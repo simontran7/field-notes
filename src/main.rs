@@ -61,8 +61,8 @@ pub(crate) fn build_site(dev: bool) -> std::io::Result<usize> {
     let slugs: HashSet<&str> = notes.iter().map(|n| n.slug.as_str()).collect();
     let mut broken = Vec::new();
 
-    let (_, home_body) = notes::split_title(read(notes_dir.join("TOC.md")));
-    let home = render::render_note("TOC.md", &home_body, "", &slugs, &mut broken);
+    let (_, home_body) = notes::split_title(read(notes_dir.join("index.md")));
+    let home = render::render_note("index.md", &home_body, "", &slugs, &mut broken);
     write(dist_dir, "index.html", &layout::home_page(&home))?;
 
     write(dist_dir, "404.html", &layout::not_found_page())?;

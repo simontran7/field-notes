@@ -354,6 +354,7 @@ dependencies = [
  "lumis",
  "notify",
  "regex",
+ "serde_json",
  "tiny_http",
 ]
 

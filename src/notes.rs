@@ -7,8 +7,8 @@ use regex::Regex;
 
 static TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#\s+(.+)$").unwrap());
 
-/// Top-level files in notes/ that aren't pages: TOC.md is the home page, rendered separately.
-const NOT_NOTES: [&str; 3] = ["TOC.md", "AGENTS.md", "README.md"];
+/// Top-level files in notes/ that aren't pages: index.md is the home page, rendered separately.
+const NOT_NOTES: [&str; 3] = ["index.md", "AGENTS.md", "README.md"];
 
 pub struct Note {
     /// URL path without leading slash, e.g. `tools/git`

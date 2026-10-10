@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Notes live in `notes/` as plain Markdown. `notes/TOC.md` is the home page; every other `.md` file becomes a page at its path (`notes/tools/git.md` -> `/tools/git/`). Preview with `cargo run -- serve`.
+Notes live in `notes/` as plain Markdown. `notes/index.md` is the home page; every other `.md` file becomes a page at its path (`notes/tools/git.md` -> `/tools/git/`). Preview with `cargo run -- serve`.
 
 Write my in this clear, conversational, explanatory style. 
 - Example 1: https://jamesbornholt.com/blog/memory-models/

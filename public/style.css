@@ -101,8 +101,8 @@
   --link: #7ea0e0;
   --link-hover: #a8c0ea;
   --toggle-hover-bg: rgba(255, 255, 255, 0.1);
-  --inline-code-bg: #2b2b2b;
-  --inline-code-text: #a9b7c6;
+  --inline-code-bg: #2b2d30;
+  --inline-code-text: #bcbec4;
 
   /* GitHub dark: a brighter title color and a deeper border color */
   --note: 68, 147, 248;
@@ -306,7 +306,25 @@ body {
   padding: 0.15em 0.4em;
 }
 
-/* ─── Code blocks (Lumis/tree-sitter + theme/darcula.json) ── */
+/* ─── Code blocks ────────────────────────────────────────
+   Each block is rendered twice by src/highlight.rs, in IntelliJ Dark and IntelliJ
+   Light; only the one matching the page's theme is shown. */
+:root {
+  --code-border: #e4e4e4;
+  --code-pill-bg: #ebecf0;
+  --code-pill-text: #6c707e;
+  --code-prompt: #8c8c8c;
+  --code-copy: #233f77;
+}
+
+[data-theme="dark"] {
+  --code-border: #333333;
+  --code-pill-bg: #2b2d30;
+  --code-pill-text: #9da0a8;
+  --code-prompt: #7a7e85;
+  --code-copy: #7ea0e0;
+}
+
 .code-block {
   position: relative;
   margin: 1.25em 0;
@@ -315,7 +333,7 @@ body {
 .code-block pre {
   margin: 0;
   padding: 2.5rem 1.5rem 1.5rem;
-  border: 1px solid #333333;
+  border: 1px solid var(--code-border);
   border-radius: 8px;
   overflow-x: auto;
   font-family: var(--mono);
@@ -330,6 +348,15 @@ body {
   font-family: inherit;
 }
 
+.code-block .code-dark,
+[data-theme="dark"] .code-block .code-light {
+  display: none;
+}
+
+[data-theme="dark"] .code-block .code-dark {
+  display: block;
+}
+
 /* Language pill, top-left */
 .code-lang {
   position: absolute;
@@ -338,9 +365,8 @@ body {
   font-family: var(--mono);
   font-size: 0.7rem;
   line-height: 1.4;
-  background: #333333;
-  color: #a9b7c6;
-  opacity: 0.7;
+  background: var(--code-pill-bg);
+  color: var(--code-pill-text);
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
 }
@@ -355,7 +381,7 @@ body {
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #7ea0e0;
+  color: var(--code-copy);
   opacity: 0.5;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -368,7 +394,7 @@ body {
 /* bash blocks: a dim "$ " before each command line (not selectable, not copied) */
 .code-block[data-lang="bash"] .l-line:not(.l-empty)::before {
   content: "$ ";
-  color: #808080;
+  color: var(--code-prompt);
   -webkit-user-select: none;
   user-select: none;
 }

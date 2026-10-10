@@ -1,81 +1,374 @@
-//! Syntax highlighting with Lumis (tree-sitter parsers + Neovim's highlight queries)
-//! and the Darcula theme in theme/darcula.json.
+//! Syntax highlighting in IntelliJ's colors.
 //!
-//! Tree-sitter parses the code, so it can tell a function declaration from a call,
-//! fields from variables, and so on, which Darcula colors differently.
+//! Lumis (tree-sitter parsers + Neovim's highlight queries) tags each token with a
+//! capture name like `function.call`. Each capture maps to the IntelliJ color key the
+//! JetBrains IDEs use for the same thing (`DEFAULT_FUNCTION_CALL`, `org.rust.TRAIT`,
+//! `OC.MACRONAME`, ...). Where tree-sitter can't tell two things apart that the IDEs
+//! color differently (a trait vs a struct, `;` vs `.`), context rules below pick the key.
+//! Every block is then rendered twice, in IntelliJ Dark and IntelliJ Light, with the
+//! colors in theme/intellij.json (resolved from JetBrains' own color scheme files).
 
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use lumis::languages::Language;
 use lumis::themes::{self, Theme};
 use lumis::{highlight, HtmlInlineBuilder};
 use regex::Regex;
+use serde_json::Value;
 
-static THEME: LazyLock<Theme> =
-    LazyLock::new(|| themes::from_json(include_str!("../theme/darcula.json")).expect("theme/darcula.json is invalid"));
+const TEXT: &str = "TEXT";
 
-const PLAIN: &str = "#a9b7c6";
-const ORANGE: &str = "#cc7832";
+/// Tree-sitter capture -> IntelliJ color key. Language-specific entries (`capture.lang`)
+/// override the generic ones. `@...` keys are placeholders resolved by the context rules.
+const CAPTURES: &[(&str, &str)] = &[
+    ("comment", "DEFAULT_LINE_COMMENT"),
+    ("comment.documentation", "DEFAULT_DOC_COMMENT"),
+    ("keyword", "DEFAULT_KEYWORD"),
+    ("boolean", "DEFAULT_KEYWORD"),
+    ("constant.builtin", "DEFAULT_KEYWORD"),
+    ("type.builtin", "DEFAULT_KEYWORD"),
+    ("variable.builtin", "DEFAULT_KEYWORD"),
+    ("number", "DEFAULT_NUMBER"),
+    ("string", "DEFAULT_STRING"),
+    ("character", "DEFAULT_STRING"),
+    ("string.escape", "DEFAULT_VALID_STRING_ESCAPE"),
+    ("escape", "DEFAULT_VALID_STRING_ESCAPE"),
+    ("function", "DEFAULT_FUNCTION_DECLARATION"),
+    ("function.method", "DEFAULT_FUNCTION_DECLARATION"),
+    ("function.call", "DEFAULT_FUNCTION_CALL"),
+    ("function.method.call", "DEFAULT_FUNCTION_CALL"),
+    ("function.builtin", "DEFAULT_FUNCTION_CALL"),
+    ("function.macro", "DEFAULT_FUNCTION_CALL"),
+    ("property", "DEFAULT_INSTANCE_FIELD"),
+    ("variable.member", "DEFAULT_INSTANCE_FIELD"),
+    ("constant", "DEFAULT_CONSTANT"),
+    ("constant.macro", "DEFAULT_CONSTANT"),
+    ("attribute", "DEFAULT_METADATA"),
+    ("type", "DEFAULT_CLASS_NAME"),
+    ("type.definition", "DEFAULT_CLASS_NAME"),
+    ("constructor", "DEFAULT_IDENTIFIER"),
+    ("variable", "DEFAULT_IDENTIFIER"),
+    ("variable.parameter", "DEFAULT_PARAMETER"),
+    ("module", "DEFAULT_IDENTIFIER"),
+    ("label", "DEFAULT_LABEL"),
+    ("operator", "DEFAULT_OPERATION_SIGN"),
+    ("punctuation", "DEFAULT_OPERATION_SIGN"),
+    ("punctuation.bracket", "DEFAULT_PARENTHS"),
+    ("punctuation.delimiter", "@delimiter"),
+    // Rust (RustRover)
+    ("comment.documentation.rust", "org.rust.DOC_COMMENT"),
+    ("keyword.rust", "org.rust.KEYWORD"),
+    ("function.rust", "org.rust.FUNCTION"),
+    ("function.method.rust", "org.rust.METHOD"),
+    ("function.call.rust", "org.rust.FUNCTION_CALL"),
+    ("function.method.call.rust", "org.rust.METHOD_CALL"),
+    ("function.macro.rust", "org.rust.MACRO"),
+    ("type.rust", "org.rust.STRUCT"),
+    ("type.builtin.rust", "org.rust.PRIMITIVE_TYPE"),
+    ("constructor.rust", "org.rust.ENUM_VARIANT"),
+    ("constant.builtin.rust", "org.rust.ENUM_VARIANT"),
+    ("constant.rust", "org.rust.CONSTANT"),
+    ("variable.builtin.rust", "org.rust.SELF_PARAMETER"),
+    ("variable.member.rust", "org.rust.FIELD"),
+    ("property.rust", "org.rust.FIELD"),
+    ("variable.parameter.rust", "org.rust.PARAMETER"),
+    ("module.rust", "org.rust.MODULE"),
+    ("keyword.modifier.rust", "@rust_modifier"),
+    ("attribute.rust", "@rust_attribute"),
+    ("attribute.builtin.rust", "@rust_attribute"),
+    ("operator.rust", "@rust_operator"),
+    // Python (PyCharm)
+    ("function.python", "PY.FUNC_DEFINITION"),
+    ("function.method.python", "PY.FUNC_DEFINITION"),
+    ("function.call.python", "PY.FUNCTION_CALL"),
+    ("function.method.call.python", "PY.METHOD_CALL"),
+    ("function.builtin.python", "PY.BUILTIN_NAME"),
+    ("type.builtin.python", "PY.BUILTIN_NAME"),
+    ("variable.builtin.python", "PY.SELF_PARAMETER"),
+    ("type.python", "DEFAULT_IDENTIFIER"),
+    ("constant.python", "DEFAULT_IDENTIFIER"),
+    ("variable.member.python", "DEFAULT_IDENTIFIER"),
+    ("property.python", "DEFAULT_IDENTIFIER"),
+    ("punctuation.special.python", "PY.FSTRING_FRAGMENT_BRACES"),
+    // Shell
+    ("keyword.bash", "BASH.KEYWORD"),
+    ("string.bash", "BASH.STRING"),
+    ("comment.bash", "BASH.LINE_COMMENT"),
+    ("function.call.bash", "BASH.EXTERNAL_COMMAND"),
+    ("function.builtin.bash", "BASH.EXTERNAL_COMMAND"),
+    ("variable.bash", "BASH.VAR_USE"),
+    ("variable.builtin.bash", "BASH.VAR_USE"),
+    ("constant.bash", "BASH.VAR_USE"),
+    ("constant.builtin.bash", "BASH.VAR_USE"),
+    ("property.bash", "BASH.VAR_USE"),
+    ("variable.member.bash", "BASH.VAR_USE"),
+];
 
-// Placeholder colors from theme/darcula.json for tokens tree-sitter groups together
-// but Darcula colors differently. They are resolved by text below.
-const DELIMITER: &str = "#a9b7c5"; // ; and , are orange, . and :: are plain
-const RUST_OPERATOR: &str = "#a9b7c4"; // ? is bold orange, other operators plain
-const RUST_MODIFIER: &str = "#a9b7c3"; // the ' of a lifetime, or mut / const / dyn
-const RUST_ATTRIBUTE: &str = "#a9b7c2"; // a lifetime's name, or an #[attribute]
+/// C and C++ (CLion) share one table, registered for both languages.
+const C_CAPTURES: &[(&str, &str)] = &[
+    ("keyword", "OC.KEYWORD"),
+    ("keyword.directive", "OC.DIRECTIVE"),
+    ("keyword.directive.define", "OC.DIRECTIVE"),
+    ("keyword.import", "OC.DIRECTIVE"),
+    ("keyword.conditional.ternary", "OC.OPERATION_SIGN"),
+    ("comment.documentation", "Doxygen Comment"),
+    ("string", "OC.STRING"),
+    ("type.builtin", "OC.BUILTIN_TYPE_KEYWORD"),
+    ("variable.builtin", "OC.SELFSUPERTHIS"),
+    ("constant.macro", "OC.MACRONAME"),
+    ("function.macro", "OC.MACRONAME"),
+    ("type", "OC.STRUCT_LIKE"),
+    ("type.definition", "OC.TYPEDEF"),
+    ("module", "OC.NAMESPACE_LIKE"),
+    ("variable.member", "OC.STRUCT_FIELD"),
+    ("property", "OC.STRUCT_FIELD"),
+    ("attribute", "DEFAULT_IDENTIFIER"),
+    ("function", "OC.FUNCTION_DECLARATION"),
+    ("function.call", "OC.FUNCTION"),
+    ("function.method.call", "OC.FUNCTION"),
+    ("constant", "OC.ENUM_CONST"),
+];
 
-fn span(color: &str, text: &str) -> String {
-    format!(r#"<span style="color: {color};">{text}</span>"#)
+/// A color scheme ready to render: IntelliJ key -> inline CSS, plus the `<pre>` style.
+struct Scheme {
+    name: &'static str,
+    styles: HashMap<String, String>,
+    pre_style: String,
 }
 
-static LIFETIME_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(
-        r#"<span style="color: {RUST_MODIFIER};">&#39;</span><span style="color: {RUST_ATTRIBUTE};">([^<]*)</span>"#
-    ))
-    .unwrap()
-});
+struct Highlighter {
+    /// Lumis theme that colors every capture with a unique placeholder color
+    theme: Theme,
+    /// placeholder color -> IntelliJ key
+    keys: HashMap<String, String>,
+    schemes: Vec<Scheme>,
+}
 
-static PLACEHOLDER_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(
-        r#"<span style="color: ({DELIMITER}|{RUST_OPERATOR}|{RUST_MODIFIER}|{RUST_ATTRIBUTE});">([^<]*)</span>"#
-    ))
-    .unwrap()
-});
+fn css(style: &Value, text_fg: &str) -> String {
+    let fg = style.get("fg").and_then(Value::as_str).unwrap_or(text_fg);
+    let mut css = format!("color: {fg};");
+    if style.get("bold").and_then(Value::as_bool) == Some(true) {
+        css.push_str(" font-weight: bold;");
+    }
+    if style.get("italic").and_then(Value::as_bool) == Some(true) {
+        css.push_str(" font-style: italic;");
+    }
+    if let Some(color) = style.get("underline").and_then(Value::as_str) {
+        css.push_str(&format!(" text-decoration: underline {color};"));
+    }
+    css
+}
 
-fn resolve_placeholders(html: &str) -> String {
-    // Rust lifetimes ('a) are teal italic as a whole (Rust plugin LIFETIME)
-    let html = LIFETIME_RE.replace_all(
-        html,
-        r#"<span style="color: #20999d; font-style: italic;">&#39;$1</span>"#,
-    );
-    PLACEHOLDER_RE
-        .replace_all(&html, |caps: &regex::Captures| {
-            let text = &caps[2];
-            match (&caps[1], text) {
-                (DELIMITER, ";" | ",") => span(ORANGE, text),
-                (DELIMITER, _) => span(PLAIN, text),
-                (RUST_OPERATOR, "?") => {
-                    format!(r#"<span style="color: {ORANGE}; font-weight: bold;">?</span>"#)
-                }
-                (RUST_OPERATOR, _) => span(PLAIN, text),
-                (RUST_MODIFIER, _) => span(ORANGE, text),
-                (RUST_ATTRIBUTE, _) => span("#bbb529", text),
-                _ => caps[0].to_string(),
-            }
+static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
+    let mut entries: Vec<(String, &str)> = CAPTURES.iter().map(|(c, k)| (c.to_string(), *k)).collect();
+    for (capture, key) in C_CAPTURES {
+        for lang in ["c", "cpp"] {
+            entries.push((format!("{capture}.{lang}"), key));
+        }
+    }
+
+    let mut placeholder_of: HashMap<String, String> = HashMap::new();
+    let mut placeholder = |key: &str| {
+        let n = placeholder_of.len();
+        placeholder_of.entry(key.to_string()).or_insert_with(|| format!("#a0{n:04x}")).clone()
+    };
+    let mut highlights = serde_json::Map::new();
+    highlights.insert("normal".into(), serde_json::json!({ "fg": placeholder(TEXT), "bg": "#000000" }));
+    for (capture, key) in &entries {
+        highlights.insert(capture.clone(), serde_json::json!({ "fg": placeholder(key) }));
+    }
+    let theme_json = serde_json::json!({
+        "name": "intellij-keys", "appearance": "dark", "revision": "1", "highlights": highlights
+    });
+    let theme = themes::from_json(&theme_json.to_string()).expect("building the key theme");
+    let keys = placeholder_of.into_iter().map(|(key, color)| (color, key)).collect();
+
+    let resolved: Value =
+        serde_json::from_str(include_str!("../theme/intellij.json")).expect("theme/intellij.json is invalid");
+    let schemes = ["dark", "light"]
+        .into_iter()
+        .map(|name| {
+            let scheme = &resolved["schemes"][name];
+            let text_fg = scheme["TEXT"]["fg"].as_str().unwrap();
+            let bg = scheme["TEXT"]["bg"].as_str().unwrap();
+            let styles = scheme.as_object().unwrap().iter().map(|(key, style)| (key.clone(), css(style, text_fg))).collect();
+            Scheme { name, styles, pre_style: format!("color: {text_fg}; background-color: {bg};") }
         })
-        .into_owned()
+        .collect();
+
+    Highlighter { theme, keys, schemes }
+});
+
+/// One highlighted piece of a line: its IntelliJ key and its (already HTML-escaped) text.
+#[derive(Clone)]
+struct Token {
+    key: String,
+    text: String,
 }
 
-static EMPTY_LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"<div class="l-line" (data-line="\d+")>(\n?)</div>"#).unwrap());
+impl Token {
+    fn trimmed(&self) -> &str {
+        self.text.trim()
+    }
 
-/// Marks blank lines so the bash `$` prompt can skip them.
-fn mark_empty_lines(html: &str) -> String {
-    EMPTY_LINE_RE.replace_all(html, r#"<div class="l-line l-empty" $1>$2</div>"#).into_owned()
+    fn is_word(&self) -> bool {
+        !self.trimmed().is_empty()
+    }
 }
 
-/// Python names PyCharm colors by what they are, wherever they appear
-/// (PythonDarcula.xml): built-ins, `self`, dunder names and decorators.
+static TAG_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"<span style="color: (#[0-9a-f]{6});[^"]*">|</span>"#).unwrap());
+
+/// Splits one line of Lumis HTML into tokens. Lumis sometimes nests spans; text takes
+/// the innermost span's key.
+fn tokenize(line: &str) -> Vec<Token> {
+    let keys = &HIGHLIGHTER.keys;
+    let mut out = Vec::new();
+    let mut stack: Vec<&str> = Vec::new();
+    let mut last = 0;
+    let push = |out: &mut Vec<Token>, text: &str, stack: &[&str]| {
+        if !text.is_empty() {
+            let key = stack.last().and_then(|c| keys.get(*c)).map_or(TEXT, String::as_str);
+            out.push(Token { key: key.to_string(), text: text.to_string() });
+        }
+    };
+    for caps in TAG_RE.captures_iter(line) {
+        let m = caps.get(0).unwrap();
+        push(&mut out, &line[last..m.start()], &stack);
+        match caps.get(1) {
+            Some(color) => stack.push(color.as_str()),
+            None => {
+                stack.pop();
+            }
+        }
+        last = m.end();
+    }
+    push(&mut out, &line[last..], &stack);
+    out
+}
+
+/// Indices of the tokens that aren't just whitespace.
+fn words(tokens: &[Token]) -> Vec<usize> {
+    (0..tokens.len()).filter(|&i| tokens[i].is_word()).collect()
+}
+
+fn is_ident(word: &str) -> bool {
+    word.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && word.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+fn is_type_parameter_name(word: &str) -> bool {
+    word.len() <= 2
+        && word.starts_with(|c: char| c.is_ascii_uppercase())
+        && word.chars().skip(1).all(|c| c.is_ascii_digit())
+}
+
+/// `;`, `,` and `.` have their own keys; tree-sitter tags them all as delimiters.
+fn split_delimiters(tokens: &mut [Token]) {
+    for t in tokens.iter_mut().filter(|t| t.key == "@delimiter") {
+        t.key = match t.trimmed() {
+            ";" => "DEFAULT_SEMICOLON",
+            "," => "DEFAULT_COMMA",
+            "." => "DEFAULT_DOT",
+            _ => "DEFAULT_OPERATION_SIGN",
+        }
+        .to_string();
+    }
+}
+
+fn rust_rules(tokens: &mut Vec<Token>) {
+    // Lifetimes: `'` (tagged like `mut`) followed by the name (tagged like an attribute)
+    let mut i = 0;
+    while i + 1 < tokens.len() {
+        if tokens[i].key == "@rust_modifier" && tokens[i].text == "&#39;" && tokens[i + 1].key == "@rust_attribute" {
+            let name = tokens.remove(i + 1).text;
+            tokens[i] = Token { key: "org.rust.LIFETIME".into(), text: format!("&#39;{name}") };
+        }
+        i += 1;
+    }
+    for t in tokens.iter_mut() {
+        let key = match (t.key.as_str(), t.trimmed()) {
+            ("@rust_modifier", _) => "org.rust.KEYWORD",
+            ("@rust_attribute", _) => "org.rust.ATTRIBUTE",
+            ("@rust_operator", "?") => "org.rust.Q_OPERATOR",
+            ("@rust_operator", _) => "DEFAULT_OPERATION_SIGN",
+            _ => continue,
+        };
+        t.key = key.into();
+    }
+
+    let w = words(tokens);
+    let text = |tokens: &[Token], n: usize| tokens[w[n]].trimmed().to_string();
+
+    // #[attribute] lines are ATTRIBUTE throughout (strings keep their color)
+    if w.len() >= 2 && text(tokens, 0) == "#" && text(tokens, 1).starts_with('[') {
+        for t in tokens.iter_mut().filter(|t| t.is_word() && t.key != "DEFAULT_STRING") {
+            t.key = "org.rust.ATTRIBUTE".into();
+        }
+        return;
+    }
+
+    for n in 0..w.len() {
+        let i = w[n];
+        let word = text(tokens, n);
+        let prev = if n > 0 { text(tokens, n - 1) } else { String::new() };
+        let is_type = tokens[i].key == "org.rust.STRUCT";
+        let for_follows = w[n + 1..].iter().any(|&j| tokens[j].trimmed() == "for");
+        let after_impl = prev == "impl" || (prev == "&gt;" && w[..n].iter().any(|&j| tokens[j].trimmed() == "impl"));
+
+        let key = if word.len() > 1 && word.ends_with('!') && is_ident(&word[..word.len() - 1]) {
+            Some("org.rust.MACRO")
+        } else if is_type && is_type_parameter_name(&word) {
+            Some("org.rust.TYPE_PARAMETER")
+        } else if is_type && (prev == "trait" || prev == "dyn" || (after_impl && for_follows) || (prev == "impl" && n > 1)) {
+            // `trait X`, `dyn X`, `impl X for Y`, and `impl X` in type position (`-> impl Iterator`)
+            Some("org.rust.TRAIT")
+        } else if matches!(word.as_str(), "std" | "core" | "alloc" | "crate")
+            && n + 1 < w.len()
+            && text(tokens, n + 1).starts_with("::")
+        {
+            Some("org.rust.CRATE")
+        } else {
+            None
+        };
+        if let Some(key) = key {
+            tokens[i].key = key.into();
+        }
+    }
+}
+
+fn c_rules(tokens: &mut [Token], cpp: bool) {
+    let w = words(tokens);
+    let text = |tokens: &[Token], n: usize| tokens[w[n]].trimmed().to_string();
+    for n in 0..w.len() {
+        let i = w[n];
+        let word = text(tokens, n);
+        let prev = if n > 0 { text(tokens, n - 1) } else { String::new() };
+        let next = if n + 1 < w.len() { text(tokens, n + 1) } else { String::new() };
+        let key = tokens[i].key.as_str();
+        let ident = is_ident(&word);
+        let all_caps = ident && word.len() >= 2 && word.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
+
+        let new_key = if word == "NULL" || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION") {
+            Some("OC.MACRONAME") // NULL and SHOUTING_CASE calls are macros
+        } else if ident && word.ends_with("_t") && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE") {
+            Some("OC.TYPEDEF") // size_t, uint8_t, ...
+        } else if cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word) {
+            Some("OC.TYPEDEF") // template parameters (OC.TEMPLATE_TYPE falls back to OC.TYPEDEF)
+        } else if ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
+            // s.field / s->field are fields; s.method() is a call
+            Some(if next.starts_with('(') { "OC.FUNCTION" } else { "OC.STRUCT_FIELD" })
+        } else {
+            None
+        };
+        if let Some(k) = new_key {
+            tokens[i].key = k.into();
+        }
+    }
+}
+
+/// Built-in names PyCharm colors wherever they appear.
 const PYTHON_BUILTINS: &[&str] = &[
     "abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr",
     "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec",
@@ -86,309 +379,199 @@ const PYTHON_BUILTINS: &[&str] = &[
     "vars", "zip",
 ];
 
-static TOKEN_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"<span style="color: (#[0-9a-f]{6});([^"]*)">([^<]*)</span>"#).unwrap());
-
-/// A decorator comes out as `<span yellow>@<span yellow>name</span>...</span>`.
-static DECORATOR_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"<span style="color: #ffc66d;">@((?:<span[^>]*>[^<]*</span>|[^<])*)</span>"#).unwrap()
-});
-
-fn python_names(html: &str) -> String {
-    let html = DECORATOR_RE.replace_all(html, |caps: &regex::Captures| {
-        let inner = caps[1].replace("color: #ffc66d;", "color: #bbb529;");
-        format!(r#"<span style="color: #bbb529;">@{inner}</span>"#)
-    });
-    TOKEN_RE
-        .replace_all(&html, |caps: &regex::Captures| {
-            let (color, extra, text) = (&caps[1], &caps[2], &caps[3]);
-            let is_dunder = text.len() > 4 && text.starts_with("__") && text.ends_with("__");
-            let new_color = match text {
-                "self" | "cls" => "#94558d",
-                _ if is_dunder => "#b200b2",
-                _ if color == PLAIN && PYTHON_BUILTINS.contains(&text) => "#8888c6",
-                _ => return caps[0].to_string(),
-            };
-            format!(r#"<span style="color: {new_color};{extra}">{text}</span>"#)
-        })
-        .into_owned()
-}
-
-// Rust plugin colors (RustDarcula.xml) that need context tree-sitter doesn't give:
-const RUST_TYPE: &str = "#86985d"; // STRUCT / ENUM / TYPE_ALIAS
-const RUST_TRAIT: &str = "#8d91dc"; // TRAIT, CRATE
-const RUST_TYPE_PARAMETER: &str = "#20999d";
-const RUST_MACRO: &str = "#4eade5";
-const ATTRIBUTE: &str = "#bbb529";
-
-static LINE_DIV_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?s)(<div class="l-line[^"]*" data-line="\d+">)(.*?)(</div>)"#).unwrap());
-
-static SPAN_OR_TEXT_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"<span style="color: (#[0-9a-f]{6});([^"]*)">([^<]*)</span>|([^<]+)"#).unwrap());
-
-struct Token {
-    color: Option<String>,
-    extra: String,
-    text: String,
-}
-
-impl Token {
-    fn html(&self) -> String {
-        match &self.color {
-            Some(color) => format!(r#"<span style="color: {color};{}">{}</span>"#, self.extra, self.text),
-            None => self.text.clone(),
-        }
+fn python_rules(tokens: &mut [Token]) {
+    let w = words(tokens);
+    if w.is_empty() {
+        return;
     }
-
-    fn is_word(&self) -> bool {
-        !self.text.trim().is_empty()
-    }
-}
-
-static TAG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"<span ([^>]*)>|</span>"#).unwrap());
-
-/// `<span A>x<span B>y</span>z</span>` -> `<span A>x</span><span B>y</span><span A>z</span>`,
-/// so every piece of text sits in exactly one span.
-fn flatten_spans(line: &str) -> String {
-    let mut out = String::new();
-    let mut stack: Vec<String> = Vec::new();
-    let mut last = 0;
-    for m in TAG_RE.find_iter(line) {
-        let text = &line[last..m.start()];
-        if !text.is_empty() {
-            match stack.last() {
-                Some(attrs) => out.push_str(&format!("<span {attrs}>{text}</span>")),
-                None => out.push_str(text),
+    // Decorators: everything from `@` up to the arguments
+    if tokens[w[0]].trimmed().starts_with('@') {
+        for &i in &w {
+            if tokens[i].trimmed().starts_with('(') {
+                break;
             }
+            tokens[i].key = "PY.DECORATOR".into();
         }
-        let tag = m.as_str();
-        if tag == "</span>" {
-            stack.pop();
-        } else {
-            stack.push(tag["<span ".len()..tag.len() - 1].to_string());
-        }
-        last = m.end();
+        return;
     }
-    out.push_str(&line[last..]);
-    out
-}
-
-fn tokens(line: &str) -> Option<Vec<Token>> {
-    let line = &flatten_spans(line);
-    let mut out = Vec::new();
-    let mut end = 0;
-    for caps in SPAN_OR_TEXT_RE.captures_iter(line) {
-        let m = caps.get(0).unwrap();
-        if m.start() != end {
-            return None; // nested spans: leave the line as is
-        }
-        end = m.end();
-        out.push(match caps.get(4) {
-            Some(text) => Token { color: None, extra: String::new(), text: text.as_str().to_string() },
-            None => Token { color: Some(caps[1].to_string()), extra: caps[2].to_string(), text: caps[3].to_string() },
-        });
-    }
-    (end == line.len()).then_some(out)
-}
-
-fn rust_line(line: &str) -> String {
-    let Some(mut toks) = tokens(line) else { return line.to_string() };
-    let words: Vec<usize> = (0..toks.len()).filter(|&i| toks[i].is_word()).collect();
-    let text = |toks: &Vec<Token>, w: usize| toks[words[w]].text.trim().to_string();
-
-    // #[attribute] lines are ATTRIBUTE colored throughout (strings keep their color)
-    if words.len() >= 2 && text(&toks, 0) == "#" && text(&toks, 1).starts_with('[') {
-        for t in toks.iter_mut().filter(|t| t.color.is_some() && t.color.as_deref() != Some("#6a8759")) {
-            t.color = Some(ATTRIBUTE.to_string());
-        }
-        return toks.iter().map(Token::html).collect();
-    }
-
-    for w in 0..words.len() {
-        let i = words[w];
-        let word = text(&toks, w);
-        let prev = if w > 0 { text(&toks, w - 1) } else { String::new() };
-        let color = toks[i].color.clone().unwrap_or_default();
-
-        if word.ends_with('!') && word.len() > 1 && word[..word.len() - 1].chars().all(|c| c.is_alphanumeric() || c == '_') {
-            toks[i].color = Some(RUST_MACRO.to_string());
-        } else if color == RUST_TYPE && word.len() <= 2 && word.chars().next().is_some_and(|c| c.is_ascii_uppercase()) && word.chars().skip(1).all(|c| c.is_ascii_digit()) {
-            toks[i].color = Some(RUST_TYPE_PARAMETER.to_string());
-        } else if color == RUST_TYPE && (prev == "trait" || prev == "dyn" || (prev == "impl" && w > 1)) {
-            // `trait X`, `dyn X`, and `impl X` in type position (`-> impl Iterator`)
-            toks[i].color = Some(RUST_TRAIT.to_string());
-        } else if color == RUST_TYPE && prev == "impl" || color == RUST_TYPE && prev == "&gt;" && words.iter().take(w).any(|&j| toks[j].text.trim() == "impl") && !words.iter().take(w).any(|&j| toks[j].text.trim() == "for") {
-            // `impl X for Y` / `impl<T> X for Y`: X is a trait when `for` follows on the line
-            let rest_has_for = words[w + 1..].iter().any(|&j| toks[j].text.trim() == "for");
-            if rest_has_for {
-                toks[i].color = Some(RUST_TRAIT.to_string());
-            }
-        } else if matches!(word.as_str(), "std" | "core" | "alloc") && w + 1 < words.len() && text(&toks, w + 1).starts_with("::") {
-            toks[i].color = Some(RUST_TRAIT.to_string());
+    for n in 0..w.len() {
+        let i = w[n];
+        let word = tokens[i].trimmed().to_string();
+        let prev = if n > 0 { tokens[w[n - 1]].trimmed().to_string() } else { String::new() };
+        let is_dunder = word.len() > 4 && word.starts_with("__") && word.ends_with("__") && is_ident(&word);
+        let new_key = match word.as_str() {
+            "self" | "cls" => Some("PY.SELF_PARAMETER"),
+            _ if is_dunder && prev == "def" => Some("PY.PREDEFINED_DEFINITION"),
+            _ if is_dunder => Some("PY.PREDEFINED_USAGE"),
+            _ if prev == "class" && is_ident(&word) => Some("PY.CLASS_DEFINITION"),
+            _ if PYTHON_BUILTINS.contains(&word.as_str()) && prev != "." && prev != "def" => Some("PY.BUILTIN_NAME"),
+            _ => None,
+        };
+        if let Some(k) = new_key {
+            tokens[i].key = k.into();
         }
     }
-    toks.iter().map(Token::html).collect()
 }
-
-fn rust_context(html: &str) -> String {
-    LINE_DIV_RE
-        .replace_all(html, |caps: &regex::Captures| format!("{}{}{}", &caps[1], rust_line(&caps[2]), &caps[3]))
-        .into_owned()
-}
-
-// CLion colors (OCDarcula.xml, CLion 2026.2.3.1) that need context tree-sitter doesn't give:
-const C_MACRO: &str = "#908b25"; // OC.MACRONAME
-const C_TYPEDEF: &str = "#b9bcd1"; // OC.TYPEDEF, OC.TEMPLATE_TYPE
-const C_STRUCT_LIKE: &str = "#b5b6e3"; // OC.STRUCT_LIKE
-const C_FIELD: &str = "#9373a5"; // OC.STRUCT_FIELD
-
-fn c_line(line: &str, cpp: bool) -> String {
-    let Some(mut toks) = tokens(line) else { return line.to_string() };
-    let words: Vec<usize> = (0..toks.len()).filter(|&i| toks[i].is_word()).collect();
-    let text = |toks: &Vec<Token>, w: usize| toks[words[w]].text.trim().to_string();
-
-    for w in 0..words.len() {
-        let i = words[w];
-        let word = text(&toks, w);
-        let prev = if w > 0 { text(&toks, w - 1) } else { String::new() };
-        let next = if w + 1 < words.len() { text(&toks, w + 1) } else { String::new() };
-        let color = toks[i].color.clone().unwrap_or_default();
-        let is_ident = word.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-            && word.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
-        let all_caps = is_ident && word.len() >= 2 && word.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
-
-        if word == "NULL" || (all_caps && color == PLAIN && next.starts_with('(')) {
-            // NULL and SHOUTING_CASE calls are macros
-            toks[i].color = Some(C_MACRO.to_string());
-        } else if is_ident && word.ends_with("_t") && (color == ORANGE || color == C_STRUCT_LIKE) {
-            toks[i].color = Some(C_TYPEDEF.to_string());
-        } else if cpp && color == C_STRUCT_LIKE && word.len() <= 2 && word.starts_with(|c: char| c.is_ascii_uppercase()) && word.chars().skip(1).all(|c| c.is_ascii_digit()) {
-            toks[i].color = Some(C_TYPEDEF.to_string());
-        } else if is_ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
-            // s.field / s->field are fields; s.method() calls stay plain
-            toks[i].color = Some(if next.starts_with('(') { PLAIN } else { C_FIELD }.to_string());
-        }
-    }
-    toks.iter().map(Token::html).collect()
-}
-
-fn c_context(html: &str, cpp: bool) -> String {
-    LINE_DIV_RE
-        .replace_all(html, |caps: &regex::Captures| format!("{}{}{}", &caps[1], c_line(&caps[2], cpp), &caps[3]))
-        .into_owned()
-}
-
-fn language_for(lang: &str) -> Language {
-    match lang {
-        "sh" | "shell" | "zsh" => Language::Bash,
-        other => other.parse().unwrap_or(Language::PlainText),
-    }
-}
-
-fn highlight_as(language: Language, code: &str) -> String {
-    let formatter = HtmlInlineBuilder::new()
-        .language(language)
-        .theme(Some(THEME.clone()))
-        .build()
-        .expect("building the HTML formatter");
-    resolve_placeholders(&highlight(code, formatter))
-}
-
-static CODE_INNER_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?s)^(.*?<code[^>]*>)(.*)(</code></pre>)\s*$"#).unwrap());
 
 static LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?s)<div class="l-line" data-line="\d+">(.*?)</div>"#).unwrap());
+    LazyLock::new(|| Regex::new(r#"(?s)<div class="l-line" data-line="\d+">(.*?)\n?</div>"#).unwrap());
 
-/// A ```console session: `$ command` lines are highlighted as bash, output stays plain.
-fn highlight_console(code: &str) -> String {
-    let plain = highlight_as(Language::PlainText, code);
-    let caps = CODE_INNER_RE.captures(&plain).expect("unexpected Lumis HTML");
-    let (open, close) = (caps[1].to_string(), caps[3].to_string());
-
-    let mut lines = String::new();
-    for (i, line) in code.lines().enumerate() {
-        let n = i + 1;
-        let content = match line.strip_prefix("$ ") {
-            Some(command) => {
-                let html = highlight_as(Language::Bash, command);
-                let inner = LINE_RE.captures(&html).map(|c| c[1].trim_end_matches('\n').to_string());
-                format!("{}{}", span("#808080", "$ "), inner.unwrap_or_default())
-            }
-            None => html_escape(line),
-        };
-        lines.push_str(&format!("<div class=\"l-line\" data-line=\"{n}\">{content}\n</div>"));
-    }
-    format!("{open}{lines}{close}")
+/// Highlights code with Lumis and returns one token list per line.
+fn tokenize_code(language: Language, code: &str) -> Vec<Vec<Token>> {
+    let formatter = HtmlInlineBuilder::new()
+        .language(language)
+        .theme(Some(HIGHLIGHTER.theme.clone()))
+        .build()
+        .expect("building the HTML formatter");
+    let html = highlight(code, formatter);
+    LINE_RE.captures_iter(&html).map(|caps| tokenize(&caps[1])).collect()
 }
 
 fn html_escape(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
 }
 
-/// Highlights one fenced code block and wraps it with its language label.
+fn language_for(lang: &str) -> Language {
+    match lang {
+        "sh" | "shell" | "zsh" => Language::Bash,
+        "py" => Language::Python,
+        "rs" => Language::Rust,
+        "h" => Language::C,
+        "c++" | "cc" | "hpp" => Language::CPlusPlus,
+        other => other.parse().unwrap_or(Language::PlainText),
+    }
+}
+
+fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
+    if lang == "console" {
+        // `$ command` lines are highlighted as bash; output stays plain
+        return code
+            .lines()
+            .map(|line| match line.strip_prefix("$ ") {
+                Some(command) => {
+                    let mut tokens = vec![Token { key: "DEFAULT_LINE_COMMENT".into(), text: "$ ".into() }];
+                    tokens.extend(lines_for("bash", command).into_iter().next().unwrap_or_default());
+                    tokens
+                }
+                None => vec![Token { key: TEXT.into(), text: html_escape(line) }],
+            })
+            .collect();
+    }
+
+    let language = language_for(lang);
+    let mut lines = tokenize_code(language, code);
+    for tokens in &mut lines {
+        split_delimiters(tokens);
+        match language {
+            Language::Rust => rust_rules(tokens),
+            Language::C => c_rules(tokens, false),
+            Language::CPlusPlus => c_rules(tokens, true),
+            Language::Python => python_rules(tokens),
+            _ => {}
+        }
+    }
+    lines
+}
+
+fn render(lines: &[Vec<Token>], lang: &str, scheme: &Scheme) -> String {
+    let mut html = format!(
+        r#"<pre class="code-{}" style="{}"><code class="language-{lang}">"#,
+        scheme.name, scheme.pre_style
+    );
+    for (n, tokens) in lines.iter().enumerate() {
+        let empty = if tokens.iter().all(|t| !t.is_word()) { " l-empty" } else { "" };
+        html.push_str(&format!(r#"<div class="l-line{empty}" data-line="{}">"#, n + 1));
+        for t in tokens {
+            match scheme.styles.get(&t.key) {
+                Some(style) if t.key != TEXT => html.push_str(&format!(r#"<span style="{style}">{}</span>"#, t.text)),
+                _ => html.push_str(&t.text),
+            }
+        }
+        html.push_str("\n</div>");
+    }
+    html.push_str("</code></pre>");
+    html
+}
+
+/// Highlights one fenced code block in IntelliJ Dark and IntelliJ Light (CSS shows the
+/// one matching the page's theme), with its language label.
 pub fn code_block(lang: &str, code: &str) -> String {
     let code = code.strip_suffix('\n').unwrap_or(code);
-    let html = match lang {
-        "console" => highlight_console(code),
-        "python" | "py" => python_names(&highlight_as(Language::Python, code)),
-        "rust" | "rs" => rust_context(&highlight_as(Language::Rust, code)),
-        "c" | "h" => c_context(&highlight_as(Language::C, code), false),
-        "cpp" | "c++" | "cc" | "hpp" => c_context(&highlight_as(Language::CPlusPlus, code), true),
-        _ => highlight_as(language_for(lang), code),
-    };
+    let lines = lines_for(lang, code);
     let label = html_escape(lang);
-    format!(
-        r#"<div class="code-block" data-lang="{label}"><span class="code-lang">{label}</span>{}</div>"#,
-        mark_empty_lines(&html)
-    )
+    let variants: String = HIGHLIGHTER.schemes.iter().map(|scheme| render(&lines, &label, scheme)).collect();
+    format!(r#"<div class="code-block" data-lang="{label}"><span class="code-lang">{label}</span>{variants}</div>"#)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn semicolons_and_commas_are_orange_dots_plain() {
-        let html = code_block("c", "int f(int a, int b) { return s.x; }");
-        assert!(html.contains(&span(ORANGE, ";")), "{html}");
-        assert!(html.contains(&span(ORANGE, ",")), "{html}");
-        assert!(html.contains(&span(PLAIN, ".")), "{html}");
-        assert!(!html.contains("#a9b7c5"), "{html}");
+    fn key_of(lang: &str, code: &str, word: &str) -> String {
+        lines_for(lang, code)
+            .into_iter()
+            .flatten()
+            .find(|t| t.trimmed() == word)
+            .map(|t| t.key)
+            .unwrap_or_else(|| panic!("{word} not found in {code}"))
     }
 
     #[test]
-    fn rust_lifetimes_and_question_mark() {
-        let html = code_block("rust", "fn f<'a>(x: &'a str) -> Option<u8> { g()?; None }");
-        assert!(html.contains(r#"<span style="color: #20999d; font-style: italic;">&#39;a</span>"#), "{html}");
-        assert!(html.contains("font-weight: bold;\">?</span>"), "{html}");
-        for placeholder in [DELIMITER, RUST_OPERATOR, RUST_MODIFIER, RUST_ATTRIBUTE] {
-            assert!(!html.contains(placeholder), "{html}");
-        }
+    fn delimiters_get_their_own_keys() {
+        let code = "int f(int a, int b) { return s.x; }";
+        assert_eq!(key_of("c", code, ";"), "DEFAULT_SEMICOLON");
+        assert_eq!(key_of("c", code, ","), "DEFAULT_COMMA");
     }
 
     #[test]
-    fn console_highlights_commands_only() {
+    fn rust_context() {
+        let code = "#[derive(Debug)]\nimpl<T> Shape for Stack<T> { fn f<'a>(&self) -> Option<u8> { g()?; vec![1]; None } }\nfn h(s: &dyn Shape) -> impl Iterator<Item = u8> { std::iter::empty() }";
+        assert_eq!(key_of("rust", code, "derive"), "org.rust.ATTRIBUTE");
+        assert_eq!(key_of("rust", code, "Shape"), "org.rust.TRAIT");
+        assert_eq!(key_of("rust", code, "Stack"), "org.rust.STRUCT");
+        assert_eq!(key_of("rust", code, "T"), "org.rust.TYPE_PARAMETER");
+        assert_eq!(key_of("rust", code, "&#39;a"), "org.rust.LIFETIME");
+        assert_eq!(key_of("rust", code, "?"), "org.rust.Q_OPERATOR");
+        assert_eq!(key_of("rust", code, "vec!"), "org.rust.MACRO");
+        assert_eq!(key_of("rust", code, "None"), "org.rust.ENUM_VARIANT");
+        assert_eq!(key_of("rust", code, "Iterator"), "org.rust.TRAIT");
+        assert_eq!(key_of("rust", code, "std"), "org.rust.CRATE");
+    }
+
+    #[test]
+    fn c_context() {
+        let code = "#define MAX(a, b) a\nstruct stack { size_t count; };\nint f(struct stack *s) { return MAX(1, 2) + s->count + NULL; }";
+        assert_eq!(key_of("c", code, "#define"), "OC.DIRECTIVE");
+        assert_eq!(key_of("c", code, "size_t"), "OC.TYPEDEF");
+        assert_eq!(key_of("c", code, "stack"), "OC.STRUCT_LIKE");
+        assert_eq!(key_of("c", code, "NULL"), "OC.MACRONAME");
+        assert_eq!(key_of("c", code, "count"), "OC.STRUCT_FIELD");
+    }
+
+    #[test]
+    fn python_context() {
+        let code = "@dataclass\nclass A:\n    def __init__(self, x: int):\n        print(len(x))";
+        assert_eq!(key_of("python", code, "dataclass"), "PY.DECORATOR");
+        assert_eq!(key_of("python", code, "A"), "PY.CLASS_DEFINITION");
+        assert_eq!(key_of("python", code, "__init__"), "PY.PREDEFINED_DEFINITION");
+        assert_eq!(key_of("python", code, "self"), "PY.SELF_PARAMETER");
+        assert_eq!(key_of("python", code, "int"), "PY.BUILTIN_NAME");
+        assert_eq!(key_of("python", code, "print"), "PY.BUILTIN_NAME");
+    }
+
+    #[test]
+    fn bash_commands_and_console() {
+        assert_eq!(key_of("bash", "sed -i x \"$FILE\"", "sed"), "BASH.EXTERNAL_COMMAND");
         let html = code_block("console", "$ echo hi\nhi");
-        assert!(html.contains(&span("#808080", "$ ")), "{html}");
-        assert!(html.matches("l-line").count() == 2, "{html}");
+        assert_eq!(html.matches("class=\"l-line").count(), 4, "{html}"); // 2 lines in each scheme
     }
-}
 
-#[cfg(test)]
-mod probe {
     #[test]
-    #[ignore]
-    fn print_samples() {
-        for (lang, code) in [
-            ("python", "@dataclass\nclass A:\n    def __init__(self, x: int = 1):\n        self.x = len([x])\n        print(f\"{x}\", sep=\"\")\n"),
-            ("bash", "sed -i 's/a/b/g' \"$FILE\" | grep -rn x . && echo $HOME"),
-            ("c", "// stack.h\n#ifndef STACK_H\n#define STACK_H\n#include <stddef.h>\n#define MAX(a, b) ((a) > (b) ? (a) : (b))\nstruct stack { size_t count; int *data; };\nenum color { RED, GREEN };\n[[nodiscard]] struct stack *stack_new(size_t capacity);\nint f(struct stack *s) { int x = MAX(1, 2); return s->count + NULL + RED; }\n#endif"),
-            ("cpp", "#include <vector>\nnamespace ds {\ntemplate <typename T>\nclass Stack {\npublic:\n    void push(const T &value) { items_.push_back(value); this->n++; }\nprivate:\n    std::vector<T> items_;\n    std::size_t n;\n};\n}"),
-            ("rust", "#[derive(Debug)]\nstruct Stack<T> { items: Vec<T> }\ntrait Shape { fn area(&self) -> f64; }\nimpl Shape for Stack<u8> {\n    fn area(&self) -> f64 { self.items.len() as f64 }\n}\nimpl<T> Stack<T> {\n    pub fn new() -> Self { Stack { items: Vec::new() } }\n}\nfn f(s: &dyn Shape) -> impl Iterator<Item = u32> { let mut v = vec![1]; v.push(2); std::iter::empty() }\nconst MAX: usize = 3;\nmatch x { Some(y) => y, None => 0 }"),
-        ] {
-            println!("== {lang}\n{}", super::code_block(lang, code));
+    fn every_key_has_a_style_in_both_schemes() {
+        for scheme in &HIGHLIGHTER.schemes {
+            for key in HIGHLIGHTER.keys.values().filter(|k| !k.starts_with('@')) {
+                assert!(scheme.styles.contains_key(key), "{} is missing {key}", scheme.name);
+            }
         }
     }
 }

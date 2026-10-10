@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Copy button on every highlighted code block (scripts/highlight.mjs wraps them in .code-block)
   document.querySelectorAll('.code-block').forEach(function (block) {
+    // Both color variants hold the same text, so either one can be copied
     var pre = block.querySelector('pre')
     var btn = document.createElement('button')
     btn.className = 'copy-btn'
