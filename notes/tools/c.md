@@ -262,6 +262,105 @@ $ ./cleanup missing.txt; echo $?
 > - `goto` can't jump forward past a variable-length array, because its memory is allocated only when execution reaches the declaration.
 > - Variable initializations skipped by a `goto` never run, so reading those variables is undefined behavior. In the example above, `goto out` skips the initialization of `buf`, which is safe only because nothing after `out` reads `buf`.
 
+## Tagged Unions
+
+A union stores one of several types in the same memory, but it has no way of recording which member currently holds a value. A **tagged union** pairs the union with an enum, the tag, that records which member is valid. Code that writes the union also sets the tag, and code that reads it checks the tag first.
+
+This example builds a `value` that holds an `int`, a `double`, or a string. The tag lists the possible kinds.
+
+```c
+#include <stdio.h>
+
+enum value_kind {
+    VALUE_INT,
+    VALUE_DOUBLE,
+    VALUE_STRING,
+};
+```
+
+The struct keeps the tag next to an anonymous union. Since C11, the members of an anonymous union are accessed directly through the struct, so `v.i` works without naming the union.
+
+```c
+struct value {
+    enum value_kind kind;
+    union {
+        int i;
+        double d;
+        const char *s;
+    };
+};
+```
+
+Each constructor sets the tag and the matching member in one compound literal, so a value with a mismatched tag can't be created through them.
+
+```c
+static struct value value_int(int i)
+{
+    return (struct value){ .kind = VALUE_INT, .i = i };
+}
+
+static struct value value_double(double d)
+{
+    return (struct value){ .kind = VALUE_DOUBLE, .d = d };
+}
+
+static struct value value_string(const char *s)
+{
+    return (struct value){ .kind = VALUE_STRING, .s = s };
+}
+```
+
+Reading a value means switching on the tag and touching only the member that case allows. With `-Wall`, the compiler warns when a `switch` over an enum leaves out one of its values and has no `default`, so adding a new kind later flags every `switch` that needs a new case.
+
+```c
+static void value_print(struct value v)
+{
+    switch (v.kind) {
+    case VALUE_INT:
+        printf("int     %d\n", v.i);
+        break;
+    case VALUE_DOUBLE:
+        printf("double  %g\n", v.d);
+        break;
+    case VALUE_STRING:
+        printf("string  \"%s\"\n", v.s);
+        break;
+    }
+}
+```
+
+Since every element has the same type, values of different kinds fit in one array.
+
+```c
+int main(void)
+{
+    struct value values[] = {
+        value_int(42),
+        value_double(3.5),
+        value_string("hello"),
+    };
+
+    for (size_t i = 0; i < sizeof values / sizeof values[0]; i++) {
+        value_print(values[i]);
+    }
+    printf("sizeof(struct value) = %zu\n", sizeof(struct value));
+    return 0;
+}
+```
+
+The union is as large as its largest member (8 bytes for the `double` and the pointer), and the 4-byte tag is padded to 8 bytes so the union stays aligned, which makes 16 bytes on x86-64.
+
+```console
+$ gcc -std=c23 -Wall -Wextra -o value value.c && ./value
+int     42
+double  3.5
+string  "hello"
+sizeof(struct value) = 16
+```
+
+> [!WARNING]
+> Nothing stops code from reading a member the tag doesn't allow. Reading `v.d` when `v.kind` is `VALUE_INT` reinterprets the `int`'s bytes as a `double` and quietly produces a garbage number, so every read must go through a check of the tag.
+
 ## Inheritance and Intrusive Data Structures with `container_of`
 
 The `container_of` macro takes a pointer to a struct member and returns a pointer to the struct that contains it. The Linux kernel uses it everywhere, because it gives C two features the language lacks:
