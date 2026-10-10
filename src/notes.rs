@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -8,7 +7,7 @@ use regex::Regex;
 
 static TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#\s+(.+)$").unwrap());
 
-/// Vault files that aren't pages: the home page is rendered separately.
+/// Top-level files in notes/ that aren't pages: TOC.md is the home page, rendered separately.
 const NOT_NOTES: [&str; 3] = ["TOC.md", "AGENTS.md", "README.md"];
 
 pub struct Note {
@@ -20,7 +19,7 @@ pub struct Note {
     pub body: String,
 }
 
-/// Dot-folders like `.obsidian` and `.git` aren't part of the site.
+/// Dot-files and dot-folders (e.g. `.DS_Store`, `.git`) aren't part of the site.
 pub fn is_hidden(name: &OsStr) -> bool {
     name.to_string_lossy().starts_with('.')
 }
@@ -90,28 +89,4 @@ pub fn load_notes(notes_dir: &Path) -> Vec<Note> {
             Note { slug, dir, title, body }
         })
         .collect()
-}
-
-/// Obsidian resolves a link like `list.md` or `[[list]]` to whichever note has that
-/// file name, wherever it lives in the vault. This maps file names to page slugs.
-pub struct LinkMap {
-    by_name: HashMap<String, String>,
-}
-
-impl LinkMap {
-    pub fn new(notes: &[Note]) -> Self {
-        let mut by_name = HashMap::new();
-        for note in notes {
-            let name = note.slug.rsplit('/').next().unwrap_or(&note.slug).to_lowercase();
-            by_name.insert(name, note.slug.clone());
-        }
-        LinkMap { by_name }
-    }
-
-    /// `../data-structures/list.md` or `list` -> `data-structures-and-algorithms/data-structures/list`
-    pub fn resolve(&self, target: &str) -> Option<&str> {
-        let name = target.rsplit('/').next().unwrap_or(target);
-        let name = name.strip_suffix(".md").unwrap_or(name).replace("%20", " ").to_lowercase();
-        self.by_name.get(&name).map(String::as_str)
-    }
 }

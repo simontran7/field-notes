@@ -1,21 +1,16 @@
+mod highlight;
 mod layout;
 mod notes;
 mod render;
 mod serve;
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
-/// Where the notes come from: NOTES_DIR if set, otherwise the Obsidian vault next to
-/// this repo (../programming) when it exists, otherwise the synced copy in notes/
-/// (what GitHub Actions builds from; refresh it with scripts/sync-notes.sh).
+/// The notes the site is built from. Override with NOTES_DIR.
 pub(crate) fn notes_dir() -> PathBuf {
-    if let Some(dir) = std::env::var_os("NOTES_DIR") {
-        return PathBuf::from(dir);
-    }
-    let vault = PathBuf::from("../programming");
-    if vault.is_dir() { vault } else { PathBuf::from("notes") }
+    std::env::var_os("NOTES_DIR").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("notes"))
 }
 
 fn copy_static_assets(src_dir: &Path, dist_dir: &Path) -> std::io::Result<()> {
@@ -50,21 +45,6 @@ fn read(path: impl AsRef<Path>) -> String {
     fs::read_to_string(path).unwrap_or_else(|e| panic!("reading {path:?}: {e}"))
 }
 
-/// Highlights every code block in dist/ with Shiki and the vault's Darcula theme,
-/// so code looks exactly like it does in Obsidian.
-fn highlight_code(dist_dir: &Path, notes_dir: &Path) -> std::io::Result<()> {
-    let status = Command::new("node")
-        .arg("scripts/highlight.mjs")
-        .arg(dist_dir)
-        .arg(notes_dir.join(".obsidian/shiki-themes/darcula.json"))
-        .status()?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(std::io::Error::other("syntax highlighting failed (run `npm install` first?)"))
-    }
-}
-
 pub(crate) fn build_site(dev: bool) -> std::io::Result<usize> {
     layout::set_dev_mode(dev);
 
@@ -78,21 +58,27 @@ pub(crate) fn build_site(dev: bool) -> std::io::Result<usize> {
     fs::create_dir_all(dist_dir)?;
 
     let notes = notes::load_notes(&notes_dir);
-    let links = notes::LinkMap::new(&notes);
+    let slugs: HashSet<&str> = notes.iter().map(|n| n.slug.as_str()).collect();
+    let mut broken = Vec::new();
 
     let (_, home_body) = notes::split_title(read(notes_dir.join("TOC.md")));
-    write(dist_dir, "index.html", &layout::home_page(&render::render_note(&home_body, "", &links)))?;
+    let home = render::render_note("TOC.md", &home_body, "", &slugs, &mut broken);
+    write(dist_dir, "index.html", &layout::home_page(&home))?;
 
     write(dist_dir, "404.html", &layout::not_found_page())?;
 
     for note in &notes {
-        let html = render::render_note(&note.body, &note.dir, &links);
+        let source = format!("{}.md", note.slug);
+        let html = render::render_note(&source, &note.body, &note.dir, &slugs, &mut broken);
         write(dist_dir, &format!("{}/index.html", note.slug), &layout::note_page(&note.title, &html))?;
+    }
+
+    if !broken.is_empty() {
+        return Err(std::io::Error::other(format!("links to notes that don't exist:\n  {}", broken.join("\n  "))));
     }
 
     copy_static_assets(public_dir, dist_dir)?;
     copy_static_assets(&notes_dir, dist_dir)?;
-    highlight_code(dist_dir, &notes_dir)?;
 
     Ok(notes.len())
 }

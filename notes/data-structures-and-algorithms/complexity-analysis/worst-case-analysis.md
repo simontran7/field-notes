@@ -28,57 +28,57 @@ The following primitive operations are worst-case $O(1)$:
 > [!TIP]
 > For step 2, for fixed-limit formulas, if the upper limit does not match the standard formula (e.g. $\sum_{i=0}^{n-1}$ instead of $\sum_{i=1}^{n}$), substitute the upper limit into the formula in place of $n$. However, if the lower limit doesn't match the fixed-limit formula, there are two approaches. If the lower limit is larger than that of the fixed formula, then your sum is missing terms compared to the formula's sum, so you compute the full sum and subtract the prefix you don't want (e.g., $\sum_{i=3}^{n} i = \sum_{i=1}^{n} i - \sum_{i=1}^{2} i = \frac{n(n+1)}{2} - 3$). If the lower limit is smaller than that of the fixed formula, then your sum has extra terms compared to the formula's sum, so you compute the formula's sum and add the extras manually (e.g., $\sum_{i=0}^{n} i = 0 + \sum_{i=1}^{n} i = \frac{n(n+1)}{2}$).
 
-> [!formula] Property (big O and summation)
+> [!FORMULA] Property (big O and summation)
 > $$
 > \sum_{i \in I} O(f(i)) = O\left(\sum_{i \in I} f(i)\right)
 > $$
 
-> [!formula] Property (summation of a constant)
+> [!FORMULA] Property (summation of a constant)
 > $$
 > \sum_{i = m}^{n} ca_i = c \sum_{i = m}^{n} a_i
 > $$
 
-> [!formula] Property (addition and subtraction of summations)
+> [!FORMULA] Property (addition and subtraction of summations)
 > $$
 > \sum_{i = m}^{n} (a_i \pm b_i) = \sum_{i = m}^{n} a_i \pm \sum_{i = m}^{n} b_i
 > $$
 
-> [!formula] Formula (summation of a $1$)
+> [!FORMULA] Formula (summation of a $1$)
 > $$
 > \sum_{i = m}^{n} 1 = n - m + 1
 > $$
 
-> [!formula] Formula (arithmetic series)
+> [!FORMULA] Formula (arithmetic series)
 > $$
 > \sum_{i = 1}^{n} i = \frac{n(n + 1)}{2}
 > $$
 
-> [!formula] Formula (sum of squares)
+> [!FORMULA] Formula (sum of squares)
 > $$
 > \sum_{i = 1}^{n} i^2 = \frac{n(n + 1)(2n + 1)}{6}
 > $$
 
-> [!formula] Formula (cubic series)
+> [!FORMULA] Formula (cubic series)
 > $$
 > \sum_{i = 1}^{n} i^3 = \left(\frac{n(n + 1)}{2}\right)^2
 > $$
 
-> [!formula] Formula ($i^k$ series)
+> [!FORMULA] Formula ($i^k$ series)
 > $$
 > \sum_{i = 1}^{n} i^k \approx \frac{1}{k + 1}n^{k + 1}
 > $$
 
-> [!formula] Formula (geometric series)
+> [!FORMULA] Formula (geometric series)
 > $$
 > \sum_{k = 0}^{n}r^k = \frac{r^{n + 1} - 1}{r - 1}, \text{ where } r > 0 \text{ and } r \neq 1
 > $$
 
-> [!formula] Formula (harmonic series)
+> [!FORMULA] Formula (harmonic series)
 > $$
 > \sum_{i = 1}^{n} \frac{1}{i} \approx \ln n + \gamma, \text{ where } \gamma \approx 0.5772 \dots
 > $$
 
-> [!formula] Formula ($\log_{2}$ series)
+> [!FORMULA] Formula ($\log_{2}$ series)
 > $$
 > \sum_{i = 1}^{n} \log_2 i = O\left(\sum_{i = 1}^{n} \log_2 n\right) = O(n\log_2 n)
 > $$

@@ -58,7 +58,7 @@ class MedianFinder:
 
 ## Binary Heap
 
-> [!definition]
+> [!DEFINITION]
 > A **binary heap** is a complete, binary tree satisfying the **heap property**:
 > - Largest element is stored at the root (max-heap) or the smallest element is stored at the root (min-heap)
 > - Excluding the root, every parent node is $\ge$ its children (max-heap) or $\le$ its children (min-heap).

@@ -1,9 +1,0 @@
-{
-  "name": "cs-handbook",
-  "private": true,
-  "type": "module",
-  "description": "Build-time syntax highlighting for the CS Handbook site",
-  "dependencies": {
-    "shiki": "4.4.3"
-  }
-}

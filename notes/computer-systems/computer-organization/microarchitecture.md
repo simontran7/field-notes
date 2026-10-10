@@ -10,7 +10,7 @@
 
 #### Datapath Unit
 
-> [!definition]
+> [!DEFINITION]
 > The processor needs physical hardware to carry out its operations: the **datapath unit** is the portion of the processor that contains it.
 
 It contains a few components:
@@ -21,14 +21,14 @@ It contains a few components:
 
 #### Control Unit
 
-> [!definition]
+> [!DEFINITION]
 > The datapath has the hardware to perform an operation, but something must tell it what to do: the **control unit (CU)** describes the signals needed for the datapath's elements to correctly execute an instruction.
 
 Some of its notable components:
 - **Instruction register (IR)**: holds the current instruction being executed.
 - **Instruction decoder**: decodes the instruction in the instruction register, and generates the appropriate control signals.
 
-> [!definition]
+> [!DEFINITION]
 > The **clock** is a separate physical component feeding into the entire CPU. It generates a **clock signal**, a continuous stream of electrical pulses that coordinates all processor activity.
 
 Each pulse, known as a **clock cycle**, acts like a heartbeat: it synchronizes when the ALU performs an operation, when registers capture or update values, and when data is transferred across buses.
@@ -37,31 +37,31 @@ The clock signal is said to be **high** when the value is 1, and **low** when th
 
 As such, a **rising edge** is the moment when the clock goes from low to high, and a **falling edge** is when it goes from high to low. Picture a clock signal as a timing diagram, with real time on the x-axis and the clock value on the y-axis.
 
-> [!definition]
+> [!DEFINITION]
 > The **clock period** is the time between two adjacent rising edges, or between two falling edges, measured in real time (i.e., seconds); within one period, the clock is high for half the time and low for half the time. The **clock speed** is the frequency of these cycles: the reciprocal of the clock period, measured in hertz (typically gigahertz).
 
 <img src="images/clock.png" width="400">
 
 ### Memory Unit
 
-> [!definition]
+> [!DEFINITION]
 > Positioned close to the processing unit (PU) to reduce the time required for calculations, the **memory unit** stores both program instructions and program data. Its size varies depending on the system.
 
 In modern computers, the memory unit is typically implemented as **random access memory (RAM)**, where every storage location (address) can be accessed directly in constant time. Conceptually, RAM can be viewed as an array of addresses, and since the smallest addressable unit is one byte, each address corresponds to a single byte of memory. The address space spans from $0$ up to $2^{\text{word}} - 1$, where the word depends on the ISA.
 
 ### Input and Output (I/O) Unit
 
-> [!definition]
+> [!DEFINITION]
 > The **input unit** consists of the set of devices that enable a user or program to get data from the outside world into the computer. The keyboard and mouse are the most common input devices today, alongside cameras and microphones.
 
-> [!definition]
+> [!DEFINITION]
 > The **output unit** consists of the set of devices that relay results of computation from the computer back to the outside world, or that store results outside internal memory. The monitor and speakers are common examples.
 
 Some modern devices act as both an input and an output unit. A touchscreen is one example, letting users both send and receive data through a single unified device. Solid-state drives and hard drives are another: they act as input devices when they store the executable files that the operating system loads into memory to run, and as output devices when they store files to which program results are written.
 
 ### Buses
 
-> [!definition]
+> [!DEFINITION]
 > Since the units of a computer need a way to send binary information to one another, they connect through a communication channel of wires called the **bus**. Architectures typically have separate buses for sending different types of information between units:
 
 - the **data bus**: transferring data between units
@@ -90,7 +90,7 @@ CISC ISAs, in contrast, have a large set of complex higher-level instructions th
 
 ### CPU Performance
 
-> [!formula]
+> [!FORMULA]
 > The following equation is commonly used to express a computer's performance ability:
 > 
 > $$
@@ -228,7 +228,7 @@ There are two data hazards: instruction 2 depends on the result of instruction 1
 
 ### Technique 3: Superscalar Execution
 
-> [!definition]
+> [!DEFINITION]
 > **Superscalar execution** is an Instruction-Level Parallelism (ILP) technique where a processor issues and executes multiple independent instructions in a single clock cycle by using multiple execution units. A **superscalar processor** can achieve an IPC (instructions per cycle) greater than 1, unlike a **scalar processor** which executes at most one instruction per clock cycle. The processor's dispatch logic identifies independent instructions and simultaneously sends them to different execution units (e.g., multiple ALUs, FPUs, or load/store units).
 
 ## Hardware Multithreading

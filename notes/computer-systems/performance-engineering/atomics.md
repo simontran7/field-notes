@@ -2,7 +2,7 @@
 
 ## Performance Problems
 
-Cache coherency mechanisms ([Multiprocessor Systems](multiprocessor-systems.md#cache-coherence)) introduce two notable performance problems.
+Cache coherency mechanisms ([Multiprocessor Systems](../computer-organization/multiprocessor-systems.md#cache-coherence)) introduce two notable performance problems.
 
 1. **False sharing**: occurs when different variables that happen to reside on the same cache line are modified by different processors. Since cache coherency operates at cache line granularity, modifications to logically independent variables trigger unnecessary invalidations across processors.
 

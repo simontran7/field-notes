@@ -1,35 +1,29 @@
 # CS Handbook
 
-Computer science notes, written in Obsidian and published as a static site.
+Computer science notes, published as a static site at <https://simontran7.github.io/cs-handbook/>.
 
 ## Installation
 
 ### Dependencies
 
 - [Rust](https://www.rust-lang.org/tools/install)
-- [Node.js](https://nodejs.org) (Shiki syntax highlighting at build time)
 
 ### Steps
 
 ```
-npm install
 cargo run -- serve
 ```
 
-Site will be live at [http://localhost:8000](http://localhost:8000) (use `PORT=8001` if 8000 is taken). It rebuilds whenever a note changes.
+Site will be live at [http://localhost:8000](http://localhost:8000) (use `PORT=8001` if 8000 is taken). It rebuilds and reloads whenever a note changes.
 
-## Where the notes come from
+## Writing notes
 
-The build reads, in order:
+Notes are plain Markdown in `notes/`. `notes/TOC.md` is the home page, and every other `.md` file becomes a page at its path (`notes/tools/git.md` is served at `/tools/git/`). See `AGENTS.md` for the writing conventions.
 
-1. `NOTES_DIR`, if set
-2. the Obsidian vault at `../programming`, if it exists
-3. `notes/`, a synced copy of the vault that GitHub Actions builds from
+- **Links** between notes are relative paths (`[Generics](c.md#generics)`). A link to a note that doesn't exist fails the build.
+- **Images** go in an `images/` folder next to the note (`images/cpu.png`).
+- **Math** uses `$...$` and `$$...$$` (rendered with KaTeX).
+- **Callouts** use GitHub's syntax (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`), plus `> [!DEFINITION]` and `> [!FORMULA]`. Text after the type becomes the title: `> [!FORMULA] Arithmetic series`.
+- **Code** is highlighted at build time with [Lumis](https://lumis.sh) (tree-sitter parsers and Neovim's highlight queries) and `theme/darcula.json`, IntelliJ's Darcula colors taken from JetBrains' own color scheme files, including the Rust, Python, shell and C/C++ plugins. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt; use ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
 
-Before pushing, refresh `notes/` from the vault:
-
-```
-scripts/sync-notes.sh
-```
-
-`TOC.md` becomes the home page. Code blocks are highlighted with Shiki using the vault's own Darcula theme (`.obsidian/shiki-themes/darcula.json`).
+Pushing to `main` deploys the site with GitHub Actions.

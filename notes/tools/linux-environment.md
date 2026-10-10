@@ -330,7 +330,7 @@ The **lowercase** version matches something, and the **uppercase** version match
 
 ### Lookarounds
 
-> [!definition]
+> [!DEFINITION]
 > **Lookarounds** are zero-width assertions, which means they check for a pattern at the current position without consuming any characters.
 
 - `(?=<pattern>)`: positive lookahead (i.e., matches if `pattern` follows)

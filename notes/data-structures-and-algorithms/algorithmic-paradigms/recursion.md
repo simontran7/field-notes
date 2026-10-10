@@ -2,7 +2,7 @@
 
 ## Introduction
 
-> [!definition]
+> [!DEFINITION]
 > **Recursion** is a mechanism in which a problem is solved by defining a solution in terms of smaller instances of the same problem.
 
 We can implement a recursive algorithm by modelling it as a **recurrence relation**:

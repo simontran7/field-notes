@@ -3,11 +3,10 @@ use std::sync::LazyLock;
 use comrak::{markdown_to_html, Options};
 use regex::Regex;
 
-use crate::notes::LinkMap;
+use std::collections::HashSet;
 
 /// Callout icons: GitHub's Octicons (primer/octicons) for GitHub's five alert types,
-/// matching the Obsidian vault's callouts.css, plus a book for definitions and
-/// Lucide's square-function for formulas.
+/// plus a book for definitions and Lucide's square-function for formulas.
 fn callout_icon(callout_type: &str) -> &'static str {
     match callout_type {
         "note" => r#"<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>"#,
@@ -28,11 +27,12 @@ const CUSTOM_TYPES: [&str; 2] = ["definition", "formula"];
 const CUSTOM_MARK: &str = "@@callout:";
 
 static CALLOUT_START_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^((?:>[ \t]*)+)\[!(\w+)\][+-]?[ \t]*(.*)$").unwrap());
+    LazyLock::new(|| Regex::new(r"(?m)^((?:>[ \t]*)+)\[!(\w+)\][ \t]*(.*)$").unwrap());
 
-/// Rewrites Obsidian callout headers into GitHub alerts comrak can parse:
-/// `> [!tip]` -> `> [!TIP]`, and custom types like `> [!formula] Arithmetic series`
-/// -> `> [!NOTE] @@callout:formula@@Arithmetic series`, restored after rendering.
+/// Rewrites callout headers into GitHub alerts comrak can parse. GitHub types pass
+/// through; titles (`> [!TIP] Shortcut`) and the custom types are carried in a marker:
+/// `> [!FORMULA] Arithmetic series` -> `> [!NOTE] @@callout:formula@@Arithmetic series`,
+/// restored after rendering.
 fn prepare_callouts(markdown: &str) -> String {
     CALLOUT_START_RE
         .replace_all(markdown, |caps: &regex::Captures| {
@@ -99,36 +99,46 @@ fn strip_anchors(html: &str) -> String {
 
 static HREF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"href="([^"]*)""#).unwrap());
 
-/// Turns note links into site URLs: `list.md`, `../x/list.md#heading` -> `{base}/<slug>#heading`.
-/// Links to notes that don't exist (or empty links like `[Virtual Memory]()`) become plain text spans.
-fn fix_links(html: &str, links: &LinkMap) -> String {
+/// Resolves `a/b/../c` style paths without touching the file system.
+fn normalize(path: &str) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop();
+            }
+            p => parts.push(p),
+        }
+    }
+    parts.join("/")
+}
+
+/// Turns relative note links into site URLs: from `tools/git.md`, `../tools/c.md#generics`
+/// -> `{base}/tools/c/#generics`. Links to notes that don't exist are collected in `broken`.
+fn fix_links(html: &str, source: &str, dir: &str, slugs: &HashSet<&str>, broken: &mut Vec<String>) -> String {
     let base = crate::layout::base_path();
     HREF_RE
         .replace_all(html, |caps: &regex::Captures| {
             let href = &caps[1];
-            if href.starts_with("http") || href.starts_with('#') || href.starts_with("mailto:") {
-                return caps[0].to_string();
-            }
             let (path, fragment) = href.split_once('#').map_or((href, ""), |(p, f)| (p, f));
-            if path.ends_with(".md") {
-                if let Some(slug) = links.resolve(path) {
-                    let fragment = if fragment.is_empty() { String::new() } else { format!("#{fragment}") };
-                    return format!(r#"href="{base}/{slug}/{fragment}""#);
+            if let Some(rest) = path.strip_suffix(".md") {
+                if rest.contains("://") {
+                    return caps[0].to_string();
                 }
+                let slug = normalize(&format!("{dir}/{rest}"));
+                if !slugs.contains(slug.as_str()) {
+                    broken.push(format!("{source} -> {href}"));
+                }
+                let fragment = if fragment.is_empty() { String::new() } else { format!("#{fragment}") };
+                return format!(r#"href="{base}/{slug}/{fragment}""#);
             }
-            if let Some(rest) = href.strip_prefix('/') {
-                return format!(r#"href="{base}/{rest}""#);
+            match href.strip_prefix('/') {
+                Some(rest) => format!(r#"href="{base}/{rest}""#),
+                None => caps[0].to_string(),
             }
-            caps[0].to_string()
         })
         .into_owned()
-}
-
-static EMPTY_LINK_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"<a href="">(.*?)</a>"#).unwrap());
-
-/// Placeholder links with no target (`[Virtual Memory]()`) render as plain text.
-fn drop_empty_links(html: &str) -> String {
-    EMPTY_LINK_RE.replace_all(html, "$1").into_owned()
 }
 
 static SRC_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"src="([^"]*)""#).unwrap());
@@ -168,15 +178,35 @@ fn options() -> Options<'static> {
     options
 }
 
-/// Code blocks come out as plain `<pre><code class="language-x">`; Shiki highlights
-/// them after the whole site is built (scripts/highlight.mjs).
-pub fn render_markdown(body: &str) -> String {
-    let html = markdown_to_html(&prepare_callouts(body), &options());
-    strip_anchors(&process_callouts(&html))
+static CODE_BLOCK_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"<pre><code(?: class="language-([^"\s]+)")?>([\s\S]*?)</code></pre>"#).unwrap()
+});
+
+fn unescape_html(text: &str) -> String {
+    text.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&amp;", "&")
 }
 
-pub fn render_note(body: &str, dir: &str, links: &LinkMap) -> String {
-    drop_empty_links(&fix_links(&fix_image_paths(&render_markdown(body), dir), links))
+/// comrak emits plain `<pre><code class="language-x">` blocks; highlight each one.
+/// Mermaid blocks are left alone for site.js to turn into diagrams.
+fn highlight_code_blocks(html: &str) -> String {
+    CODE_BLOCK_RE
+        .replace_all(html, |caps: &regex::Captures| {
+            let lang = caps.get(1).map_or("text", |m| m.as_str());
+            if lang == "mermaid" {
+                return caps[0].to_string();
+            }
+            crate::highlight::code_block(lang, &unescape_html(&caps[2]))
+        })
+        .into_owned()
+}
+
+pub fn render_markdown(body: &str) -> String {
+    let html = markdown_to_html(&prepare_callouts(body), &options());
+    highlight_code_blocks(&strip_anchors(&process_callouts(&html)))
+}
+
+pub fn render_note(source: &str, body: &str, dir: &str, slugs: &HashSet<&str>, broken: &mut Vec<String>) -> String {
+    fix_links(&fix_image_paths(&render_markdown(body), dir), source, dir, slugs, broken)
 }
 
 #[cfg(test)]
@@ -192,19 +222,28 @@ mod tests {
 
     #[test]
     fn custom_callouts_keep_type_and_title() {
-        let html = render_markdown("> [!formula] Arithmetic series\n> $1+1$\n");
+        let html = render_markdown("> [!FORMULA] Arithmetic series\n> $1+1$\n");
         assert!(html.contains(r#"class="callout callout-formula""#), "{html}");
         assert!(html.contains("<span>Arithmetic series</span>"), "{html}");
 
-        let html = render_markdown("> [!definition]\n> A **cache** is fast.\n");
+        let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
         assert!(html.contains("callout-definition"), "{html}");
         assert!(html.contains("<span>Definition</span>"), "{html}");
     }
 
     #[test]
     fn math_in_callout_titles_renders() {
-        let html = render_markdown("> [!formula] Formula ($i^k$ series)\n> x\n");
+        let html = render_markdown("> [!FORMULA] Formula ($i^k$ series)\n> x\n");
         assert!(html.contains(r#"Formula (<span data-math-style="inline">i^k</span> series)"#), "{html}");
+    }
+
+    #[test]
+    fn relative_links_resolve_and_broken_ones_are_reported() {
+        let slugs: HashSet<&str> = ["tools/c", "tools/git"].into_iter().collect();
+        let mut broken = Vec::new();
+        let html = render_note("tools/git.md", "[c](c.md#generics) [x](../nope.md)", "tools", &slugs, &mut broken);
+        assert!(html.contains(r#"href="/cs-handbook/tools/c/#generics""#) || html.contains(r#"href="/tools/c/#generics""#), "{html}");
+        assert_eq!(broken, vec!["tools/git.md -> ../nope.md".to_string()]);
     }
 
     #[test]

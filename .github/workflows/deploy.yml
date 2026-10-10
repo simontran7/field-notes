@@ -13,14 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
       - run: cargo run --release
-        env:
-          NOTES_DIR: notes
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

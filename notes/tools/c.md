@@ -279,7 +279,7 @@ The examples below build up to both, one program at a time.
 #include <stddef.h>
 ```
 
-`tag` is a single `char`, and `x` needs 4-byte alignment, so the compiler inserts 3 bytes of padding after `tag`. Because of padding, a member's offset can be larger than the sum of the sizes of the members before it (see [Record Packing](record-packing.md)).
+`tag` is a single `char`, and `x` needs 4-byte alignment, so the compiler inserts 3 bytes of padding after `tag`. Because of padding, a member's offset can be larger than the sum of the sizes of the members before it (see [Record Packing](../computer-systems/performance-engineering/record-packing.md)).
 
 ```c
 struct point {

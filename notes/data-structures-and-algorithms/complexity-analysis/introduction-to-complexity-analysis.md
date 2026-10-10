@@ -51,12 +51,12 @@ $$
 
 ### Laws
 
-> [!formula] Law of Addition
+> [!FORMULA] Law of Addition
 > $$
 > O(f(n)) + O(g(n)) \rightarrow O(f(n) + g(n))
 > $$
 
-> [!formula] Law of Multiplication
+> [!FORMULA] Law of Multiplication
 > $$
 > O(f(n)) \cdot O(g(n)) \rightarrow O(f(n) \cdot g(n))
 > $$
@@ -75,7 +75,7 @@ $$
 | Exponential  | $2^n$          | Iterates over all subsets of the input |
 | Factorial    | $n!$           | Iterates through all permutations of the input |
 
-> [!definition]
+> [!DEFINITION]
 > An algorithm is said to be **polynomial** if its time complexity is at most $O(n^k)$ where $k$ is a constant. A polynomial algorithm can typically process large inputs.
 
 > [!NOTE]

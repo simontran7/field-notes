@@ -34,10 +34,10 @@ Use the recursion trees from Step 0 to decide what each subproblem represents.
     - Express the answer in terms of the state variables and the problem's fixed input data, without referring to $dp$ itself.
     - Common examples include a minimum, maximum, count, cost, or boolean indicating whether a solution exists.
 
-> [!definition]
+> [!DEFINITION]
 > A **state** is a particular tuple $(x_1,\dots,x_k)$ of values for the state variables. Each state identifies one subproblem.
 
-> [!definition]
+> [!DEFINITION]
 > The **dimensionality** of a dynamic programming problem is the number of state variables. A problem is $1D$ when the state has one variable and $2D$ when it has two.
 
 ### Step 2: Check for Conditions

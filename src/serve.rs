@@ -61,12 +61,9 @@ fn watch_and_rebuild(version: Arc<AtomicU64>) {
     watcher
         .watch(Path::new("public"), RecursiveMode::Recursive)
         .expect("failed to watch public/");
-    watcher
-        .watch(Path::new("scripts"), RecursiveMode::Recursive)
-        .expect("failed to watch scripts/");
 
     for res in rx.iter() {
-        // Obsidian rewrites .obsidian/workspace.json constantly; only real content changes rebuild.
+        // Ignore editor temp files and dot-folders (e.g. .git); only real content changes rebuild.
         let Ok(event) = res else { continue };
         let relevant = event.paths.iter().any(|p| !p.components().any(|c| c.as_os_str().to_string_lossy().starts_with('.')));
         if !relevant {

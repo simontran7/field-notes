@@ -2,7 +2,7 @@
 
 ## Definition
 
-> [!definition]
+> [!DEFINITION]
 > An **operating system** is system software that manages a computer's hardware resources (CPU, memory, storage, and I/O devices) by allocating them efficiently and safely among competing programs, while presenting users and applications with a simplified, consistent interface that hides the hardware's complexity.
 
 For instance, it creates it provides the following abstractions: 
@@ -21,7 +21,7 @@ Operating systems differ in how they implement the same basic functionality. A p
 
 ## Kernel
 
-> [!definition]
+> [!DEFINITION]
 > The operating system's core program that always runs is called the **kernel**.
 
 The kernel communicates to the hardware directly, or through systems programs called **device drivers**.

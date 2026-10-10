@@ -4,12 +4,12 @@
 
 ### Decimal System
 
-> [!definition]
+> [!DEFINITION]
 > The **Decimal System** is a number system that uses base 10, characterized by two fundamental properties:
 > - Each digit position can hold one of 10 unique values (0 through 9), where values greater than 9 require carrying to an additional digit position to the left.
 > - Each digit's position determines its contribution to the overall value: digits are labeled from right to left as $d_0, d_1, d_2, \dots, d_{N - 1}$, and each successive position is worth ten times the position to its right.
 
-> [!formula]
+> [!FORMULA]
 > More formally, any $N$-digit number can be expressed using **positional notation** as:
 > 
 > $$
@@ -18,7 +18,7 @@
 
 ### Binary System
 
-> [!definition]
+> [!DEFINITION]
 > **Binary** is a number system that uses base 2, where:
 >
 > - Each digit position (called a **bit**) can hold one of two unique values: 0 or 1. Values greater than 1 require carrying to an additional bit position to the left.
@@ -31,7 +31,7 @@
 - **Nibble**: 4 bits
 - **Word**: determined by the CPU's register (the natural unit of data that a processor operates on)
 
-> [!definition]
+> [!DEFINITION]
 > A base-$b$ number with $n$ digits can represent exactly $b^n$ unique values. Each of the $n$ digit positions independently holds one of $b$ values, so by the multiplication principle:
 > $$
 > \underbrace{b \times b \times \cdots \times b}_{n \text{ digits}} = b^n
@@ -68,7 +68,7 @@
 
 ### Any base $b$ to decimal
 
-> [!formula]
+> [!FORMULA]
 > For a number with digits $d_{N - 1}, d_{N - 2}, \dots, d_1, d_0$ in base $b$, convert the number by multiplying each digit by its place value $b^i$:
 > 
 > $$
@@ -134,7 +134,7 @@
 
 ### ASCII
 
-> [!definition]
+> [!DEFINITION]
 > The **American Standard Code for Information Interchange (ASCII)** is a character encoding standard which uses 7 bits per character.
 
 #### Types of ASCII Characters
@@ -444,7 +444,7 @@ println!("z: {z:b}"); // z: 11000000111001
 
 ### IEEE 754 Structure
 
-> [!formula]
+> [!FORMULA]
 > For some number $x$:
 > 
 > $$
@@ -478,7 +478,7 @@ println!("z: {z:b}"); // z: 11000000111001
 
 ### Normal Numbers
 
-> [!formula]
+> [!FORMULA]
 > $$
 > x = (-1)^\text{sign} \times (1.\text{fraction})_2 \times 2^\text{actual exponent}
 > $$
@@ -525,7 +525,7 @@ Types of $\text{NaN}$:
 
 #### Denormalized (Subnormal) Numbers
 
-> [!formula]
+> [!FORMULA]
 > $$
 > x = (-1)^\text{sign} \times (0.\text{fraction})_2 \times 2^\text{smallest possible actual exponent}
 > $$
@@ -578,7 +578,7 @@ Final result: $01000001010001100000000000000000_2$
 
 Because bytes get stored contiguously, we need a rule for how to arrange them back-to-back in memory.
 
-> [!definition]
+> [!DEFINITION]
 > **Byte order**, also known as the **endianness** of a system, defines how _multi $N$-byte_ chunks ($N \gt 1$) are assigned to memory addresses.
 > - **Big endian Byte Order**: The most significant byte in the $N$-byte chunk is stored at the lowest memory address.
 > - **Little endian Byte Order**: The least significant byte in the $N$-byte chunk is stored at the lowest memory address.

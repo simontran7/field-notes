@@ -64,9 +64,7 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* ─── Tokens ─────────────────────────────────────────────────
-   Ported from the Obsidian vault's snippets (font.css, links.css, callouts.css,
-   darcula.css, layout.css) on top of Obsidian's default theme. */
+/* ─── Tokens ─────────────────────────────────────────────── */
 :root {
   --bg: #ffffff;
   --text: #222222;
@@ -83,7 +81,7 @@
   --sans: "Jost", sans-serif;
   --mono: "Cascadia Code", ui-monospace, Menlo, monospace;
 
-  /* Callout colors: GitHub alert colors (light), plus the vault's custom types */
+  /* Callout colors: GitHub alert colors (light), plus the custom definition and formula types */
   --note: 9, 105, 218;
   --tip: 26, 127, 55;
   --important: 130, 80, 223;
@@ -138,6 +136,7 @@ body {
   line-height: 1.5;
   color: var(--text);
   background-color: var(--bg);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Theme toggle (floating, no header) ─────────────────── */
@@ -165,13 +164,31 @@ body {
   color: var(--text);
 }
 
+/* Sun and moon cross-fade with a quarter turn when switching (from the catholicism site) */
 .sun-icon,
-[data-theme="dark"] .moon-icon {
-  display: none;
+.moon-icon {
+  position: absolute;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.sun-icon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
+}
+
+.moon-icon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
 }
 
 [data-theme="dark"] .sun-icon {
-  display: block;
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .moon-icon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.8);
 }
 
 /* ─── Layout ─────────────────────────────────────────────── */
@@ -289,7 +306,7 @@ body {
   padding: 0.15em 0.4em;
 }
 
-/* ─── Code blocks (Shiki + the vault's Darcula theme) ────── */
+/* ─── Code blocks (Lumis/tree-sitter + theme/darcula.json) ── */
 .code-block {
   position: relative;
   margin: 1.25em 0;
@@ -349,15 +366,11 @@ body {
 }
 
 /* bash blocks: a dim "$ " before each command line (not selectable, not copied) */
-.code-block[data-lang="bash"] .line::before {
+.code-block[data-lang="bash"] .l-line:not(.l-empty)::before {
   content: "$ ";
   color: #808080;
   -webkit-user-select: none;
   user-select: none;
-}
-
-.code-block[data-lang="bash"] .line:empty::before {
-  content: none;
 }
 
 /* ─── Tables: thin borders, tinted header, light row shading ── */

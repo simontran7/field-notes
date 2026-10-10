@@ -46,7 +46,7 @@ There are three performance metrics when reading or writing data from a persiste
 
 ## Caching
 
-> [!definition]
+> [!DEFINITION]
 > A **cache** is a small, fast memory bank built into the CPU that stores copies of frequently or recently used instructions and data from main memory.
 
 According to **Moore's law**, the number of transistors on microchips, and therefore processor performance, doubles every two years, but memory bus bandwidth improves far more slowly. The widening gap starves increasingly powerful processors of data, since they can request information faster than the memory system can deliver it. Caches exist to bridge that gap.
@@ -131,7 +131,7 @@ Inefficient access patterns can undo the speedup that caches provide by keeping 
 
 **Cache pollution** occurs when the cache is filled with data that is unlikely to be reused soon, displacing more valuable data that would have benefited from being cached. This often happens in workloads with poor temporal locality.
 
-> [!definition]
+> [!DEFINITION]
 > **Cache thrashing** is severe performance degradation caused by cache lines being repeatedly evicted and reloaded, forcing the system to spend more time fetching from slow main memory than executing instructions. It happens when a working set exceeds cache capacity, or when access patterns repeatedly conflict.
 
 ### Cache Hierarchy
@@ -161,18 +161,18 @@ Separate caches also add design flexibility. Instruction streams follow mostly s
 
 ### Cache Associativity
 
-> [!definition]
+> [!DEFINITION]
 > A **fully-associative cache** is a cache where memory blocks can be stored *anywhere* in the cache. Each access checks _every_ line in parallel, which is still expensive for reasonably sized caches.
 
 To address this, caches restrict where specific memory blocks can reside, at a cost: since the cache is far smaller than main memory, multiple addresses inevitably map to the same cache location, a phenomenon called **cache aliasing**.
 
-> [!definition]
+> [!DEFINITION]
 > A **set-associative cache** is a cache where a memory block maps to a specific **set** (i.e., a compartment of the cache), according to the index field encoded in the memory block's address. Each set contains $N$ cache lines, so we typically specify a cache as **$N$-way set-associative**. The cache hardware uses the index field to select a set, then searches all $N$ lines in that set in parallel.
 
-> [!definition]
+> [!DEFINITION]
 > A **direct-mapped cache** maps each memory block to exactly one specific cache line based on the index field encoded in the memory block's address. No searching is needed, as the hardware directly computes which single cache line to check.
 
-> [!formula]
+> [!FORMULA]
 > $$
 > \text{cache size} = \text{total sets} \times \text{cache lines per set} \times \text{data block size}
 > $$

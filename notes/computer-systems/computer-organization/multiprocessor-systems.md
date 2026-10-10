@@ -2,7 +2,7 @@
 
 For decades, chips got faster in two ways: higher clock speeds, and cleverer tricks for running several instructions at once inside a single processor, which is called instruction-level parallelism. That kept performance growing in line with Moore's Law through the early 2000s, but then it hit a wall. Pushing the clock any higher would have made chips use far too much power. So architects started putting several processors (cores) on one chip, and today almost every computer is multicore. These extra cores speed up a program only when programmers write code that runs in parallel.
 
-> [!definition]
+> [!DEFINITION]
 > A **multiprocessor system** is basically a team of processors working toward the same goal: finishing the work faster. We usually sort these systems by two questions. First, how do the processors get to memory? Second, is every processor the same kind, or does the system combine different kinds of processors?
 
 ## Introduction
@@ -197,7 +197,7 @@ ARM's relaxed memory model can relax all four orderings, making it the weakest c
 
 ### Memory Fences
 
-> [!definition]
+> [!DEFINITION]
 > A **memory fence** (a.k.a memory barrier) is an instruction that forces the CPU to flush one or both buffers before continuing:
 > - **Store fence**: drain the write buffer so all pending writes reach L1 (and invalidates are sent) before any subsequent stores.
 > - **Load fence**: drain the invalidation queue so all pending invalidations are acknowledged before any subsequent loads.
@@ -209,7 +209,7 @@ This is why concurrent programming requires atomics, mutexes, and memory orderin
 
 ## Atomicity
 
-> [!definition]
+> [!DEFINITION]
 > An **atomic operation** is an operation that other cores can only observe as either not yet started or fully finished.
 
 To see why we need them, consider incrementing a shared counter with `counter += 1`. The CPU carries it out in three steps: 
@@ -235,7 +235,7 @@ Suppose `counter` starts at `5` and two cores increment it at the same time:
 | 4 | store 6, invalidate C1 | | M / I |
 | 5 | | store 6, invalidate C0 | I / M |
 
-Every step in this sequence follows MESI, and the counter still ends at `6` after two increments. Core 1 correctly read `5` in step 2, but it kept that value in a register while Core 0 updated the counter, so its store in step 5 overwrote Core 0's result with a value computed from stale data. This is called a **lost update**, and it is one form of the data race described in [Synchronization](synchronization.md).
+Every step in this sequence follows MESI, and the counter still ends at `6` after two increments. Core 1 correctly read `5` in step 2, but it kept that value in a register while Core 0 updated the counter, so its store in step 5 overwrote Core 0's result with a value computed from stale data. This is called a **lost update**, and it is one form of the data race described in [Synchronization](../operating-systems/synchronization.md).
 
 An **atomic instruction** prevents lost updates by holding the cache line for the entire read-modify-write. On x86, an instruction becomes atomic when it carries the `lock` prefix, as in `lock add [mem], 1`, and Rust's `counter.fetch_add(1, Ordering::Relaxed)` compiles to this kind of instruction. The core begins by requesting the line in Modified, which invalidates every other copy before the load even happens. It then performs the load, the add, and the store while keeping the line locked in its own cache. If another core requests the line during this time, the owning core delays its response until the store completes, and only then hands over the line, which now holds the updated value. Under plain MESI, a core must give up a line as soon as another core asks for it, so an atomic instruction is MESI's normal ownership plus a short "don't give it up yet" window.
 
@@ -248,7 +248,7 @@ An **atomic instruction** prevents lost updates by holding the cache line for th
 
 Since the lock is confined to a single cache line in a single core's cache, other cores can keep accessing the rest of memory while the atomic instruction runs. The core simply keeps one line in Modified for a few extra cycles and postpones its reply to coherence requests, relying on MESI's existing rule that only one core may hold a line in Modified at a time. Older processors achieved atomicity by locking the entire memory bus, and modern x86 processors still fall back to a bus lock when an atomic instruction touches data that straddles two cache lines.
 
-The cost of an atomic instruction depends on how many cores are using the same line. When only one core updates the counter, the line is already in its cache in Modified, and the atomic instruction costs on the order of tens of cycles, slightly more on x86 because a locked instruction also acts as a full memory fence. When many cores update the same counter, each one needs the line in Modified in turn, so the line moves from core to core on every increment, producing the write contention described in [Atomics](atomics.md#performance-problems).
+The cost of an atomic instruction depends on how many cores are using the same line. When only one core updates the counter, the line is already in its cache in Modified, and the atomic instruction costs on the order of tens of cycles, slightly more on x86 because a locked instruction also acts as a full memory fence. When many cores update the same counter, each one needs the line in Modified in turn, so the line moves from core to core on every increment, producing the write contention described in [Atomics](../performance-engineering/atomics.md#performance-problems).
 
 Putting it all together, correct concurrent code rests on three separate guarantees, each answering a different question:
 
