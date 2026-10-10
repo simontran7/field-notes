@@ -28,7 +28,7 @@ def recursive_preorder_dfs(root):
     if not root:
         return
 
-	# process `root`
+    # process `root`
 
     recursive_preorder_dfs(root.left)
 
@@ -58,11 +58,11 @@ def recursive_inorder_dfs(root):
     if not root:
         return
 
-    recursive_preorder_dfs(root.left)
+    recursive_inorder_dfs(root.left)
 
-	# process `root`
+    # process `root`
 
-    recursive_preorder_dfs(root.right)
+    recursive_inorder_dfs(root.right)
 ```
 
 ```python
@@ -79,7 +79,7 @@ def iterative_inorder_dfs(root):
 
             # process `current`
 
-            current = current.right   
+            current = current.right
 ```
 
 ```python
@@ -87,11 +87,11 @@ def recursive_postorder_dfs(root):
     if not root:
         return
 
-    recursive_preorder_dfs(root.left)
+    recursive_postorder_dfs(root.left)
 
-    recursive_preorder_dfs(root.right)
+    recursive_postorder_dfs(root.right)
 
-	# process `root`
+    # process `root`
 ```
 
 ```python
@@ -109,7 +109,7 @@ def iterative_postorder_dfs(root):
             if stack[-1].right and last_visited != stack[-1].right:
                 current = stack[-1].right
             else:
-               	# process `stack[-1]`
+                # process `stack[-1]`
 
                 last_visited = stack.pop()
 
@@ -133,10 +133,10 @@ Most graph problems.
 
 ```python
 def adjacency_list_recursive_dfs(vertex):
-	visited.add(vertex)
-	for neighbour in graph[vertex]:
-		if neighbour not in visited:
-			adjacency_list_recursive_dfs(neighbour)
+    visited.add(vertex)
+    for neighbour in graph[vertex]:
+        if neighbour not in visited:
+            adjacency_list_recursive_dfs(neighbour)
 ```
 
 ```python
@@ -203,6 +203,7 @@ Level-order traversal.
 ```python
 from collections import deque
 
+
 def bfs(root):
     if not root:
         return
@@ -213,7 +214,7 @@ def bfs(root):
         for _ in range(len(queue)):
             node = queue.popleft()
 
-			# process `node`
+            # process `node`
 
             if node.left:
                 queue.append(node.left)
@@ -238,19 +239,20 @@ Determine the shortest path in an _unweighted_ graph.
 ```python
 from collections import deque
 
+
 def adjacency_list_bfs(source):
-	queue = deque([source])
-	visited = set([source])
+    queue = deque([source])
+    visited = set([source])
 
-	while queue:
-		vertex = queue.popleft()
+    while queue:
+        vertex = queue.popleft()
 
-		for neighbour in graph[vertex]:
-			if neighbour not in visited:
-				visited.add(neighbour)
-				queue.append(neighbour)
+        for neighbour in graph[vertex]:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                queue.append(neighbour)
 
-			# process `neighbour`'s state
+            # process `neighbour`'s state
 ```
 
 ```python
