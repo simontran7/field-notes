@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{mpsc, Arc, RwLock};
+use std::sync::{Arc, RwLock, mpsc};
 use std::time::Duration;
 
 use notify::{RecursiveMode, Watcher};
@@ -65,7 +65,10 @@ fn watch_and_rebuild(version: Arc<AtomicU64>) {
     for res in rx.iter() {
         // Ignore editor temp files and dot-folders (e.g. .git); only real content changes rebuild.
         let Ok(event) = res else { continue };
-        let relevant = event.paths.iter().any(|p| !p.components().any(|c| c.as_os_str().to_string_lossy().starts_with('.')));
+        let relevant = event.paths.iter().any(|p| {
+            !p.components()
+                .any(|c| c.as_os_str().to_string_lossy().starts_with('.'))
+        });
         if !relevant {
             continue;
         }
@@ -112,7 +115,9 @@ fn serve_file(request: Request, dist_dir: &Path, url: &str, query: Option<&str>)
     let rel = decoded.trim_start_matches('/');
 
     // Only plain path segments: no `..`, no absolute paths escaping dist/.
-    let safe = Path::new(rel).components().all(|c| matches!(c, Component::Normal(_)));
+    let safe = Path::new(rel)
+        .components()
+        .all(|c| matches!(c, Component::Normal(_)));
 
     let mut path = if !safe {
         dist_dir.join("404.html")
@@ -136,15 +141,20 @@ fn serve_file(request: Request, dist_dir: &Path, url: &str, query: Option<&str>)
         path = path.join("index.html");
     }
 
-    let (path, status) =
-        if safe && path.is_file() { (path, 200u16) } else { (dist_dir.join("404.html"), 404u16) };
+    let (path, status) = if safe && path.is_file() {
+        (path, 200u16)
+    } else {
+        (dist_dir.join("404.html"), 404u16)
+    };
 
     let content_type = content_type_for(&path);
     let header = Header::from_bytes(&b"Content-Type"[..], content_type.as_bytes()).unwrap();
 
     match File::open(&path) {
         Ok(file) => {
-            let response = Response::from_file(file).with_status_code(status).with_header(header);
+            let response = Response::from_file(file)
+                .with_status_code(status)
+                .with_header(header);
             let _ = request.respond(response);
         }
         Err(_) => {

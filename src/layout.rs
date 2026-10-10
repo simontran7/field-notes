@@ -37,11 +37,19 @@ pub fn base_path() -> &'static str {
     // Prefix internal links and asset URLs since GitHub Pages serves
     // this project from /cs-handbook/, but the local dev
     // server serves it from `/`
-    if DEV_MODE.load(Ordering::Relaxed) { "" } else { "/cs-handbook" }
+    if DEV_MODE.load(Ordering::Relaxed) {
+        ""
+    } else {
+        "/cs-handbook"
+    }
 }
 
 pub fn page(title: &str, body: &str) -> String {
-    let reload_script = if DEV_MODE.load(Ordering::Relaxed) { RELOAD_SCRIPT } else { "" };
+    let reload_script = if DEV_MODE.load(Ordering::Relaxed) {
+        RELOAD_SCRIPT
+    } else {
+        ""
+    };
     let base = base_path();
     // Mermaid is large, so only pages with a diagram load it
     let mermaid_script = if body.contains("language-mermaid") {
@@ -97,11 +105,19 @@ pub fn not_found_page() -> String {
 }
 
 fn heading(title: &str) -> String {
-    if title.is_empty() { String::new() } else { format!("<h1>{title}</h1>") }
+    if title.is_empty() {
+        String::new()
+    } else {
+        format!("<h1>{title}</h1>")
+    }
 }
 
 fn tab_title(title: &str) -> String {
-    if title.is_empty() { SITE_NAME.to_string() } else { format!("{title} · {SITE_NAME}") }
+    if title.is_empty() {
+        SITE_NAME.to_string()
+    } else {
+        format!("{title} · {SITE_NAME}")
+    }
 }
 
 pub fn note_page(title: &str, content_html: &str) -> String {

@@ -80,14 +80,18 @@ def longest_subarray_with_state(array, target_state):
     """
     Returns the length of the longest subarray in `array` whose state equals `target_state`.
     """
-    state_first_index = {0: -1}  # state -> FIRST index it appeared at (greedy: keep earliest)
+    state_first_index = {
+        0: -1
+    }  # state -> FIRST index it appeared at (greedy: keep earliest)
     current_state = 0
     result = 0
 
     for i, num in enumerate(array):
         current_state = current_state + num  # or `current_state ^ num`, etc.
 
-        needed_state = current_state - target_state  # or `current_state ^ target_state`
+        needed_state = (
+            current_state - target_state
+        )  # or `current_state ^ target_state`
         if needed_state in state_first_index:
             result = max(result, i - state_first_index[needed_state])
 

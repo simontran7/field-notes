@@ -71,8 +71,7 @@ out:
     return nullptr;
 }
 
-void stack_free(struct stack *s)
-{
+void stack_free(struct stack *s) {
     if (s == nullptr) {
         return;
     }
@@ -84,9 +83,9 @@ bool stack_push(struct stack *s, int value) {
     if (s->count == s->capacity) {
         return false;
     }
-    
+
     s->data[s->len++] = value;
-    
+
     return true;
 }
 
@@ -94,9 +93,9 @@ bool stack_pop(struct stack *s, int *out) {
     if (s->count == 0) {
         return false;
     }
-    
+
     *out = s->data[--s->count];
-    
+
     return true;
 }
 
@@ -197,8 +196,7 @@ constexpr size_t buf_size = 4096;
 `result` starts as the failure value and becomes `0` only when every step succeeds, so each early exit returns an error without any extra code.
 
 ```c
-static int process(const char *path)
-{
+static int process(const char *path) {
     int result = -1;
 ```
 
@@ -237,8 +235,7 @@ out:
 ```
 
 ```c
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "usage: %s FILE\n", argv[0]);
         return 1;
@@ -294,18 +291,15 @@ struct value {
 Each constructor sets the tag and the matching member in one compound literal, so a value with a mismatched tag can't be created through them.
 
 ```c
-static struct value value_int(int i)
-{
+static struct value value_int(int i) {
     return (struct value){ .kind = VALUE_INT, .i = i };
 }
 
-static struct value value_double(double d)
-{
+static struct value value_double(double d) {
     return (struct value){ .kind = VALUE_DOUBLE, .d = d };
 }
 
-static struct value value_string(const char *s)
-{
+static struct value value_string(const char *s) {
     return (struct value){ .kind = VALUE_STRING, .s = s };
 }
 ```
@@ -313,8 +307,7 @@ static struct value value_string(const char *s)
 Reading a value means switching on the tag and touching only the member that case allows. With `-Wall`, the compiler warns when a `switch` over an enum leaves out one of its values and has no `default`, so adding a new kind later flags every `switch` that needs a new case.
 
 ```c
-static void value_print(struct value v)
-{
+static void value_print(struct value v) {
     switch (v.kind) {
     case VALUE_INT:
         printf("int     %d\n", v.i);
@@ -332,8 +325,7 @@ static void value_print(struct value v)
 Since every element has the same type, values of different kinds fit in one array.
 
 ```c
-int main(void)
-{
+int main(void) {
     struct value values[] = {
         value_int(42),
         value_double(3.5),
@@ -395,8 +387,7 @@ static_assert(offsetof(struct point, x) == 4);
 ```
 
 ```c
-int main(void)
-{
+int main(void) {
     printf("tag: %zu\n", offsetof(struct point, tag));
     printf("x:   %zu\n", offsetof(struct point, x));
     printf("y:   %zu\n", offsetof(struct point, y));
@@ -428,7 +419,8 @@ The `1 ? (ptr) : &((type *)0)->member` part is a type check. The conditional ope
 
 ```c
 #define container_of(ptr, type, member) \
-    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
+    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
+              offsetof(type, member)))
 ```
 
 ```c
@@ -442,12 +434,12 @@ struct point {
 Starting from a pointer to `y`, the calculation written out by hand and the macro both land on `p`.
 
 ```c
-int main(void)
-{
+int main(void) {
     struct point p = { 'A', 10, 20 };
     int *py = &p.y;
 
-    struct point *by_hand = (struct point *)((char *)py - offsetof(struct point, y));
+    struct point *by_hand =
+        (struct point *)((char *)py - offsetof(struct point, y));
     struct point *by_macro = container_of(py, struct point, y);
 
     printf("by hand:  %s\n", by_hand == &p ? "&p" : "wrong");
@@ -473,7 +465,8 @@ In an intrusive list, the list node lives inside your data. The list code works 
 #include <stddef.h>
 
 #define container_of(ptr, type, member) \
-    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
+    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
+              offsetof(type, member)))
 ```
 
 The generic part is a circular doubly linked list with a sentinel head, the same design as the Linux kernel's `list_head`. An empty list is a head that points to itself.
@@ -483,13 +476,11 @@ struct list_node {
     struct list_node *prev, *next;
 };
 
-static void list_init(struct list_node *head)
-{
+static void list_init(struct list_node *head) {
     head->prev = head->next = head;
 }
 
-static void list_add_tail(struct list_node *head, struct list_node *n)
-{
+static void list_add_tail(struct list_node *head, struct list_node *n) {
     n->prev = head->prev;
     n->next = head;
     head->prev->next = n;
@@ -500,8 +491,7 @@ static void list_add_tail(struct list_node *head, struct list_node *n)
 `list_del` unlinks a node by connecting its neighbors to each other, then points the node at itself.
 
 ```c
-static void list_del(struct list_node *n)
-{
+static void list_del(struct list_node *n) {
     n->prev->next = n->next;
     n->next->prev = n->prev;
     n->next = n->prev = n;
@@ -522,8 +512,7 @@ struct employee {
 Everyone joins the company list, and Carol and Bob join the team.
 
 ```c
-int main(void)
-{
+int main(void) {
     struct list_node staff, team;
     list_init(&staff);
     list_init(&team);
@@ -585,7 +574,8 @@ A base type holds a pointer to a table of function pointers, called a **vtable**
 #include <stddef.h>
 
 #define container_of(ptr, type, member) \
-    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
+    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
+              offsetof(type, member)))
 ```
 
 ```c
@@ -611,21 +601,19 @@ struct circle {
     struct shape base;
 };
 
-static double circle_area(struct shape *s)
-{
+static double circle_area(struct shape *s) {
     struct circle *c = container_of(s, struct circle, base);
     return pi * c->r * c->r;
 }
 
-static const char *circle_name(struct shape *)
-{
+static const char *circle_name(struct shape *) {
     return "circle";
 }
 
-static const struct shape_ops circle_ops = { .area = circle_area, .name = circle_name };
+static const struct shape_ops circle_ops = { .area = circle_area,
+                                             .name = circle_name };
 
-static void circle_init(struct circle *c, double r)
-{
+static void circle_init(struct circle *c, double r) {
     c->r = r;
     c->base.ops = &circle_ops;
 }
@@ -639,21 +627,19 @@ struct rect {
     struct shape base;
 };
 
-static double rect_area(struct shape *s)
-{
+static double rect_area(struct shape *s) {
     struct rect *r = container_of(s, struct rect, base);
     return r->w * r->h;
 }
 
-static const char *rect_name(struct shape *)
-{
+static const char *rect_name(struct shape *) {
     return "rectangle";
 }
 
-static const struct shape_ops rect_ops = { .area = rect_area, .name = rect_name };
+static const struct shape_ops rect_ops = { .area = rect_area,
+                                           .name = rect_name };
 
-static void rect_init(struct rect *r, double w, double h)
-{
+static void rect_init(struct rect *r, double w, double h) {
     r->w = w;
     r->h = h;
     r->base.ops = &rect_ops;
@@ -663,13 +649,11 @@ static void rect_init(struct rect *r, double w, double h)
 Generic code sees only `struct shape *` and calls through the vtable, which is how C++ virtual methods work underneath.
 
 ```c
-static void print_shape(struct shape *s)
-{
+static void print_shape(struct shape *s) {
     printf("%s with area %.2f\n", s->ops->name(s), s->ops->area(s));
 }
 
-int main(void)
-{
+int main(void) {
     struct circle c;
     struct rect r;
 
@@ -703,7 +687,8 @@ Give the base `struct shape` a list hook, and any shape can live in a generic li
 #include <stddef.h>
 
 #define container_of(ptr, type, member) \
-    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
+    ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
+              offsetof(type, member)))
 ```
 
 The list is the one from Step 3, with a `list_for_each` macro to shorten the loop.
@@ -713,13 +698,11 @@ struct list_node {
     struct list_node *prev, *next;
 };
 
-static void list_init(struct list_node *head)
-{
+static void list_init(struct list_node *head) {
     head->prev = head->next = head;
 }
 
-static void list_add_tail(struct list_node *head, struct list_node *n)
-{
+static void list_add_tail(struct list_node *head, struct list_node *n) {
     n->prev = head->prev;
     n->next = head;
     head->prev->next = n;
@@ -756,21 +739,19 @@ struct circle {
     struct shape base;
 };
 
-static double circle_area(struct shape *s)
-{
+static double circle_area(struct shape *s) {
     struct circle *c = container_of(s, struct circle, base);
     return pi * c->r * c->r;
 }
 
-static const char *circle_name(struct shape *)
-{
+static const char *circle_name(struct shape *) {
     return "circle";
 }
 
-static const struct shape_ops circle_ops = { .area = circle_area, .name = circle_name };
+static const struct shape_ops circle_ops = { .area = circle_area,
+                                             .name = circle_name };
 
-static void circle_init(struct circle *c, double r)
-{
+static void circle_init(struct circle *c, double r) {
     c->r = r;
     c->base.ops = &circle_ops;
 }
@@ -780,21 +761,19 @@ struct rect {
     struct shape base;
 };
 
-static double rect_area(struct shape *s)
-{
+static double rect_area(struct shape *s) {
     struct rect *r = container_of(s, struct rect, base);
     return r->w * r->h;
 }
 
-static const char *rect_name(struct shape *)
-{
+static const char *rect_name(struct shape *) {
     return "rectangle";
 }
 
-static const struct shape_ops rect_ops = { .area = rect_area, .name = rect_name };
+static const struct shape_ops rect_ops = { .area = rect_area,
+                                           .name = rect_name };
 
-static void rect_init(struct rect *r, double w, double h)
-{
+static void rect_init(struct rect *r, double w, double h) {
     r->w = w;
     r->h = h;
     r->base.ops = &rect_ops;
@@ -804,8 +783,7 @@ static void rect_init(struct rect *r, double w, double h)
 `scene_print` knows only shapes and lists. Adding a triangle means writing a new struct, two methods and an ops table, and this loop stays the same.
 
 ```c
-static double scene_print(struct list_node *scene)
-{
+static double scene_print(struct list_node *scene) {
     struct list_node *p;
     double total = 0.0;
 
@@ -822,8 +800,7 @@ static double scene_print(struct list_node *scene)
 Nothing here is heap-allocated. The shapes, their vtable pointers and their list hooks all live inside the objects themselves.
 
 ```c
-int main(void)
-{
+int main(void) {
     struct list_node scene;
     struct circle c1, c2;
     struct rect r1;

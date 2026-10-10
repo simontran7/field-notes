@@ -11,6 +11,7 @@ Given a directed acyclic graph, produce a linear ordering of its vertices such t
 ```python
 from collections import deque, defaultdict
 
+
 def kahns_algorithm(n, edges):
     indegrees = [0] * n
     graph = defaultdict(list)

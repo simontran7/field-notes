@@ -39,6 +39,7 @@ def top_k(array, k):
 ```python
 import heapq
 
+
 class MedianFinder:
     def __init__(self):
         self.min_pq = []

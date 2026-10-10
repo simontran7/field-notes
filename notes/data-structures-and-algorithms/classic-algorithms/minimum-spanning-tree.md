@@ -40,6 +40,7 @@ Let $V$ be number of vertices, and $E$ be the number of edges. Then:
 ```python
 import heapq
 
+
 def prim(n, graph):
     visited = [False] * n
     visited_count = 0

@@ -9,6 +9,7 @@ Maximum or minimum values in a sliding window or some ranges.
 ```python
 from collections import deque
 
+
 def monotonic_non_increasing_deque(array, k):
     mono_deque = deque()
     result = []

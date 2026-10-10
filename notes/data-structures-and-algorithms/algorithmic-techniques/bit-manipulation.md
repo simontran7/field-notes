@@ -23,7 +23,7 @@ The AND of 2 bits is 1 if both bits are 1, and 0 otherwise.
 #### Syntax
 
 ```cpp
-a & b
+a &b
 ```
 
 ### OR Operator
@@ -243,7 +243,8 @@ That is, how many times do I need to divide $x$ by 2 to get to 1.
 
 ```cpp
 auto most_significant_bit(std::uint32_t x) -> std::uint32_t {
-    std::uint32_t bit_index = -1;  // so we can get 0-based index (and -1 for `x` == 0)
+    std::uint32_t bit_index =
+        -1; // so we can get 0-based index (and -1 for `x` == 0)
     while (x != 0) {
         bit_index += 1;
         x >>= 1;

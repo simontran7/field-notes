@@ -27,6 +27,7 @@ Finding the single source shortest path on graphs with non-negative edge weights
 import heapq
 from collections import defaultdict
 
+
 def dijkstras(edges, n, source):
     graph = defaultdict(list)
     for u, v, w in edges:

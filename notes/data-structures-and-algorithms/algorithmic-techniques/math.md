@@ -17,6 +17,7 @@ If $n = a \cdot b$ with $a \le b$, then $a \le \sqrt{n}$. So, if there isn't an 
 ```python
 from math import isqrt
 
+
 def is_prime(n):
     if n < 2:
         return False

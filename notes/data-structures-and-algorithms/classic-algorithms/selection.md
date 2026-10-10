@@ -11,14 +11,17 @@ Given an unsorted array and an integer $k$, find the $k^\text{th}$ smallest elem
 ```python
 import random
 
+
 def quickselect(array, k):
     low = 0
     high = len(array) - 1
-    
+
     while low <= high:
         pivot_index_random = random.randint(low, high)
-        pivot_index_final = lomuto_partition(array, low, high, pivot_index_random)
-    
+        pivot_index_final = lomuto_partition(
+            array, low, high, pivot_index_random
+        )
+
         if pivot_index_final < target_index:
             low = pivot_index_final + 1
         elif pivot_index_final > target_index:
@@ -42,7 +45,10 @@ def lomuto_partition(array, low, high, pivot_index):
     write_index = low
     for read_index in range(low, high):
         if array[read_index] < pivot_value:
-            array[write_index], array[read_index] = array[read_index], array[write_index]
+            array[write_index], array[read_index] = (
+                array[read_index],
+                array[write_index],
+            )
             write_index += 1
 
     array[high], array[write_index] = array[write_index], array[high]

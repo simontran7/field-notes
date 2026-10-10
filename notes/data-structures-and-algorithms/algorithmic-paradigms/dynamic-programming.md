@@ -122,10 +122,13 @@ return dp(<answer state>)
 > ```python
 > import math
 >
+>
 > class Solution:
 >     def coinChange(self, coins: List[int], amount: int) -> List[int]:
 >         memo = dict()
->         choice = dict()  # choice[<amount>] = coin that achieved the minimum for <amount>
+>         choice = (
+>             dict()
+>         )  # choice[<amount>] = coin that achieved the minimum for <amount>
 >
 >         def dp(amount):
 >             if amount == 0:

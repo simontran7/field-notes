@@ -82,7 +82,7 @@ def lower_bound(array, target):
 
     while low < high:
         mid = low + (high - low) // 2
-        if array[mid] >= target: 
+        if array[mid] >= target:
             high = mid
         else:
             low = mid + 1
@@ -127,6 +127,7 @@ def find_lt(array, target):
         return array[i - 1]
     raise ValueError("no value < target")
 
+
 def find_le(array, target):
     """Returns the rightmost value <= `target`"""
     i = upper_bound(array, target)
@@ -134,12 +135,14 @@ def find_le(array, target):
         return array[i - 1]
     raise ValueError("no value <= target")
 
+
 def find_gt(array, target):
     """Returns the leftmost value > `target`"""
     i = upper_bound(array, target)
     if i != len(array):
         return array[i]
     raise ValueError("no value > target")
+
 
 def find_ge(array, target):
     """Returns the leftmost value >= `target`"""

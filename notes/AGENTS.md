@@ -27,6 +27,7 @@ Write my in this clear, conversational, explanatory style.
   - WARNING vs CAUTION: WARNING covers mistakes that cost debugging time. CAUTION covers actions whose damage stays after you notice, such as deleted files, lost commits, or exposed permissions.
 - Links between notes are relative paths to the file, e.g. `[Two Pointers](../algorithmic-techniques/two-pointers.md)` or `[Generics](c.md#generics)`. A link to a note that doesn't exist fails the build.
 - Images go in an `images/` folder next to the note and are linked relatively (`images/cpu.png`).
+- After writing or editing C, C++, Python or Rust code blocks, run `cargo run -- fmt` from the repo root. It formats them with clang-format, ruff and rustfmt (4-space indents, opening braces on the same line, `(int)x` casts with no space, 80 columns). It skips blocks that are pieces of a larger program, so format those by hand in the same style.
 - Shell code blocks:
   - ` ```bash `: commands only, with no `$` and no output. The `$` prompt is added automatically when displayed.
   - ` ```console `: a terminal session that shows output. Type `$ ` before each command so commands and output can be told apart.

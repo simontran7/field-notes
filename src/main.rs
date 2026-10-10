@@ -1,3 +1,4 @@
+mod fmt;
 mod highlight;
 mod layout;
 mod notes;
@@ -10,7 +11,9 @@ use std::path::{Path, PathBuf};
 
 /// The notes the site is built from. Override with NOTES_DIR.
 pub(crate) fn notes_dir() -> PathBuf {
-    std::env::var_os("NOTES_DIR").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("notes"))
+    std::env::var_os("NOTES_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("notes"))
 }
 
 fn copy_static_assets(src_dir: &Path, dist_dir: &Path) -> std::io::Result<()> {
@@ -70,11 +73,18 @@ pub(crate) fn build_site(dev: bool) -> std::io::Result<usize> {
     for note in &notes {
         let source = format!("{}.md", note.slug);
         let html = render::render_note(&source, &note.body, &note.dir, &slugs, &mut broken);
-        write(dist_dir, &format!("{}/index.html", note.slug), &layout::note_page(&note.title, &html))?;
+        write(
+            dist_dir,
+            &format!("{}/index.html", note.slug),
+            &layout::note_page(&note.title, &html),
+        )?;
     }
 
     if !broken.is_empty() {
-        return Err(std::io::Error::other(format!("links to notes that don't exist:\n  {}", broken.join("\n  "))));
+        return Err(std::io::Error::other(format!(
+            "links to notes that don't exist:\n  {}",
+            broken.join("\n  ")
+        )));
     }
 
     copy_static_assets(public_dir, dist_dir)?;
@@ -84,7 +94,11 @@ pub(crate) fn build_site(dev: bool) -> std::io::Result<usize> {
 }
 
 fn main() -> std::io::Result<()> {
-    let dev = std::env::args().nth(1).as_deref() == Some("serve");
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("fmt") {
+        return fmt::run(args.iter().any(|a| a == "--check"));
+    }
+    let dev = args.first().map(String::as_str) == Some("serve");
 
     let count = build_site(dev)?;
     println!("built {count} notes -> dist");

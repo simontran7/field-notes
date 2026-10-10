@@ -53,7 +53,10 @@
 ### Implementation
 
 ```rust
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, Shr};
+use std::ops::{
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl,
+    Shr,
+};
 
 pub trait Word:
     Copy
@@ -365,7 +368,9 @@ macro_rules! impl_word {
 
 impl_word!(u8, u16, u32, u64, u128, usize);
 
-impl<'a, W: Word, const WORDS: usize> Iterator for StaticBitSetIterator<'a, W, WORDS> {
+impl<'a, W: Word, const WORDS: usize> Iterator
+    for StaticBitSetIterator<'a, W, WORDS>
+{
     type Item = usize;
 
     fn next(&mut self) -> Option<usize> {
@@ -377,7 +382,9 @@ impl<'a, W: Word, const WORDS: usize> Iterator for StaticBitSetIterator<'a, W, W
         next_bit
     }
 }
-impl<'a, W: Word, const WORDS: usize> IntoIterator for &'a StaticBitSet<W, WORDS> {
+impl<'a, W: Word, const WORDS: usize> IntoIterator
+    for &'a StaticBitSet<W, WORDS>
+{
     type Item = usize;
     type IntoIter = StaticBitSetIterator<'a, W, WORDS>;
 
@@ -433,21 +440,27 @@ impl<W: Word, const WORDS: usize> Not for &StaticBitSet<W, WORDS> {
     }
 }
 
-impl<W: Word, const WORDS: usize> BitOrAssign<&Self> for StaticBitSet<W, WORDS> {
+impl<W: Word, const WORDS: usize> BitOrAssign<&Self>
+    for StaticBitSet<W, WORDS>
+{
     fn bitor_assign(&mut self, rhs: &Self) {
         for i in 0..WORDS {
             self.data[i] |= rhs.data[i];
         }
     }
 }
-impl<W: Word, const WORDS: usize> BitAndAssign<&Self> for StaticBitSet<W, WORDS> {
+impl<W: Word, const WORDS: usize> BitAndAssign<&Self>
+    for StaticBitSet<W, WORDS>
+{
     fn bitand_assign(&mut self, rhs: &Self) {
         for i in 0..WORDS {
             self.data[i] &= rhs.data[i];
         }
     }
 }
-impl<W: Word, const WORDS: usize> BitXorAssign<&Self> for StaticBitSet<W, WORDS> {
+impl<W: Word, const WORDS: usize> BitXorAssign<&Self>
+    for StaticBitSet<W, WORDS>
+{
     fn bitxor_assign(&mut self, rhs: &Self) {
         for i in 0..WORDS {
             self.data[i] ^= rhs.data[i];

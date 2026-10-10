@@ -25,7 +25,9 @@ pub fn is_hidden(name: &OsStr) -> bool {
 }
 
 fn find_markdown_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(dir) else { return };
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         if is_hidden(&entry.file_name()) {
             continue;
@@ -74,7 +76,9 @@ pub fn load_notes(notes_dir: &Path) -> Vec<Note> {
     find_markdown_files(notes_dir, &mut files);
     files.retain(|f| {
         let top_level = f.parent() == Some(notes_dir);
-        !(top_level && f.file_name().is_some_and(|n| NOT_NOTES.contains(&&*n.to_string_lossy())))
+        !(top_level
+            && f.file_name()
+                .is_some_and(|n| NOT_NOTES.contains(&&*n.to_string_lossy())))
     });
     files.sort();
 
@@ -82,11 +86,20 @@ pub fn load_notes(notes_dir: &Path) -> Vec<Note> {
         .into_iter()
         .map(|file| {
             let slug = slug_for(notes_dir, &file);
-            let dir = slug.rsplit_once('/').map(|(d, _)| d.to_string()).unwrap_or_default();
-            let source = fs::read_to_string(&file).unwrap_or_else(|e| panic!("reading {file:?}: {e}"));
+            let dir = slug
+                .rsplit_once('/')
+                .map(|(d, _)| d.to_string())
+                .unwrap_or_default();
+            let source =
+                fs::read_to_string(&file).unwrap_or_else(|e| panic!("reading {file:?}: {e}"));
             let (title, body) = split_title(source);
 
-            Note { slug, dir, title, body }
+            Note {
+                slug,
+                dir,
+                title,
+                body,
+            }
         })
         .collect()
 }

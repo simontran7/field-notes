@@ -13,7 +13,7 @@ use std::sync::LazyLock;
 
 use lumis::languages::Language;
 use lumis::themes::{self, Theme};
-use lumis::{highlight, HtmlInlineBuilder};
+use lumis::{HtmlInlineBuilder, highlight};
 use regex::Regex;
 use serde_json::Value;
 
@@ -161,7 +161,8 @@ fn css(style: &Value, text_fg: &str) -> String {
 }
 
 static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
-    let mut entries: Vec<(String, &str)> = CAPTURES.iter().map(|(c, k)| (c.to_string(), *k)).collect();
+    let mut entries: Vec<(String, &str)> =
+        CAPTURES.iter().map(|(c, k)| (c.to_string(), *k)).collect();
     for (capture, key) in C_CAPTURES {
         for lang in ["c", "cpp"] {
             entries.push((format!("{capture}.{lang}"), key));
@@ -171,33 +172,58 @@ static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
     let mut placeholder_of: HashMap<String, String> = HashMap::new();
     let mut placeholder = |key: &str| {
         let n = placeholder_of.len();
-        placeholder_of.entry(key.to_string()).or_insert_with(|| format!("#a0{n:04x}")).clone()
+        placeholder_of
+            .entry(key.to_string())
+            .or_insert_with(|| format!("#a0{n:04x}"))
+            .clone()
     };
     let mut highlights = serde_json::Map::new();
-    highlights.insert("normal".into(), serde_json::json!({ "fg": placeholder(TEXT), "bg": "#000000" }));
+    highlights.insert(
+        "normal".into(),
+        serde_json::json!({ "fg": placeholder(TEXT), "bg": "#000000" }),
+    );
     for (capture, key) in &entries {
-        highlights.insert(capture.clone(), serde_json::json!({ "fg": placeholder(key) }));
+        highlights.insert(
+            capture.clone(),
+            serde_json::json!({ "fg": placeholder(key) }),
+        );
     }
     let theme_json = serde_json::json!({
         "name": "intellij-keys", "appearance": "dark", "revision": "1", "highlights": highlights
     });
     let theme = themes::from_json(&theme_json.to_string()).expect("building the key theme");
-    let keys = placeholder_of.into_iter().map(|(key, color)| (color, key)).collect();
+    let keys = placeholder_of
+        .into_iter()
+        .map(|(key, color)| (color, key))
+        .collect();
 
-    let resolved: Value =
-        serde_json::from_str(include_str!("../theme/intellij.json")).expect("theme/intellij.json is invalid");
+    let resolved: Value = serde_json::from_str(include_str!("../theme/intellij.json"))
+        .expect("theme/intellij.json is invalid");
     let schemes = ["dark", "light"]
         .into_iter()
         .map(|name| {
             let scheme = &resolved["schemes"][name];
             let text_fg = scheme["TEXT"]["fg"].as_str().unwrap();
             let bg = scheme["TEXT"]["bg"].as_str().unwrap();
-            let styles = scheme.as_object().unwrap().iter().map(|(key, style)| (key.clone(), css(style, text_fg))).collect();
-            Scheme { name, styles, pre_style: format!("color: {text_fg}; background-color: {bg};") }
+            let styles = scheme
+                .as_object()
+                .unwrap()
+                .iter()
+                .map(|(key, style)| (key.clone(), css(style, text_fg)))
+                .collect();
+            Scheme {
+                name,
+                styles,
+                pre_style: format!("color: {text_fg}; background-color: {bg};"),
+            }
         })
         .collect();
 
-    Highlighter { theme, keys, schemes }
+    Highlighter {
+        theme,
+        keys,
+        schemes,
+    }
 });
 
 /// One highlighted piece of a line: its IntelliJ key and its (already HTML-escaped) text.
@@ -229,8 +255,14 @@ fn tokenize(line: &str) -> Vec<Token> {
     let mut last = 0;
     let push = |out: &mut Vec<Token>, text: &str, stack: &[&str]| {
         if !text.is_empty() {
-            let key = stack.last().and_then(|c| keys.get(*c)).map_or(TEXT, String::as_str);
-            out.push(Token { key: key.to_string(), text: text.to_string() });
+            let key = stack
+                .last()
+                .and_then(|c| keys.get(*c))
+                .map_or(TEXT, String::as_str);
+            out.push(Token {
+                key: key.to_string(),
+                text: text.to_string(),
+            });
         }
     };
     for caps in TAG_RE.captures_iter(line) {
@@ -254,7 +286,9 @@ fn words(tokens: &[Token]) -> Vec<usize> {
 }
 
 fn is_ident(word: &str) -> bool {
-    word.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+    word.chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
         && word.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
@@ -281,9 +315,15 @@ fn rust_rules(tokens: &mut Vec<Token>) {
     // Lifetimes: `'` (tagged like `mut`) followed by the name (tagged like an attribute)
     let mut i = 0;
     while i + 1 < tokens.len() {
-        if tokens[i].key == "@rust_modifier" && tokens[i].text == "&#39;" && tokens[i + 1].key == "@rust_attribute" {
+        if tokens[i].key == "@rust_modifier"
+            && tokens[i].text == "&#39;"
+            && tokens[i + 1].key == "@rust_attribute"
+        {
             let name = tokens.remove(i + 1).text;
-            tokens[i] = Token { key: "org.rust.LIFETIME".into(), text: format!("&#39;{name}") };
+            tokens[i] = Token {
+                key: "org.rust.LIFETIME".into(),
+                text: format!("&#39;{name}"),
+            };
         }
         i += 1;
     }
@@ -303,7 +343,10 @@ fn rust_rules(tokens: &mut Vec<Token>) {
 
     // #[attribute] lines are ATTRIBUTE throughout (strings keep their color)
     if w.len() >= 2 && text(tokens, 0) == "#" && text(tokens, 1).starts_with('[') {
-        for t in tokens.iter_mut().filter(|t| t.is_word() && t.key != "DEFAULT_STRING") {
+        for t in tokens
+            .iter_mut()
+            .filter(|t| t.is_word() && t.key != "DEFAULT_STRING")
+        {
             t.key = "org.rust.ATTRIBUTE".into();
         }
         return;
@@ -312,16 +355,26 @@ fn rust_rules(tokens: &mut Vec<Token>) {
     for n in 0..w.len() {
         let i = w[n];
         let word = text(tokens, n);
-        let prev = if n > 0 { text(tokens, n - 1) } else { String::new() };
+        let prev = if n > 0 {
+            text(tokens, n - 1)
+        } else {
+            String::new()
+        };
         let is_type = tokens[i].key == "org.rust.STRUCT";
         let for_follows = w[n + 1..].iter().any(|&j| tokens[j].trimmed() == "for");
-        let after_impl = prev == "impl" || (prev == "&gt;" && w[..n].iter().any(|&j| tokens[j].trimmed() == "impl"));
+        let after_impl = prev == "impl"
+            || (prev == "&gt;" && w[..n].iter().any(|&j| tokens[j].trimmed() == "impl"));
 
         let key = if word.len() > 1 && word.ends_with('!') && is_ident(&word[..word.len() - 1]) {
             Some("org.rust.MACRO")
         } else if is_type && is_type_parameter_name(&word) {
             Some("org.rust.TYPE_PARAMETER")
-        } else if is_type && (prev == "trait" || prev == "dyn" || (after_impl && for_follows) || (prev == "impl" && n > 1)) {
+        } else if is_type
+            && (prev == "trait"
+                || prev == "dyn"
+                || (after_impl && for_follows)
+                || (prev == "impl" && n > 1))
+        {
             // `trait X`, `dyn X`, `impl X for Y`, and `impl X` in type position (`-> impl Iterator`)
             Some("org.rust.TRAIT")
         } else if matches!(word.as_str(), "std" | "core" | "alloc" | "crate")
@@ -344,22 +397,42 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
     for n in 0..w.len() {
         let i = w[n];
         let word = text(tokens, n);
-        let prev = if n > 0 { text(tokens, n - 1) } else { String::new() };
-        let next = if n + 1 < w.len() { text(tokens, n + 1) } else { String::new() };
+        let prev = if n > 0 {
+            text(tokens, n - 1)
+        } else {
+            String::new()
+        };
+        let next = if n + 1 < w.len() {
+            text(tokens, n + 1)
+        } else {
+            String::new()
+        };
         let key = tokens[i].key.as_str();
         let ident = is_ident(&word);
-        let all_caps = ident && word.len() >= 2 && word.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
+        let all_caps = ident
+            && word.len() >= 2
+            && word
+                .chars()
+                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
 
-        let new_key = if word == "NULL" || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION") {
+        let new_key = if word == "NULL"
+            || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION")
+        {
             Some("OC.MACRONAME") // NULL and SHOUTING_CASE calls are macros
-        } else if (ident && word.ends_with("_t") && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE"))
+        } else if (ident
+            && word.ends_with("_t")
+            && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE"))
             || (cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word))
         {
             // size_t, uint8_t, ... and template parameters (OC.TEMPLATE_TYPE falls back to OC.TYPEDEF)
             Some("OC.TYPEDEF")
         } else if ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
             // s.field / s->field are fields; s.method() is a call
-            Some(if next.starts_with('(') { "OC.FUNCTION" } else { "OC.STRUCT_FIELD" })
+            Some(if next.starts_with('(') {
+                "OC.FUNCTION"
+            } else {
+                "OC.STRUCT_FIELD"
+            })
         } else {
             None
         };
@@ -371,13 +444,74 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
 
 /// Built-in names PyCharm colors wherever they appear.
 const PYTHON_BUILTINS: &[&str] = &[
-    "abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable", "chr",
-    "classmethod", "compile", "complex", "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec",
-    "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help", "hex", "id",
-    "input", "int", "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max", "memoryview",
-    "min", "next", "object", "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed",
-    "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "tuple", "type",
-    "vars", "zip",
+    "abs",
+    "all",
+    "any",
+    "ascii",
+    "bin",
+    "bool",
+    "breakpoint",
+    "bytearray",
+    "bytes",
+    "callable",
+    "chr",
+    "classmethod",
+    "compile",
+    "complex",
+    "delattr",
+    "dict",
+    "dir",
+    "divmod",
+    "enumerate",
+    "eval",
+    "exec",
+    "filter",
+    "float",
+    "format",
+    "frozenset",
+    "getattr",
+    "globals",
+    "hasattr",
+    "hash",
+    "help",
+    "hex",
+    "id",
+    "input",
+    "int",
+    "isinstance",
+    "issubclass",
+    "iter",
+    "len",
+    "list",
+    "locals",
+    "map",
+    "max",
+    "memoryview",
+    "min",
+    "next",
+    "object",
+    "oct",
+    "open",
+    "ord",
+    "pow",
+    "print",
+    "property",
+    "range",
+    "repr",
+    "reversed",
+    "round",
+    "set",
+    "setattr",
+    "slice",
+    "sorted",
+    "staticmethod",
+    "str",
+    "sum",
+    "super",
+    "tuple",
+    "type",
+    "vars",
+    "zip",
 ];
 
 fn python_rules(tokens: &mut [Token]) {
@@ -398,14 +532,21 @@ fn python_rules(tokens: &mut [Token]) {
     for n in 0..w.len() {
         let i = w[n];
         let word = tokens[i].trimmed().to_string();
-        let prev = if n > 0 { tokens[w[n - 1]].trimmed().to_string() } else { String::new() };
-        let is_dunder = word.len() > 4 && word.starts_with("__") && word.ends_with("__") && is_ident(&word);
+        let prev = if n > 0 {
+            tokens[w[n - 1]].trimmed().to_string()
+        } else {
+            String::new()
+        };
+        let is_dunder =
+            word.len() > 4 && word.starts_with("__") && word.ends_with("__") && is_ident(&word);
         let new_key = match word.as_str() {
             "self" | "cls" => Some("PY.SELF_PARAMETER"),
             _ if is_dunder && prev == "def" => Some("PY.PREDEFINED_DEFINITION"),
             _ if is_dunder => Some("PY.PREDEFINED_USAGE"),
             _ if prev == "class" && is_ident(&word) => Some("PY.CLASS_DEFINITION"),
-            _ if PYTHON_BUILTINS.contains(&word.as_str()) && prev != "." && prev != "def" => Some("PY.BUILTIN_NAME"),
+            _ if PYTHON_BUILTINS.contains(&word.as_str()) && prev != "." && prev != "def" => {
+                Some("PY.BUILTIN_NAME")
+            }
             _ => None,
         };
         if let Some(k) = new_key {
@@ -414,8 +555,9 @@ fn python_rules(tokens: &mut [Token]) {
     }
 }
 
-static LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?s)<div class="l-line" data-line="\d+">(.*?)\n?</div>"#).unwrap());
+static LINE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?s)<div class="l-line" data-line="\d+">(.*?)\n?</div>"#).unwrap()
+});
 
 /// Highlights code with Lumis and returns one token list per line.
 fn tokenize_code(language: Language, code: &str) -> Vec<Vec<Token>> {
@@ -425,11 +567,17 @@ fn tokenize_code(language: Language, code: &str) -> Vec<Vec<Token>> {
         .build()
         .expect("building the HTML formatter");
     let html = highlight(code, formatter);
-    LINE_RE.captures_iter(&html).map(|caps| tokenize(&caps[1])).collect()
+    LINE_RE
+        .captures_iter(&html)
+        .map(|caps| tokenize(&caps[1]))
+        .collect()
 }
 
 fn html_escape(text: &str) -> String {
-    text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }
 
 fn language_for(lang: &str) -> Language {
@@ -450,11 +598,22 @@ fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
             .lines()
             .map(|line| match line.strip_prefix("$ ") {
                 Some(command) => {
-                    let mut tokens = vec![Token { key: "DEFAULT_LINE_COMMENT".into(), text: "$ ".into() }];
-                    tokens.extend(lines_for("bash", command).into_iter().next().unwrap_or_default());
+                    let mut tokens = vec![Token {
+                        key: "DEFAULT_LINE_COMMENT".into(),
+                        text: "$ ".into(),
+                    }];
+                    tokens.extend(
+                        lines_for("bash", command)
+                            .into_iter()
+                            .next()
+                            .unwrap_or_default(),
+                    );
                     tokens
                 }
-                None => vec![Token { key: TEXT.into(), text: html_escape(line) }],
+                None => vec![Token {
+                    key: TEXT.into(),
+                    text: html_escape(line),
+                }],
             })
             .collect();
     }
@@ -480,11 +639,20 @@ fn render(lines: &[Vec<Token>], lang: &str, scheme: &Scheme) -> String {
         scheme.name, scheme.pre_style
     );
     for (n, tokens) in lines.iter().enumerate() {
-        let empty = if tokens.iter().all(|t| !t.is_word()) { " l-empty" } else { "" };
-        html.push_str(&format!(r#"<div class="l-line{empty}" data-line="{}">"#, n + 1));
+        let empty = if tokens.iter().all(|t| !t.is_word()) {
+            " l-empty"
+        } else {
+            ""
+        };
+        html.push_str(&format!(
+            r#"<div class="l-line{empty}" data-line="{}">"#,
+            n + 1
+        ));
         for t in tokens {
             match scheme.styles.get(&t.key) {
-                Some(style) if t.key != TEXT => html.push_str(&format!(r#"<span style="{style}">{}</span>"#, t.text)),
+                Some(style) if t.key != TEXT => {
+                    html.push_str(&format!(r#"<span style="{style}">{}</span>"#, t.text))
+                }
                 _ => html.push_str(&t.text),
             }
         }
@@ -500,8 +668,14 @@ pub fn code_block(lang: &str, code: &str) -> String {
     let code = code.strip_suffix('\n').unwrap_or(code);
     let lines = lines_for(lang, code);
     let label = html_escape(lang);
-    let variants: String = HIGHLIGHTER.schemes.iter().map(|scheme| render(&lines, &label, scheme)).collect();
-    format!(r#"<div class="code-block" data-lang="{label}"><span class="code-lang">{label}</span>{variants}</div>"#)
+    let variants: String = HIGHLIGHTER
+        .schemes
+        .iter()
+        .map(|scheme| render(&lines, &label, scheme))
+        .collect();
+    format!(
+        r#"<div class="code-block" data-lang="{label}"><span class="code-lang">{label}</span>{variants}</div>"#
+    )
 }
 
 #[cfg(test)]
@@ -554,7 +728,10 @@ mod tests {
         let code = "@dataclass\nclass A:\n    def __init__(self, x: int):\n        print(len(x))";
         assert_eq!(key_of("python", code, "dataclass"), "PY.DECORATOR");
         assert_eq!(key_of("python", code, "A"), "PY.CLASS_DEFINITION");
-        assert_eq!(key_of("python", code, "__init__"), "PY.PREDEFINED_DEFINITION");
+        assert_eq!(
+            key_of("python", code, "__init__"),
+            "PY.PREDEFINED_DEFINITION"
+        );
         assert_eq!(key_of("python", code, "self"), "PY.SELF_PARAMETER");
         assert_eq!(key_of("python", code, "int"), "PY.BUILTIN_NAME");
         assert_eq!(key_of("python", code, "print"), "PY.BUILTIN_NAME");
@@ -562,7 +739,10 @@ mod tests {
 
     #[test]
     fn bash_commands_and_console() {
-        assert_eq!(key_of("bash", "sed -i x \"$FILE\"", "sed"), "BASH.EXTERNAL_COMMAND");
+        assert_eq!(
+            key_of("bash", "sed -i x \"$FILE\"", "sed"),
+            "BASH.EXTERNAL_COMMAND"
+        );
         let html = code_block("console", "$ echo hi\nhi");
         assert_eq!(html.matches("class=\"l-line").count(), 4, "{html}"); // 2 lines in each scheme
     }
@@ -571,7 +751,11 @@ mod tests {
     fn every_key_has_a_style_in_both_schemes() {
         for scheme in &HIGHLIGHTER.schemes {
             for key in HIGHLIGHTER.keys.values().filter(|k| !k.starts_with('@')) {
-                assert!(scheme.styles.contains_key(key), "{} is missing {key}", scheme.name);
+                assert!(
+                    scheme.styles.contains_key(key),
+                    "{} is missing {key}",
+                    scheme.name
+                );
             }
         }
     }
