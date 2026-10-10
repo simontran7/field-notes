@@ -207,6 +207,7 @@ body {
   font-size: 1.802em;
   font-weight: 700;
   margin-top: 0;
+  text-align: center;
 }
 
 /* A thin divider under h2 and more space above, so sections separate clearly */
