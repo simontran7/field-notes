@@ -1,0 +1,10 @@
+[package]
+name = "cs-handbook"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+comrak = "0.54"
+regex = "1"
+notify = "6"
+tiny_http = "0.12"

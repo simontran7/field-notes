@@ -1,0 +1,14 @@
+{
+  "name": "CS Handbook",
+  "short_name": "CS Handbook",
+  "icons": [
+    {
+      "src": "/cs-handbook/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "theme_color": "#233f77",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}

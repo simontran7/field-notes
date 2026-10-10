@@ -1,0 +1,465 @@
+/* ─── Fonts (self-hosted) ────────────────────────────────── */
+@font-face {
+  font-family: "Jost";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/jost-normal-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Jost";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/jost-normal-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Jost";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/jost-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Jost";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/jost-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("fonts/cascadia-code-normal-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("fonts/cascadia-code-normal-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  font-style: italic;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("fonts/cascadia-code-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Cascadia Code";
+  font-style: italic;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("fonts/cascadia-code-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ─── Tokens ─────────────────────────────────────────────────
+   Ported from the Obsidian vault's snippets (font.css, links.css, callouts.css,
+   darcula.css, layout.css) on top of Obsidian's default theme. */
+:root {
+  --bg: #ffffff;
+  --text: #222222;
+  --text-faint: #8a8a8a;
+  --border: #e4e4e4;
+  --bg-secondary: #f6f6f6;
+  --link: #233f77;
+  --link-hover: #4976d1;
+  --toggle-hover-bg: rgba(0, 0, 0, 0.08);
+  --inline-code-bg: #fafafa;
+  --inline-code-text: #222222;
+
+  --serif: "TeX Gyre Pagella", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: "Jost", sans-serif;
+  --mono: "Cascadia Code", ui-monospace, Menlo, monospace;
+
+  /* Callout colors: GitHub alert colors (light), plus the vault's custom types */
+  --note: 9, 105, 218;
+  --tip: 26, 127, 55;
+  --important: 130, 80, 223;
+  --warning: 154, 103, 0;
+  --caution: 209, 36, 47;
+  --caution-border: 207, 34, 46;
+  --definition: 188, 76, 0;
+  --formula: 191, 57, 137;
+}
+
+[data-theme="dark"] {
+  --bg: #1e1e1e;
+  --text: #dadada;
+  --text-faint: #666666;
+  --border: #333333;
+  --bg-secondary: #262626;
+  --link: #7ea0e0;
+  --link-hover: #a8c0ea;
+  --toggle-hover-bg: rgba(255, 255, 255, 0.1);
+  --inline-code-bg: #2b2b2b;
+  --inline-code-text: #a9b7c6;
+
+  /* GitHub dark: a brighter title color and a deeper border color */
+  --note: 68, 147, 248;
+  --note-border: 31, 111, 235;
+  --tip: 63, 185, 80;
+  --tip-border: 35, 134, 54;
+  --important: 171, 125, 248;
+  --important-border: 137, 87, 229;
+  --warning: 210, 153, 34;
+  --warning-border: 158, 106, 3;
+  --caution: 248, 81, 73;
+  --caution-border: 218, 54, 51;
+  --definition: 240, 136, 62;
+  --formula: 219, 97, 162;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--serif);
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Theme toggle (floating, no header) ─────────────────── */
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: var(--toggle-hover-bg);
+  color: var(--text);
+}
+
+.sun-icon,
+[data-theme="dark"] .moon-icon {
+  display: none;
+}
+
+[data-theme="dark"] .sun-icon {
+  display: block;
+}
+
+/* ─── Layout ─────────────────────────────────────────────── */
+.container {
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.not-found {
+  text-align: center;
+}
+
+/* ─── Links: bold, no underline, color shift on hover ────── */
+.prose a {
+  color: var(--link);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.prose a:hover {
+  color: var(--link-hover);
+}
+
+/* ─── Headings ───────────────────────────────────────────── */
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.2;
+  margin: 1.5em 0 0.6em;
+}
+
+.prose h1 {
+  font-size: 1.802em;
+  font-weight: 700;
+  margin-top: 0;
+}
+
+/* A thin divider under h2 and more space above, so sections separate clearly */
+.prose h2 {
+  font-size: 1.602em;
+  font-weight: 600;
+  margin-top: 1.75em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose h3 {
+  font-size: 1.424em;
+  font-weight: 600;
+}
+
+.prose h4 {
+  font-size: 1.266em;
+  font-weight: 600;
+}
+
+.prose :is(h5, h6) {
+  font-size: 1.125em;
+  font-weight: 600;
+}
+
+/* ─── Prose ──────────────────────────────────────────────── */
+.prose p {
+  margin: 0 0 1em;
+}
+
+.prose :is(ul, ol) {
+  margin: 0 0 1em;
+  padding-left: 1.6em;
+}
+
+.prose li {
+  margin: 0.2em 0;
+}
+
+.prose li > :is(ul, ol) {
+  margin: 0.2em 0 0;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose blockquote {
+  margin: 1em 0;
+  padding: 0.25em 0 0.25em 1em;
+  border-left: 3px solid var(--border);
+}
+
+/* Images: centered in the reading column, slightly rounded corners */
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.25em auto;
+  border-radius: 6px;
+}
+
+/* ─── Inline code ────────────────────────────────────────── */
+.prose :not(pre) > code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  background: var(--inline-code-bg);
+  color: var(--inline-code-text);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+}
+
+/* ─── Code blocks (Shiki + the vault's Darcula theme) ────── */
+.code-block {
+  position: relative;
+  margin: 1.25em 0;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 2.5rem 1.5rem 1.5rem;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  tab-size: 4;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+.code-block pre code {
+  font-family: inherit;
+}
+
+/* Language pill, top-left */
+.code-lang {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  background: #333333;
+  color: #a9b7c6;
+  opacity: 0.7;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Copy button, bottom-right; the icon turns into a checkmark after copying (site.js) */
+.copy-btn {
+  position: absolute;
+  bottom: 0.3rem;
+  right: 0.3rem;
+  display: flex;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #7ea0e0;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+}
+
+/* bash blocks: a dim "$ " before each command line (not selectable, not copied) */
+.code-block[data-lang="bash"] .line::before {
+  content: "$ ";
+  color: #808080;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.code-block[data-lang="bash"] .line:empty::before {
+  content: none;
+}
+
+/* ─── Tables: thin borders, tinted header, light row shading ── */
+.prose table {
+  border-collapse: collapse;
+  margin: 1.25em 0;
+  font-size: 0.95em;
+}
+
+.prose :is(th, td) {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.8em;
+}
+
+.prose thead th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.prose tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+/* ─── Math ───────────────────────────────────────────────── */
+.katex {
+  font-size: 1.05em;
+}
+
+/* Wide display formulas scroll sideways; the padding keeps tall symbols from being clipped */
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.3em 0;
+  margin: 1em 0;
+}
+
+/* ─── Callouts: GitHub alert style, with a light tint ────── */
+.callout {
+  --callout-color: var(--note);
+  --callout-border: var(--callout-color);
+  margin: 1.5em 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.25em solid rgb(var(--callout-border));
+  background-color: color-mix(in srgb, rgb(var(--callout-color)) 8%, var(--bg));
+}
+
+.callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+  font-weight: 500;
+  line-height: 1;
+  color: rgb(var(--callout-color));
+}
+
+.callout-title svg {
+  flex-shrink: 0;
+}
+
+.callout-body {
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.callout-body > :first-child {
+  margin-top: 0;
+}
+
+.callout-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Wide tables inside a callout scroll on their own */
+.callout-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.callout-note { --callout-color: var(--note); --callout-border: var(--note-border, var(--note)); }
+.callout-tip { --callout-color: var(--tip); --callout-border: var(--tip-border, var(--tip)); }
+.callout-important { --callout-color: var(--important); --callout-border: var(--important-border, var(--important)); }
+.callout-warning { --callout-color: var(--warning); --callout-border: var(--warning-border, var(--warning)); }
+.callout-caution { --callout-color: var(--caution); --callout-border: var(--caution-border); }
+.callout-definition { --callout-color: var(--definition); }
+.callout-formula { --callout-color: var(--formula); }
+
+/* ─── Mermaid ────────────────────────────────────────────── */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1.25em 0;
+}
+
+@media (max-width: 600px) {
+  html {
+    font-size: 16px;
+  }
+
+  .container {
+    padding: 3.5rem 1rem 4rem;
+  }
+}
