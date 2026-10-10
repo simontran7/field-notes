@@ -91,7 +91,7 @@ def longest_subarray_with_state(array, target_state):
         if needed_state in state_first_index:
             result = max(result, i - state_first_index[needed_state])
 
-        # Only store the FIRST time we see a state — a later index would only
+        # Only store the FIRST time we see a state; a later index would only
         # ever produce a shorter subarray, so overwriting is never beneficial.
         if current_state not in state_first_index:
             state_first_index[current_state] = i
@@ -115,7 +115,7 @@ def shortest_subarray_with_state(array, target_state):
         if needed_state in state_last_index:
             result = min(result, i - state_last_index[needed_state])
 
-        # Always overwrite — the most recent occurrence gives the shortest
+        # Always overwrite: the most recent occurrence gives the shortest
         # possible subarray for any future match.
         state_last_index[current_state] = i
 

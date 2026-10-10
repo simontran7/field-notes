@@ -25,10 +25,6 @@ const COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16
 const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
 
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.email-link').forEach(function (a) {
-    a.href = 'mailto:' + a.dataset.user + '@' + a.dataset.domain
-  })
-
   document.querySelectorAll('.prose pre code.language-mermaid').forEach(function (code) {
     const div = document.createElement('div')
     div.className = 'mermaid'

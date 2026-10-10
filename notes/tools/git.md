@@ -266,7 +266,7 @@ git stash drop
 
 ## Undoing Things
 
-- Move the current branch back to a commit, keeping changes staged (`--soft`), unstaged (`--mixed`) — the default — or discarding them entirely (`--hard`)
+- Move the current branch back to a commit, keeping changes staged (`--soft`), unstaged (`--mixed`, the default), or discarding them entirely (`--hard`)
 
 ```bash
 git reset [--soft | --mixed | --hard] <commit>

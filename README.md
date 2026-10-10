@@ -18,7 +18,7 @@ Site will be live at [http://localhost:8000](http://localhost:8000) (use `PORT=8
 
 ## Writing notes
 
-Notes are plain Markdown in `notes/`. `notes/index.md` is the home page, and every other `.md` file becomes a page at its path (`notes/tools/git.md` is served at `/tools/git/`). See `AGENTS.md` for the writing conventions.
+Notes are plain Markdown in `notes/`. `notes/index.md` is the home page, and every other `.md` file becomes a page at its path (`notes/tools/git.md` is served at `/tools/git/`). See `notes/AGENTS.md` for the writing conventions.
 
 - **Links** between notes are relative paths (`[Generics](c.md#generics)`). A link to a note that doesn't exist fails the build.
 - **Images** go in an `images/` folder next to the note (`images/cpu.png`).

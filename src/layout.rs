@@ -43,6 +43,12 @@ pub fn base_path() -> &'static str {
 pub fn page(title: &str, body: &str) -> String {
     let reload_script = if DEV_MODE.load(Ordering::Relaxed) { RELOAD_SCRIPT } else { "" };
     let base = base_path();
+    // Mermaid is large, so only pages with a diagram load it
+    let mermaid_script = if body.contains("language-mermaid") {
+        "    <script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script>\n"
+    } else {
+        ""
+    };
     format!(
         r#"<!doctype html>
 <html lang="en">
@@ -67,8 +73,7 @@ pub fn page(title: &str, body: &str) -> String {
     {THEME_TOGGLE_SVG}
     {body}
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-    <script defer src="{base}/site.js"></script>
+{mermaid_script}    <script defer src="{base}/site.js"></script>
   </body>
 </html>
 "#

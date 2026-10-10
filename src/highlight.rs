@@ -352,10 +352,11 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
 
         let new_key = if word == "NULL" || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION") {
             Some("OC.MACRONAME") // NULL and SHOUTING_CASE calls are macros
-        } else if ident && word.ends_with("_t") && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE") {
-            Some("OC.TYPEDEF") // size_t, uint8_t, ...
-        } else if cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word) {
-            Some("OC.TYPEDEF") // template parameters (OC.TEMPLATE_TYPE falls back to OC.TYPEDEF)
+        } else if (ident && word.ends_with("_t") && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE"))
+            || (cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word))
+        {
+            // size_t, uint8_t, ... and template parameters (OC.TEMPLATE_TYPE falls back to OC.TYPEDEF)
+            Some("OC.TYPEDEF")
         } else if ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
             // s.field / s->field are fields; s.method() is a call
             Some(if next.starts_with('(') { "OC.FUNCTION" } else { "OC.STRUCT_FIELD" })
