@@ -1,6 +1,6 @@
 # CS Handbook
 
-Computer science notes, published as a static site at <https://simontran7.github.io/cs-handbook/>.
+computer science notes
 
 ## Installation
 
@@ -25,5 +25,3 @@ Notes are plain Markdown in `notes/`. `notes/TOC.md` is the home page, and every
 - **Math** uses `$...$` and `$$...$$` (rendered with KaTeX).
 - **Callouts** use GitHub's syntax (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`), plus `> [!DEFINITION]` and `> [!FORMULA]`. Text after the type becomes the title: `> [!FORMULA] Arithmetic series`.
 - **Code** is highlighted at build time with [Lumis](https://lumis.sh) (tree-sitter parsers and Neovim's highlight queries) and `theme/darcula.json`, IntelliJ's Darcula colors taken from JetBrains' own color scheme files, including the Rust, Python, shell and C/C++ plugins. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt; use ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
-
-Pushing to `main` deploys the site with GitHub Actions.
