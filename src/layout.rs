@@ -44,7 +44,19 @@ pub fn base_path() -> &'static str {
     }
 }
 
+/// A short hash of a file in public/, added to its URL (`style.css?v=3f2a9c`) so
+/// browsers fetch the new file as soon as it changes instead of a cached copy.
+fn asset_version(file: &str) -> String {
+    use std::hash::{Hash, Hasher};
+    let contents = std::fs::read(std::path::Path::new("public").join(file)).unwrap_or_default();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    contents.hash(&mut hasher);
+    format!("{:x}", hasher.finish() & 0xff_ffff)
+}
+
 pub fn page(title: &str, body: &str) -> String {
+    let css_version = asset_version("style.css");
+    let js_version = asset_version("site.js");
     let reload_script = if DEV_MODE.load(Ordering::Relaxed) {
         RELOAD_SCRIPT
     } else {
@@ -67,7 +79,7 @@ pub fn page(title: &str, body: &str) -> String {
     <link rel="icon" type="image/svg+xml" href="{base}/favicon.svg" />
     <link rel="manifest" href="{base}/site.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
-    <link rel="stylesheet" href="{base}/style.css" />
+    <link rel="stylesheet" href="{base}/style.css?v={css_version}" />
     <script>
       (function () {{
         var saved = localStorage.getItem('theme-manual');
@@ -81,7 +93,7 @@ pub fn page(title: &str, body: &str) -> String {
     {THEME_TOGGLE_SVG}
     {body}
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-{mermaid_script}    <script defer src="{base}/site.js"></script>
+{mermaid_script}    <script defer src="{base}/site.js?v={js_version}"></script>
   </body>
 </html>
 "#
