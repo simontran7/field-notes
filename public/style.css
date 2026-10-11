@@ -512,7 +512,8 @@ body {
 }
 
 .env-theorem,
-.env-proposition {
+.env-proposition,
+.env-corollary {
   --env-color: var(--env-math);
   --env-bg: var(--env-math-bg);
 }

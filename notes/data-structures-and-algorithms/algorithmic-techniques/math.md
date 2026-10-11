@@ -55,7 +55,7 @@ Algorithms that involve `x mod m`, (`m` is typically $10^9 + 7$), where:
 
 ### Properties
 
-> [!PROPOSITION] Modular arithmetic
+> [!COROLLARY] Modular arithmetic
 > We get the following properties from the above:
 > $$
 > \begin{aligned}

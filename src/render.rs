@@ -24,7 +24,7 @@ fn callout_icon(callout_type: &str) -> &'static str {
         "caution" => {
             r#"<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>"#
         }
-        "theorem" | "proposition" => {
+        "theorem" | "proposition" | "corollary" => {
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 17c2 0 2.8-1 2.8-2.8V10c0-2 1-3.3 3.2-3"/><path d="M9 11.2h5.7"/></svg>"#
         }
         _ => unreachable!(),
@@ -32,12 +32,12 @@ fn callout_icon(callout_type: &str) -> &'static str {
 }
 
 const GITHUB_TYPES: [&str; 5] = ["note", "tip", "important", "warning", "caution"];
-const CUSTOM_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
+const CUSTOM_TYPES: [&str; 4] = ["definition", "theorem", "proposition", "corollary"];
 
 /// Types drawn as boxes with a title bar, like a LaTeX math environment
 /// ("Definition (Cache)", "Proposition (Law of Addition)"), so they stand apart
 /// from callouts. Theorems and propositions also get the function icon.
-const ENVIRONMENT_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
+const ENVIRONMENT_TYPES: [&str; 4] = ["definition", "theorem", "proposition", "corollary"];
 
 /// Marks a custom callout so it survives comrak, which only knows GitHub's five types.
 const CUSTOM_MARK: &str = "@@callout:";
@@ -342,7 +342,7 @@ mod tests {
 
     #[test]
     fn theorems_and_propositions_are_boxes_with_the_math_icon() {
-        for kind in ["THEOREM", "PROPOSITION"] {
+        for kind in ["THEOREM", "PROPOSITION", "COROLLARY"] {
             let html = render_markdown(&format!("> [!{kind}] T\n> x\n"));
             let class = kind.to_lowercase();
             assert!(
