@@ -69,12 +69,11 @@
 
 ### Any base $b$ to decimal
 
-> [!DEFINITION] Positional notation in base $b$
-> For a number with digits $d_{N - 1}, d_{N - 2}, \dots, d_1, d_0$ in base $b$, convert the number by multiplying each digit by its place value $b^i$:
-> 
-> $$
-> (d_{N-1} \cdot b^{N-1}) + (d_{N-2} \cdot b^{N-2}) + \dots + (d_1 \cdot b^1) + (d_0 \cdot b^0)
-> $$
+For a number with digits $d_{N - 1}, d_{N - 2}, \dots, d_1, d_0$ in base $b$, convert the number by multiplying each digit by its place value $b^i$:
+
+$$
+(d_{N-1} \cdot b^{N-1}) + (d_{N-2} \cdot b^{N-2}) + \dots + (d_1 \cdot b^1) + (d_0 \cdot b^0)
+$$
 
 > [!TIP]
 > When converting bits encoded in two's complement, check the most significant bit first: if it's 1, treat its place value as negative and proceed with the conversion as usual.
