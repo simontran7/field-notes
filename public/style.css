@@ -490,14 +490,14 @@ body {
    read differently from callouts. Theorems and propositions are callouts with the
    function icon. */
 :root {
-  --env-definition: #b98b7f;
-  --env-definition-bg: #f3ebe9;
+  --env-definition: #5f6b7a;
+  --env-definition-bg: #f0f2f4;
   --env-title-text: #ffffff;
 }
 
 [data-theme="dark"] {
-  --env-definition: #8f645a;
-  --env-definition-bg: #2c2422;
+  --env-definition: #4a5462;
+  --env-definition-bg: #23262b;
   --env-title-text: #f3f1ee;
 }
 
