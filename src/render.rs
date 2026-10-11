@@ -5,8 +5,8 @@ use regex::Regex;
 
 use std::collections::HashSet;
 
-/// Callout icons: GitHub's Octicons (primer/octicons) for GitHub's five alert types,
-/// plus Lucide's square-function for theorems and propositions.
+/// Icons: GitHub's Octicons (primer/octicons) for GitHub's five alert types, plus
+/// Lucide's square-function for the theorem and proposition boxes.
 fn callout_icon(callout_type: &str) -> &'static str {
     match callout_type {
         "note" => {
@@ -35,8 +35,9 @@ const GITHUB_TYPES: [&str; 5] = ["note", "tip", "important", "warning", "caution
 const CUSTOM_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
 
 /// Types drawn as boxes with a title bar, like a LaTeX math environment
-/// ("Definition (Cache)"), so they stand apart from callouts.
-const ENVIRONMENT_TYPES: [&str; 1] = ["definition"];
+/// ("Definition (Cache)", "Proposition (Law of Addition)"), so they stand apart
+/// from callouts. Theorems and propositions also get the function icon.
+const ENVIRONMENT_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
 
 /// Marks a custom callout so it survives comrak, which only knows GitHub's five types.
 const CUSTOM_MARK: &str = "@@callout:";
@@ -112,6 +113,8 @@ fn process_callouts(html: &str) -> String {
                 // "A **cache** is ..." -> "Definition (Cache)"
                 let name = if label != heading {
                     Some(label.clone())
+                } else if kind != "definition" {
+                    None
                 } else {
                     // A trailing abbreviation is dropped: "Control unit (CU)" -> "Control unit"
                     STRONG_RE.captures(body).map(|c| {
@@ -123,8 +126,9 @@ fn process_callouts(html: &str) -> String {
                     Some(name) => format!("{heading} ({name})"),
                     None => heading,
                 };
+                let icon = if kind == "definition" { "" } else { callout_icon(&kind) };
                 return format!(
-                    r#"<div class="env env-{kind}"><div class="env-title">{title}</div><div class="env-body">{body}</div></div>"#
+                    r#"<div class="env env-{kind}"><div class="env-title">{icon}<span>{title}</span></div><div class="env-body">{body}</div></div>"#
                 );
             }
             format!(
@@ -295,7 +299,7 @@ mod tests {
         for t in GITHUB_TYPES
             .iter()
             .chain(CUSTOM_TYPES.iter())
-            .filter(|t| !ENVIRONMENT_TYPES.contains(t))
+            .filter(|t| **t != "definition")
         {
             callout_icon(t);
         }
@@ -304,11 +308,11 @@ mod tests {
     #[test]
     fn custom_callouts_keep_type_and_title() {
         let html = render_markdown("> [!PROPOSITION] Arithmetic series\n> $1+1$\n");
+        assert!(html.contains(r#"class="env env-proposition""#), "{html}");
         assert!(
-            html.contains(r#"class="callout callout-proposition""#),
+            html.contains("<span>Proposition (Arithmetic series)</span>"),
             "{html}"
         );
-        assert!(html.contains("<span>Arithmetic series</span>"), "{html}");
 
         let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
         assert!(
@@ -321,7 +325,7 @@ mod tests {
     fn definitions_are_titled_by_name() {
         let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
         assert!(
-            html.contains(r#"<div class="env-title">Definition (Cache)</div>"#),
+            html.contains(r#"<div class="env-title"><span>Definition (Cache)</span></div>"#),
             "{html}"
         );
         let html = render_markdown("> [!DEFINITION] Positional notation\n> **x** y\n");
@@ -331,18 +335,18 @@ mod tests {
         );
         let html = render_markdown("> [!DEFINITION]\n> no bold term\n");
         assert!(
-            html.contains(r#"<div class="env-title">Definition</div>"#),
+            html.contains(r#"<div class="env-title"><span>Definition</span></div>"#),
             "{html}"
         );
     }
 
     #[test]
-    fn theorems_and_propositions_are_math_callouts() {
+    fn theorems_and_propositions_are_boxes_with_the_math_icon() {
         for kind in ["THEOREM", "PROPOSITION"] {
             let html = render_markdown(&format!("> [!{kind}] T\n> x\n"));
             let class = kind.to_lowercase();
             assert!(
-                html.contains(&format!(r#"class="callout callout-{class}""#)),
+                html.contains(&format!(r#"class="env env-{class}""#)),
                 "{html}"
             );
             assert!(

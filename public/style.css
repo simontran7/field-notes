@@ -88,7 +88,6 @@
   --warning: 154, 103, 0;
   --caution: 209, 36, 47;
   --caution-border: 207, 34, 46;
-  --math: 191, 57, 137;
 }
 
 [data-theme="dark"] {
@@ -114,7 +113,6 @@
   --warning-border: 158, 106, 3;
   --caution: 248, 81, 73;
   --caution-border: 218, 54, 51;
-  --math: 219, 97, 162;
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
@@ -481,23 +479,25 @@ body {
 .callout-important { --callout-color: var(--important); --callout-border: var(--important-border, var(--important)); }
 .callout-warning { --callout-color: var(--warning); --callout-border: var(--warning-border, var(--warning)); }
 .callout-caution { --callout-color: var(--caution); --callout-border: var(--caution-border); }
-.callout-theorem,
-.callout-proposition { --callout-color: var(--math); }
 
 /* ─── Definitions ──────────────────────────────────────────
-   Definitions are full boxes with a solid title bar ("Definition (Cache)"),
-   in the style of LaTeX tcolorbox lecture notes, so they
-   read differently from callouts. Theorems and propositions are callouts with the
-   function icon. */
+   Definitions, theorems and propositions are full boxes with a solid title bar
+   ("Definition (Cache)", "Proposition (Law of Addition)"), in the style of LaTeX tcolorbox lecture notes, so they
+   read differently from callouts. Theorems and propositions use the same box in
+   pink, with the function icon. */
 :root {
   --env-definition: #5f6b7a;
   --env-definition-bg: #f0f2f4;
+  --env-math: #b04a80;
+  --env-math-bg: #faf0f5;
   --env-title-text: #ffffff;
 }
 
 [data-theme="dark"] {
   --env-definition: #4a5462;
   --env-definition-bg: #23262b;
+  --env-math: #8a3d66;
+  --env-math-bg: #2b2027;
   --env-title-text: #f3f1ee;
 }
 
@@ -511,7 +511,16 @@ body {
   overflow: hidden;
 }
 
+.env-theorem,
+.env-proposition {
+  --env-color: var(--env-math);
+  --env-bg: var(--env-math-bg);
+}
+
 .env-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: var(--env-color);
   color: var(--env-title-text);
   font-weight: 700;
