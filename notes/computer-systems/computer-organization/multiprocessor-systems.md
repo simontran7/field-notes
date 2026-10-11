@@ -1,6 +1,6 @@
 # Multiprocessor Systems
 
-For decades, chips got faster in two ways: higher clock speeds, and cleverer tricks for running several instructions at once inside a single processor, which is called instruction-level parallelism. That kept performance growing in line with Moore's Law through the early 2000s, but then it hit a wall. Pushing the clock any higher would have made chips use far too much power. So architects started putting several processors (cores) on one chip, and today almost every computer is multicore. These extra cores speed up a program only when programmers write code that runs in parallel.
+For decades, chips got faster in two ways: higher clock speeds, and **instruction-level parallelism**, the tricks a single processor uses to run several instructions at once. That kept performance growing in line with Moore's Law through the early 2000s, but then it hit a wall. Pushing the clock any higher would have made chips use far too much power. So architects started putting several processors (cores) on one chip, and today almost every computer is multicore. These extra cores speed up a program only when programmers write code that runs in parallel.
 
 > [!DEFINITION]
 > A **multiprocessor system** is basically a team of processors working toward the same goal: finishing the work faster. We usually sort these systems by two questions. First, how do the processors get to memory? Second, is every processor the same kind, or does the system combine different kinds of processors?
