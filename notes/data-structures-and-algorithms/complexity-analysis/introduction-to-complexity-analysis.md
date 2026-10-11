@@ -34,17 +34,17 @@ The asymptotic notation tells you how tightly/loosely you're bounding that scena
 
 ### Simplification Rules
 
-1. Drop constant factors (since we only care about the rate of growth)
+> [!PROPOSITION] Dropping constant factors
+> Since only the rate of growth matters, constant factors can be dropped:
+> $$
+> O(c \cdot f(n)) \rightarrow O(f(n))
+> $$
 
-$$
-O(c \cdot f(n)) \rightarrow O(f(n))
-$$
-
-3. Drop lower-order terms (since we only care about large inputs)
-
-$$
-O(f(n) + g(n)) \rightarrow O(max(f, g))
-$$
+> [!PROPOSITION] Dropping lower-order terms
+> Since only large inputs matter, the faster-growing term dominates:
+> $$
+> O(f(n) + g(n)) \rightarrow O(\max(f, g))
+> $$
 
 ### Laws
 
