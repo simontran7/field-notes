@@ -92,8 +92,6 @@ CISC ISAs, in contrast, have a large set of complex higher-level instructions th
 ### CPU Performance
 
 > [!PROPOSITION] Performance equation
-> The following equation is commonly used to express a computer's performance ability:
-> 
 > $$
 > \frac{\text{time}}{\text{program}}
 > = \frac{\text{instructions}}{\text{program}}

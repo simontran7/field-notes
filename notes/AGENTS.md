@@ -15,7 +15,7 @@ Write my in this clear, conversational, explanatory style.
   - `> [!THEOREM]`: a major or fundamental result (e.g., congruence modulo $m$).
   - `> [!PROPOSITION]`: a smaller result that can be proven, such as a closed form (arithmetic series, cache size), a rule for rewriting expressions (summation properties, the laws of big O, modular arithmetic properties), or an identity (the performance equation). Include the sentence that introduces it, and use its name as the title (`> [!PROPOSITION] Arithmetic series`). Worked-example steps and derivations stay as plain math.
   - `> [!COROLLARY]`: a result that follows almost immediately from the theorem or proposition right before it (e.g., the modular arithmetic properties after congruence modulo $m$).
-  - All three render as boxes with a title bar, "Definition (Cache)", "Proposition (Arithmetic series)". Theorems, propositions and corollaries are pink with a function icon; definitions are slate.
+  - All three render as boxes with a title bar, "Definition (Cache)", "Proposition (Arithmetic series)". Theorems, propositions and corollaries are pink; definitions are slate.
 - Everything else that deserves a box is a callout, and there are only three kinds, picked by what the reader should do with the information:
   - `> [!NOTE]`: background or clarifying facts worth knowing, with no action implied.
   - `> [!TIP]`: optional advice, such as a better way, a technique, a shortcut, a handy tool, or a "prefer X over Y" recommendation.

@@ -483,8 +483,8 @@ body {
 /* ─── Definitions ──────────────────────────────────────────
    Definitions, theorems and propositions are full boxes with a solid title bar
    ("Definition (Cache)", "Proposition (Law of Addition)"), in the style of LaTeX tcolorbox lecture notes, so they
-   read differently from callouts. Theorems and propositions use the same box in
-   pink, with the function icon. */
+   read differently from callouts. Theorems, propositions and corollaries use the
+   same box in pink. */
 :root {
   --env-definition: #5f6b7a;
   --env-definition-bg: #f0f2f4;
@@ -501,14 +501,12 @@ body {
   --env-title-text: #f3f1ee;
 }
 
+/* Each edge is drawn once (the title bar's rounded top, the body's sides and bottom),
+   so no sliver of page shows between two anti-aliased curves at the corners. */
 .env {
   --env-color: var(--env-definition);
   --env-bg: var(--env-definition-bg);
   margin: 1.5em 0;
-  border: 1px solid var(--env-color);
-  border-radius: 6px;
-  background: var(--env-bg);
-  overflow: hidden;
 }
 
 .env-theorem,
@@ -519,19 +517,19 @@ body {
 }
 
 .env-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  border-radius: 6px 6px 0 0;
   background: var(--env-color);
   color: var(--env-title-text);
   font-weight: 700;
-  /* line-height 1 keeps the icon centered on the letters; the padding makes up the
-     height (0.5em * 2 + 1 = the old 0.3em * 2 + 1.4) */
-  padding: 0.5em 1rem;
-  line-height: 1;
+  padding: 0.3em 1rem;
+  line-height: 1.4;
 }
 
 .env-body {
+  background: var(--env-bg);
+  border: 1px solid var(--env-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
   padding: 0.75rem 1rem;
 }
 
