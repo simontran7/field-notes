@@ -525,8 +525,10 @@ body {
   background: var(--env-color);
   color: var(--env-title-text);
   font-weight: 700;
-  padding: 0.3em 1rem;
-  line-height: 1.4;
+  /* line-height 1 keeps the icon centered on the letters; the padding makes up the
+     height (0.5em * 2 + 1 = the old 0.3em * 2 + 1.4) */
+  padding: 0.5em 1rem;
+  line-height: 1;
 }
 
 .env-body {
