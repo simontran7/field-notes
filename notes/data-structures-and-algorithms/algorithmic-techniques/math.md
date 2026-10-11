@@ -42,7 +42,7 @@ Algorithms that involve `x mod m`, (`m` is typically $10^9 + 7$), where:
 
 ### Theorem
 
-> [!FORMULA] Congruence modulo $m$
+> [!THEOREM] Congruence modulo $m$
 > $$
 > \begin{aligned}
 > a \equiv b \pmod{m}
@@ -55,7 +55,7 @@ Algorithms that involve `x mod m`, (`m` is typically $10^9 + 7$), where:
 
 ### Properties
 
-> [!FORMULA] Modular arithmetic properties
+> [!PROPOSITION] Modular arithmetic
 > We get the following properties from the above:
 > $$
 > \begin{aligned}

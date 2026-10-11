@@ -154,7 +154,7 @@ mv <source> <destination>
 > [!NOTE]
 > Moving a file to the *same* directory under a different name renames it.
 
-> [!CAUTION]
+> [!WARNING]
 > `mv` silently overwrites `<destination>` if it already exists. Use `mv -i` to be prompted first.
 
 - Removing files
@@ -175,7 +175,7 @@ rmdir <directory>
 rm -r <directory>
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > `rm` deletes permanently, with no trash bin and no undo. Double-check the path before running it, especially with `-r` or wildcards.
 
 - Find files by name, searching recursively from the current directory
@@ -341,7 +341,7 @@ The **lowercase** version matches something, and the **uppercase** version match
 > [!NOTE]
 > `\d+(?= dollars)` matches the number in `100 dollars` but not in `100 euros`, and the match is just `100`, not `100 dollars`, since the lookahead doesn't consume characters.
 
-> [!IMPORTANT]
+> [!WARNING]
 > Lookbehind patterns in PCRE must be *fixed-width* (you can't use `*` or `+` inside them). Lookaheads have no such restriction.
 
 ## Text Manipulation
@@ -406,7 +406,7 @@ sed -i 's/<old text>/<new text>/g' <file to search>
 grep -rIEl '<old text>' . | xargs sed -i 's/<old text>/<new text>/g'
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > `sed -i` edits files in place with no backup. Run the command without `-i` first to preview the output, or use `-i.bak` to keep a backup copy of each file.
 
 ## Permissions & Ownership
@@ -447,7 +447,7 @@ chmod 644 <file>        # rw-r--r--: typical for regular files
 chmod 755 <file>        # rwxr-xr-x: typical for scripts and directories
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > Avoid `chmod 777`, which lets *every* user read, modify, and run the file. It's a common quick fix in old tutorials, but it's almost never the right one and creates a security hole.
 
 - Change a file's owner and group (add `-R` to apply to a directory's contents)
@@ -602,7 +602,7 @@ crontab -l
 crontab -r
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > `crontab -r` deletes everything immediately, with no confirmation. The `r` key sits right next to `e`, so it's easy to hit by accident. Back up first with `crontab -l > crontab-backup.txt`.
 
 ### Crontab Syntax
@@ -685,7 +685,7 @@ logout
 NAME="VALUE"
 ```
 
-> [!IMPORTANT]
+> [!WARNING]
 > No spaces around `=`. `name = "value"` is treated as running a command called `name`.
 
 - Print a variable
@@ -1078,7 +1078,7 @@ sudo deluser <user>
 sudo usermod -aG <group> <user>
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > Never leave out the `-a`. Without it, `usermod -G` *replaces* all of the user's groups instead of adding one, which can remove your own `sudo` access.
 
 > [!NOTE]

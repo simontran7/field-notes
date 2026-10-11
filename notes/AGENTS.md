@@ -10,21 +10,22 @@ Write my in this clear, conversational, explanatory style.
 - No em dashes. Check with grep before finishing.
 - Center align all markdown tables (`| :---: | :---: |`).
 - Use `_` over `*` for italics.
-- Pick callout types by what the reader should do with the information:
-  - `> [!DEFINITION]`: defines a term (the bolded term and what it is).
-  - `> [!FORMULA]`: a reusable formula, law, or property worth looking up later. Include the sentence that introduces it. When the formula has its own name, use it as the title (`> [!FORMULA] Arithmetic series`). Worked-example steps and derivations stay as plain math.
+- Math content gets its own boxes, using the standard names from math writing:
+  - `> [!DEFINITION]`: defines a term, a notation, or what a representation means (the bolded term and what it is, positional notation, the floating-point format). Rendered as a numbered box with a title bar ("Definition 2.1: Title", numbered automatically). Add a title after the type when the thing has a name (`> [!DEFINITION] Set-associative cache`).
+  - `> [!THEOREM]`: a major or fundamental result (e.g., congruence modulo $m$).
+  - `> [!PROPOSITION]`: a smaller result that can be proven, such as a closed form (arithmetic series, cache size), a rule for rewriting expressions (summation properties, the laws of big O, modular arithmetic properties), or an identity (the performance equation). Include the sentence that introduces it, and use its name as the title (`> [!PROPOSITION] Arithmetic series`). Worked-example steps and derivations stay as plain math.
+  - Theorems and propositions are rendered as pink callouts with a function icon.
+- Everything else that deserves a box is a callout, and there are only three kinds, picked by what the reader should do with the information:
   - `> [!NOTE]`: background or clarifying facts worth knowing, with no action implied.
   - `> [!TIP]`: optional advice, such as a better way, a technique, a shortcut, a handy tool, or a "prefer X over Y" recommendation.
-  - `> [!IMPORTANT]`: something required for the thing to work, or a key distinction that is easy to get wrong.
-  - `> [!WARNING]`: a gotcha that silently produces wrong results or bugs (e.g., operator precedence, shell syntax that misparses).
-  - `> [!CAUTION]`: an action that destroys data, can't be undone, or opens a security hole (e.g., `rm`, `crontab -r`, `chmod 777`).
-- Telling similar callout types apart:
+  - `> [!WARNING]`: something that breaks, quietly gives wrong results, or destroys data if ignored (e.g., a required compiler flag, operator precedence, shell syntax that misparses, `rm`, `crontab -r`).
+  - Don't use `[!IMPORTANT]` or `[!CAUTION]`.
+- Telling similar boxes apart:
   - definition vs NOTE: use definition when the sentence introduces a bolded term and says what it is. Use NOTE for any other fact about a term that is already defined.
   - Which definitions get a box: box a definition when its term is the main subject of the paragraph or section (e.g., the opening sentence of "Cache Associativity" for each cache type), however the sentence is worded ("is", "lets", "consists of", "is called"). Keep a term inline when it is introduced in passing inside a sentence about something else (e.g., "...each called a **register**", "...known as a **clock cycle**"). Sibling terms in the same section are either all boxed or all inline.
+  - DEFINITION vs PROPOSITION: a definition says what something means; a proposition states something true about things already defined.
   - NOTE vs TIP: ask whether the callout suggests something the reader could choose to do. A suggestion goes in TIP. A fact the reader only needs to know goes in NOTE.
-  - TIP vs IMPORTANT: ask what happens if the reader ignores it. If the result is merely slower, longer, or less elegant, use TIP. If the code or command fails, use IMPORTANT.
-  - IMPORTANT vs WARNING: IMPORTANT covers something the reader must do for things to work, and failing to do it is usually obvious (an error, nothing happens). WARNING covers a mistake that looks fine and quietly gives the wrong result.
-  - WARNING vs CAUTION: WARNING covers mistakes that cost debugging time. CAUTION covers actions whose damage stays after you notice, such as deleted files, lost commits, or exposed permissions.
+  - TIP vs WARNING: ask what happens if the reader ignores it. If the result is merely slower, longer, or less elegant, use TIP. If something fails, gives a wrong result, or loses data, use WARNING.
 - Links between notes are relative paths to the file, e.g. `[Two Pointers](../algorithmic-techniques/two-pointers.md)` or `[Generics](c.md#generics)`. A link to a note that doesn't exist fails the build.
 - Images go in an `images/` folder next to the note and are linked relatively (`images/cpu.png`).
 - After writing or editing C, C++, Python or Rust code blocks, run `cargo run -- fmt` from the repo root. It formats them with clang-format, ruff and rustfmt (4-space indents, opening braces on the same line, `(int)x` casts with no space, 80 columns). It skips blocks that are pieces of a larger program, so format those by hand in the same style.

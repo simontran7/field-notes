@@ -194,7 +194,7 @@ git show <commit>
 git switch --detach <commit> or HEAD<relative reference>
 ```
 
-> [!CAUTION]
+> [!WARNING]
 > Checking out a commit causes the `HEAD` pointer to be in a detached head state, where any commits won't belong to any branches, and will be lost when you switch away (unless you run `git switch -c <new branch>` first to keep them).
 
 ## Merging & Rebasing

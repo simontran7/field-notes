@@ -6,7 +6,7 @@ use regex::Regex;
 use std::collections::HashSet;
 
 /// Callout icons: GitHub's Octicons (primer/octicons) for GitHub's five alert types,
-/// plus a book for definitions and Lucide's square-function for formulas.
+/// plus Lucide's square-function for theorems and propositions.
 fn callout_icon(callout_type: &str) -> &'static str {
     match callout_type {
         "note" => {
@@ -24,10 +24,7 @@ fn callout_icon(callout_type: &str) -> &'static str {
         "caution" => {
             r#"<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>"#
         }
-        "definition" => {
-            r#"<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>"#
-        }
-        "formula" => {
+        "theorem" | "proposition" => {
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 17c2 0 2.8-1 2.8-2.8V10c0-2 1-3.3 3.2-3"/><path d="M9 11.2h5.7"/></svg>"#
         }
         _ => unreachable!(),
@@ -35,7 +32,14 @@ fn callout_icon(callout_type: &str) -> &'static str {
 }
 
 const GITHUB_TYPES: [&str; 5] = ["note", "tip", "important", "warning", "caution"];
-const CUSTOM_TYPES: [&str; 2] = ["definition", "formula"];
+const CUSTOM_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
+
+/// Types drawn as numbered boxes with a title bar, like a LaTeX math environment
+/// ("Definition 2.1: Distance functions"), so they stand apart from callouts.
+const ENVIRONMENT_TYPES: [&str; 1] = ["definition"];
+
+/// Placeholder for an environment's number, filled in by `number_environments`.
+const NUMBER_MARK: &str = "@@number@@";
 
 /// Marks a custom callout so it survives comrak, which only knows GitHub's five types.
 const CUSTOM_MARK: &str = "@@callout:";
@@ -45,7 +49,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
 
 /// Rewrites callout headers into GitHub alerts comrak can parse. GitHub types pass
 /// through; titles (`> [!TIP] Shortcut`) and the custom types are carried in a marker:
-/// `> [!FORMULA] Arithmetic series` -> `> [!NOTE] @@callout:formula@@Arithmetic series`,
+/// `> [!PROPOSITION] Arithmetic series` -> `> [!NOTE] @@callout:proposition@@Arithmetic series`,
 /// restored after rendering.
 fn prepare_callouts(markdown: &str) -> String {
     CALLOUT_START_RE
@@ -105,6 +109,13 @@ fn process_callouts(html: &str) -> String {
             }
             let label = title_math(&label);
             let body = &caps[3];
+            if ENVIRONMENT_TYPES.contains(&kind.as_str()) {
+                let heading = capitalize(&kind);
+                let title = if label == heading { String::new() } else { format!(": {label}") };
+                return format!(
+                    r#"<div class="env env-{kind}"><div class="env-title">{heading} {NUMBER_MARK}{title}</div><div class="env-body">{body}</div></div>"#
+                );
+            }
             format!(
                 r#"<div class="callout callout-{kind}"><div class="callout-title">{icon}<span>{label}</span></div><div class="callout-body">{body}</div></div>"#,
                 icon = callout_icon(&kind),
@@ -237,9 +248,49 @@ fn highlight_code_blocks(html: &str) -> String {
         .into_owned()
 }
 
+static SECTION_OR_ENV_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"<h2\b|<div class="env env-(\w+)">"#).unwrap());
+
+/// Numbers environments per `##` section and per kind, like LaTeX: the first
+/// definition under the second `##` heading is "Definition 2.1".
+fn number_environments(html: &str) -> String {
+    let mut section = 0;
+    let mut counts: std::collections::HashMap<String, usize> = Default::default();
+    let mut out = String::with_capacity(html.len());
+    let mut last = 0;
+    for caps in SECTION_OR_ENV_RE.captures_iter(html) {
+        let m = caps.get(0).unwrap();
+        match caps.get(1) {
+            None => {
+                section += 1;
+                counts.clear();
+            }
+            Some(kind) => {
+                let n = counts.entry(kind.as_str().to_string()).or_insert(0);
+                *n += 1;
+                // copy up to the number placeholder of this environment
+                let mark = html[m.end()..]
+                    .find(NUMBER_MARK)
+                    .map(|i| m.end() + i)
+                    .unwrap();
+                out.push_str(&html[last..mark]);
+                out.push_str(&format!("{}.{}", section.max(1), n));
+                last = mark + NUMBER_MARK.len();
+                continue;
+            }
+        }
+        out.push_str(&html[last..m.end()]);
+        last = m.end();
+    }
+    out.push_str(&html[last..]);
+    out
+}
+
 pub fn render_markdown(body: &str) -> String {
     let html = markdown_to_html(&prepare_callouts(body), &options());
-    highlight_code_blocks(&strip_anchors(&process_callouts(&html)))
+    highlight_code_blocks(&number_environments(&strip_anchors(&process_callouts(
+        &html,
+    ))))
 }
 
 pub fn render_note(
@@ -264,28 +315,61 @@ mod tests {
 
     #[test]
     fn every_callout_type_has_an_icon() {
-        for t in GITHUB_TYPES.iter().chain(CUSTOM_TYPES.iter()) {
+        for t in GITHUB_TYPES
+            .iter()
+            .chain(CUSTOM_TYPES.iter())
+            .filter(|t| !ENVIRONMENT_TYPES.contains(t))
+        {
             callout_icon(t);
         }
     }
 
     #[test]
     fn custom_callouts_keep_type_and_title() {
-        let html = render_markdown("> [!FORMULA] Arithmetic series\n> $1+1$\n");
+        let html = render_markdown("> [!PROPOSITION] Arithmetic series\n> $1+1$\n");
         assert!(
-            html.contains(r#"class="callout callout-formula""#),
+            html.contains(r#"class="callout callout-proposition""#),
             "{html}"
         );
         assert!(html.contains("<span>Arithmetic series</span>"), "{html}");
 
         let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
-        assert!(html.contains("callout-definition"), "{html}");
-        assert!(html.contains("<span>Definition</span>"), "{html}");
+        assert!(
+            html.contains(
+                r#"<div class="env env-definition"><div class="env-title">Definition 1.1</div>"#
+            ),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn environments_are_numbered_per_section_and_kind() {
+        let md = "## A\n> [!DEFINITION] X\n> x\n\n> [!DEFINITION]\n> y\n\n## B\n> [!DEFINITION] Z\n> z\n";
+        let html = render_markdown(md);
+        for expected in ["Definition 1.1: X", "Definition 1.2<", "Definition 2.1: Z"] {
+            assert!(html.contains(expected), "missing {expected} in {html}");
+        }
+    }
+
+    #[test]
+    fn theorems_and_propositions_are_math_callouts() {
+        for kind in ["THEOREM", "PROPOSITION"] {
+            let html = render_markdown(&format!("> [!{kind}] T\n> x\n"));
+            let class = kind.to_lowercase();
+            assert!(
+                html.contains(&format!(r#"class="callout callout-{class}""#)),
+                "{html}"
+            );
+            assert!(
+                html.contains("M9 11.2h5.7"),
+                "math icon missing for {kind}: {html}"
+            );
+        }
     }
 
     #[test]
     fn math_in_callout_titles_renders() {
-        let html = render_markdown("> [!FORMULA] Formula ($i^k$ series)\n> x\n");
+        let html = render_markdown("> [!PROPOSITION] Formula ($i^k$ series)\n> x\n");
         assert!(
             html.contains(r#"Formula (<span data-math-style="inline">i^k</span> series)"#),
             "{html}"

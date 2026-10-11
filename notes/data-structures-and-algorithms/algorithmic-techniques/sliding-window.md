@@ -80,7 +80,7 @@ def fixed_sliding_window(array, k):
     return result
 ```
 
-> [!IMPORTANT]
+> [!WARNING]
 > The constraint must be preserved as the sliding window shrinks. If shrinking the window can break the constraint, consider using the _prefix state_ technique instead.
 
 > [!NOTE]

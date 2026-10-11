@@ -9,7 +9,7 @@
 > - Each digit position can hold one of 10 unique values (0 through 9), where values greater than 9 require carrying to an additional digit position to the left.
 > - Each digit's position determines its contribution to the overall value: digits are labeled from right to left as $d_0, d_1, d_2, \dots, d_{N - 1}$, and each successive position is worth ten times the position to its right.
 
-> [!FORMULA]
+> [!DEFINITION] Positional notation
 > More formally, any $N$-digit number can be expressed using **positional notation** as:
 > 
 > $$
@@ -68,7 +68,7 @@
 
 ### Any base $b$ to decimal
 
-> [!FORMULA]
+> [!DEFINITION] Positional notation in base $b$
 > For a number with digits $d_{N - 1}, d_{N - 2}, \dots, d_1, d_0$ in base $b$, convert the number by multiplying each digit by its place value $b^i$:
 > 
 > $$
@@ -444,7 +444,7 @@ println!("z: {z:b}"); // z: 11000000111001
 
 ### IEEE 754 Structure
 
-> [!FORMULA]
+> [!DEFINITION] Floating-point representation
 > For some number $x$:
 > 
 > $$
@@ -478,7 +478,7 @@ println!("z: {z:b}"); // z: 11000000111001
 
 ### Normal Numbers
 
-> [!FORMULA]
+> [!DEFINITION] Normal numbers
 > $$
 > x = (-1)^\text{sign} \times (1.\text{fraction})_2 \times 2^\text{actual exponent}
 > $$
@@ -525,7 +525,7 @@ Types of $\text{NaN}$:
 
 #### Denormalized (Subnormal) Numbers
 
-> [!FORMULA]
+> [!DEFINITION] Denormalized numbers
 > $$
 > x = (-1)^\text{sign} \times (0.\text{fraction})_2 \times 2^\text{smallest possible actual exponent}
 > $$

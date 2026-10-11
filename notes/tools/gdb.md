@@ -1,6 +1,6 @@
 # GDB
 
-> [!IMPORTANT]
+> [!WARNING]
 > You need to compile your program with debug symbols.
 
 - Start GDB: `gdb <file>`

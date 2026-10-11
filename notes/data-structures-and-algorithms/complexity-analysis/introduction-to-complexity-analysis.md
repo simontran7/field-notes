@@ -32,7 +32,7 @@ $\Theta(f(n)))$ is the set of functions that grow _as fast_ as $f(n)$.
 
 If $g \in O(f)$ and $g \in \omega(f)$, then $g \in \Theta(f)$, and we say $g$ is asymptotically **tight bounded** by $f$.
 
-> [!IMPORTANT]
+> [!NOTE]
 > The case and the asymptotic notation are independent choices!
 
 ### Simplification Rules
@@ -51,12 +51,12 @@ $$
 
 ### Laws
 
-> [!FORMULA] Law of Addition
+> [!PROPOSITION] Law of Addition
 > $$
 > O(f(n)) + O(g(n)) \rightarrow O(f(n) + g(n))
 > $$
 
-> [!FORMULA] Law of Multiplication
+> [!PROPOSITION] Law of Multiplication
 > $$
 > O(f(n)) \cdot O(g(n)) \rightarrow O(f(n) \cdot g(n))
 > $$

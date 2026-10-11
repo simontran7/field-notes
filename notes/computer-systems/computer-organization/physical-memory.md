@@ -172,7 +172,7 @@ To address this, caches restrict where specific memory blocks can reside, at a c
 > [!DEFINITION]
 > A **direct-mapped cache** maps each memory block to exactly one specific cache line based on the index field encoded in the memory block's address. No searching is needed, as the hardware directly computes which single cache line to check.
 
-> [!FORMULA]
+> [!PROPOSITION] Cache size
 > $$
 > \text{cache size} = \text{total sets} \times \text{cache lines per set} \times \text{data block size}
 > $$

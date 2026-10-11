@@ -81,15 +81,14 @@
   --sans: "Jost", sans-serif;
   --mono: "Cascadia Code", ui-monospace, Menlo, monospace;
 
-  /* Callout colors: GitHub alert colors (light), plus the custom definition and formula types */
+  /* Callout colors: GitHub alert colors (light), plus the math callouts (theorem, proposition) */
   --note: 9, 105, 218;
   --tip: 26, 127, 55;
   --important: 130, 80, 223;
   --warning: 154, 103, 0;
   --caution: 209, 36, 47;
   --caution-border: 207, 34, 46;
-  --definition: 188, 76, 0;
-  --formula: 191, 57, 137;
+  --math: 191, 57, 137;
 }
 
 [data-theme="dark"] {
@@ -115,8 +114,7 @@
   --warning-border: 158, 106, 3;
   --caution: 248, 81, 73;
   --caution-border: 218, 54, 51;
-  --definition: 240, 136, 62;
-  --formula: 219, 97, 162;
+  --math: 219, 97, 162;
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
@@ -483,8 +481,61 @@ body {
 .callout-important { --callout-color: var(--important); --callout-border: var(--important-border, var(--important)); }
 .callout-warning { --callout-color: var(--warning); --callout-border: var(--warning-border, var(--warning)); }
 .callout-caution { --callout-color: var(--caution); --callout-border: var(--caution-border); }
-.callout-definition { --callout-color: var(--definition); }
-.callout-formula { --callout-color: var(--formula); }
+.callout-theorem,
+.callout-proposition { --callout-color: var(--math); }
+
+/* ─── Definitions ──────────────────────────────────────────
+   Definitions are full boxes with a solid title bar, numbered per section
+   ("Definition 2.1: ..."), in the style of LaTeX tcolorbox lecture notes, so they
+   read differently from callouts. Theorems and propositions are callouts with the
+   function icon. */
+:root {
+  --env-definition: #b98b7f;
+  --env-definition-bg: #f3ebe9;
+  --env-title-text: #ffffff;
+}
+
+[data-theme="dark"] {
+  --env-definition: #8f645a;
+  --env-definition-bg: #2c2422;
+  --env-title-text: #f3f1ee;
+}
+
+.env {
+  --env-color: var(--env-definition);
+  --env-bg: var(--env-definition-bg);
+  margin: 1.5em 0;
+  border: 1px solid var(--env-color);
+  border-radius: 6px;
+  background: var(--env-bg);
+  overflow: hidden;
+}
+
+.env-title {
+  background: var(--env-color);
+  color: var(--env-title-text);
+  font-weight: 700;
+  padding: 0.3em 1rem;
+  line-height: 1.4;
+}
+
+.env-body {
+  padding: 0.75rem 1rem;
+}
+
+.env-body > :first-child {
+  margin-top: 0;
+}
+
+.env-body > :last-child {
+  margin-bottom: 0;
+}
+
+.env-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
 
 /* ─── Mermaid ────────────────────────────────────────────── */
 .mermaid {

@@ -90,7 +90,7 @@ CISC ISAs, in contrast, have a large set of complex higher-level instructions th
 
 ### CPU Performance
 
-> [!FORMULA]
+> [!PROPOSITION] Performance equation
 > The following equation is commonly used to express a computer's performance ability:
 > 
 > $$
