@@ -34,12 +34,9 @@ fn callout_icon(callout_type: &str) -> &'static str {
 const GITHUB_TYPES: [&str; 5] = ["note", "tip", "important", "warning", "caution"];
 const CUSTOM_TYPES: [&str; 3] = ["definition", "theorem", "proposition"];
 
-/// Types drawn as numbered boxes with a title bar, like a LaTeX math environment
-/// ("Definition 2.1: Distance functions"), so they stand apart from callouts.
+/// Types drawn as boxes with a title bar, like a LaTeX math environment
+/// ("Definition (Cache)"), so they stand apart from callouts.
 const ENVIRONMENT_TYPES: [&str; 1] = ["definition"];
-
-/// Placeholder for an environment's number, filled in by `number_environments`.
-const NUMBER_MARK: &str = "@@number@@";
 
 /// Marks a custom callout so it survives comrak, which only knows GitHub's five types.
 const CUSTOM_MARK: &str = "@@callout:";
@@ -111,9 +108,23 @@ fn process_callouts(html: &str) -> String {
             let body = &caps[3];
             if ENVIRONMENT_TYPES.contains(&kind.as_str()) {
                 let heading = capitalize(&kind);
-                let title = if label == heading { String::new() } else { format!(": {label}") };
+                // The name is the explicit title, or else the first bolded term:
+                // "A **cache** is ..." -> "Definition (Cache)"
+                let name = if label != heading {
+                    Some(label.clone())
+                } else {
+                    // A trailing abbreviation is dropped: "Control unit (CU)" -> "Control unit"
+                    STRONG_RE.captures(body).map(|c| {
+                        let term = TAG_STRIP_RE.replace_all(&c[1], "");
+                        capitalize(TRAILING_ABBREVIATION_RE.replace(&term, "").trim())
+                    })
+                };
+                let title = match name {
+                    Some(name) => format!("{heading} ({name})"),
+                    None => heading,
+                };
                 return format!(
-                    r#"<div class="env env-{kind}"><div class="env-title">{heading} {NUMBER_MARK}{title}</div><div class="env-body">{body}</div></div>"#
+                    r#"<div class="env env-{kind}"><div class="env-title">{title}</div><div class="env-body">{body}</div></div>"#
                 );
             }
             format!(
@@ -248,49 +259,15 @@ fn highlight_code_blocks(html: &str) -> String {
         .into_owned()
 }
 
-static SECTION_OR_ENV_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"<h2\b|<div class="env env-(\w+)">"#).unwrap());
-
-/// Numbers environments per `##` section and per kind, like LaTeX: the first
-/// definition under the second `##` heading is "Definition 2.1".
-fn number_environments(html: &str) -> String {
-    let mut section = 0;
-    let mut counts: std::collections::HashMap<String, usize> = Default::default();
-    let mut out = String::with_capacity(html.len());
-    let mut last = 0;
-    for caps in SECTION_OR_ENV_RE.captures_iter(html) {
-        let m = caps.get(0).unwrap();
-        match caps.get(1) {
-            None => {
-                section += 1;
-                counts.clear();
-            }
-            Some(kind) => {
-                let n = counts.entry(kind.as_str().to_string()).or_insert(0);
-                *n += 1;
-                // copy up to the number placeholder of this environment
-                let mark = html[m.end()..]
-                    .find(NUMBER_MARK)
-                    .map(|i| m.end() + i)
-                    .unwrap();
-                out.push_str(&html[last..mark]);
-                out.push_str(&format!("{}.{}", section.max(1), n));
-                last = mark + NUMBER_MARK.len();
-                continue;
-            }
-        }
-        out.push_str(&html[last..m.end()]);
-        last = m.end();
-    }
-    out.push_str(&html[last..]);
-    out
-}
+static STRONG_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<strong>(.*?)</strong>").unwrap());
+static TAG_STRIP_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
+static TRAILING_ABBREVIATION_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s*\([A-Z0-9]+\)$").unwrap());
 
 pub fn render_markdown(body: &str) -> String {
     let html = markdown_to_html(&prepare_callouts(body), &options());
-    highlight_code_blocks(&number_environments(&strip_anchors(&process_callouts(
-        &html,
-    ))))
+    highlight_code_blocks(&strip_anchors(&process_callouts(&html)))
 }
 
 pub fn render_note(
@@ -335,20 +312,28 @@ mod tests {
 
         let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
         assert!(
-            html.contains(
-                r#"<div class="env env-definition"><div class="env-title">Definition 1.1</div>"#
-            ),
+            html.contains(r#"<div class="env env-definition">"#),
             "{html}"
         );
     }
 
     #[test]
-    fn environments_are_numbered_per_section_and_kind() {
-        let md = "## A\n> [!DEFINITION] X\n> x\n\n> [!DEFINITION]\n> y\n\n## B\n> [!DEFINITION] Z\n> z\n";
-        let html = render_markdown(md);
-        for expected in ["Definition 1.1: X", "Definition 1.2<", "Definition 2.1: Z"] {
-            assert!(html.contains(expected), "missing {expected} in {html}");
-        }
+    fn definitions_are_titled_by_name() {
+        let html = render_markdown("> [!DEFINITION]\n> A **cache** is fast.\n");
+        assert!(
+            html.contains(r#"<div class="env-title">Definition (Cache)</div>"#),
+            "{html}"
+        );
+        let html = render_markdown("> [!DEFINITION] Positional notation\n> **x** y\n");
+        assert!(
+            html.contains(">Definition (Positional notation)<"),
+            "{html}"
+        );
+        let html = render_markdown("> [!DEFINITION]\n> no bold term\n");
+        assert!(
+            html.contains(r#"<div class="env-title">Definition</div>"#),
+            "{html}"
+        );
     }
 
     #[test]

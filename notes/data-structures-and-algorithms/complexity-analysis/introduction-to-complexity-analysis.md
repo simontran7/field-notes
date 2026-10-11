@@ -14,23 +14,20 @@ Runtime is usually analyzed based on three different scenarios:
 
 The asymptotic notation tells you how tightly/loosely you're bounding that scenario's growth.
 
-### Definition (big O)
+> [!DEFINITION] big O
+> $O(f(n))$ is the set of functions that grow _at most_ as fast as $c \cdot f(n)$, for some constant $c$.
+>
+> If $g \in O(f)$, then we say $g$ is asymptotically **upper bounded** by $f$.
 
-$O(f(n))$ is the set of functions that grow _at most_ as fast as $c \dot f(n)$, for some constant $c$. 
+> [!DEFINITION] big Omega
+> $\Omega(f(n))$ is the set of functions that grow _at least_ as fast as $c \cdot f(n)$, for some constant $c$.
+>
+> If $g \in \Omega(f)$, then we say $g$ is asymptotically **lower bounded** by $f$.
 
-If $g \in O(f)$, then we say $g$ is asymptotically **upper bounded** by $f$.
-
-### Definition (big Omega)
-
-$\Omega(f(n))$ is the set of functions that grow _at least_ as fast as $c \dot f(n)$, for some constant $c$. 
-
-If $g \in \omega(f)$, then we say $g$ is asymptotically **lower bounded** by $f$.
-
-### Definition (big Theta)
-
-$\Theta(f(n)))$ is the set of functions that grow _as fast_ as $f(n)$. 
-
-If $g \in O(f)$ and $g \in \omega(f)$, then $g \in \Theta(f)$, and we say $g$ is asymptotically **tight bounded** by $f$.
+> [!DEFINITION] big Theta
+> $\Theta(f(n))$ is the set of functions that grow _as fast_ as $f(n)$.
+>
+> If $g \in O(f)$ and $g \in \Omega(f)$, then $g \in \Theta(f)$, and we say $g$ is asymptotically **tight bounded** by $f$.
 
 > [!NOTE]
 > The case and the asymptotic notation are independent choices!

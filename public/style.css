@@ -485,8 +485,8 @@ body {
 .callout-proposition { --callout-color: var(--math); }
 
 /* ─── Definitions ──────────────────────────────────────────
-   Definitions are full boxes with a solid title bar, numbered per section
-   ("Definition 2.1: ..."), in the style of LaTeX tcolorbox lecture notes, so they
+   Definitions are full boxes with a solid title bar ("Definition (Cache)"),
+   in the style of LaTeX tcolorbox lecture notes, so they
    read differently from callouts. Theorems and propositions are callouts with the
    function icon. */
 :root {

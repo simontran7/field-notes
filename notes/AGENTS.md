@@ -11,7 +11,7 @@ Write my in this clear, conversational, explanatory style.
 - Center align all markdown tables (`| :---: | :---: |`).
 - Use `_` over `*` for italics.
 - Math content gets its own boxes, using the standard names from math writing:
-  - `> [!DEFINITION]`: defines a term, a notation, or what a representation means (the bolded term and what it is, positional notation, the floating-point format). Rendered as a numbered box with a title bar ("Definition 2.1: Title", numbered automatically). Add a title after the type when the thing has a name (`> [!DEFINITION] Set-associative cache`).
+  - `> [!DEFINITION]`: defines a term, a notation, or what a representation means (the bolded term and what it is, positional notation, the floating-point format). Rendered as a box with a title bar, "Definition (Name)". The name is the first **bolded** term in the box, so a title is only needed when there's no bolded term or a shorter name reads better (`> [!DEFINITION] ASCII`). Don't write definitions as headings like `### Definition (big O)`; use the box with a title.
   - `> [!THEOREM]`: a major or fundamental result (e.g., congruence modulo $m$).
   - `> [!PROPOSITION]`: a smaller result that can be proven, such as a closed form (arithmetic series, cache size), a rule for rewriting expressions (summation properties, the laws of big O, modular arithmetic properties), or an identity (the performance equation). Include the sentence that introduces it, and use its name as the title (`> [!PROPOSITION] Arithmetic series`). Worked-example steps and derivations stay as plain math.
   - Theorems and propositions are rendered as pink callouts with a function icon.

@@ -24,7 +24,7 @@ Notes are plain Markdown in `notes/`. `notes/index.md` is the home page, and eve
 - **Links** between notes are relative paths (`[Generics](c.md#generics)`). A link to a note that doesn't exist fails the build.
 - **Images** go in an `images/` folder next to the note (`images/cpu.png`).
 - **Math** uses `$...$` and `$$...$$` (rendered with KaTeX).
-- **Math boxes**: `> [!DEFINITION]` renders as a numbered box with a title bar ("Definition 2.1: Title"), numbered per `##` section. `> [!THEOREM]` and `> [!PROPOSITION]` render as callouts with a function icon.
+- **Math boxes**: `> [!DEFINITION]` renders as a box with a title bar, "Definition (Name)", where the name is the title after the type or else the first bolded term. `> [!THEOREM]` and `> [!PROPOSITION]` render as callouts with a function icon.
 - **Callouts** use GitHub's syntax, limited to `> [!NOTE]`, `> [!TIP]` and `> [!WARNING]`. Text after the type becomes the title: `> [!PROPOSITION] Arithmetic series`.
 - **Code** is highlighted at build time with [Lumis](https://lumis.sh) (tree-sitter parsers and Neovim's highlight queries) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, resolved from JetBrains' color scheme files (the platform schemes, RustRover, PyCharm's Python plugin, the shell plugin and CLion), and `src/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt; use ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
 

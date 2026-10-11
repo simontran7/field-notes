@@ -31,7 +31,7 @@
 - **Nibble**: 4 bits
 - **Word**: determined by the CPU's register (the natural unit of data that a processor operates on)
 
-> [!DEFINITION]
+> [!PROPOSITION] Number of representable values
 > A base-$b$ number with $n$ digits can represent exactly $b^n$ unique values. Each of the $n$ digit positions independently holds one of $b$ values, so by the multiplication principle:
 > $$
 > \underbrace{b \times b \times \cdots \times b}_{n \text{ digits}} = b^n
@@ -134,7 +134,7 @@
 
 ### ASCII
 
-> [!DEFINITION]
+> [!DEFINITION] ASCII
 > The **American Standard Code for Information Interchange (ASCII)** is a character encoding standard which uses 7 bits per character.
 
 #### Types of ASCII Characters
