@@ -486,16 +486,16 @@ body {
    read differently from callouts. Theorems, propositions and corollaries use the
    same box in pink. */
 :root {
-  --env-definition: #5f6b7a;
-  --env-definition-bg: #f0f2f4;
+  --env-definition: #8a8f5c;
+  --env-definition-bg: #f3f4ec;
   --env-math: #b04a80;
   --env-math-bg: #faf0f5;
   --env-title-text: #ffffff;
 }
 
 [data-theme="dark"] {
-  --env-definition: #4a5462;
-  --env-definition-bg: #23262b;
+  --env-definition: #62664a;
+  --env-definition-bg: #25261f;
   --env-math: #8a3d66;
   --env-math-bg: #2b2027;
   --env-title-text: #f3f1ee;
