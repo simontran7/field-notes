@@ -751,7 +751,8 @@ unalias <name>
 
 ### Exit Codes
 
-Every command returns an **exit code** when it finishes: `0` means success, and anything else means failure.
+> [!DEFINITION]
+> Every command returns an **exit code** when it finishes: `0` means success, and anything else means failure.
 
 - Print the exit code of the last command
 

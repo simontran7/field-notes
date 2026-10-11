@@ -109,9 +109,8 @@ Moves all bits in `n` over by `k` places to the left. Bits shifted past the left
 n << k
 ```
 
-#### Property
-
-**Left shift multiplies:** `x << n` is equivalent to $x \cdot 2^n$, as long as no set bits fall off the top.
+> [!PROPOSITION] Left shift multiplies
+> `x << n` is equivalent to $x \cdot 2^n$, as long as no set bits fall off the top.
 
 ### Right Shift Operator
 
@@ -127,9 +126,8 @@ Moves all bits in `n` over by `k` places to the right. Bits shifted past the rig
 n >> k
 ```
 
-### Property
-
-**Right shift floor-divides:** `x >> n` is equivalent to $\lfloor \frac{x}{2^n} \rfloor$.
+> [!PROPOSITION] Right shift floor-divides
+> `x >> n` is equivalent to $\lfloor \frac{x}{2^n} \rfloor$.
 
 > [!WARNING]
 > In C/C++, bitwise operators have low precedence, and therefore happen later in evaluation order. So, make sure to use parentheses to clearly define your intended grouping.

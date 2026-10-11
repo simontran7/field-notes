@@ -53,7 +53,8 @@ According to **Moore's law**, the number of transistors on microchips, and there
 
 ### Locality of Reference
 
-A program's memory access pattern is called its **locality of reference**. It comes in two types: **temporal locality** and **spatial locality**.
+> [!DEFINITION]
+> A program's memory access pattern is called its **locality of reference**. It comes in two types: **temporal locality** and **spatial locality**.
 
 - **Temporal locality**: the tendency for a recently accessed memory location to be accessed again in the near future. 
     - Loops: the same instructions execute repeatedly, and the same variables are updated each iteration.

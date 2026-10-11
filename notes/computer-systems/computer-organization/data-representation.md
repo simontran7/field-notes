@@ -39,11 +39,12 @@
 
 ### Hexadecimal System
 
-**Hexadecimal** uses base 16, where:
-- Each digit position can hold one of 16 unique values, such that:
-    -  0 to 9 are represented as is.
-    - 10 to 15 are represented as `A` to `F`.
-- Each digit's position determines its contribution through powers of 16: $16^{N-1}, \dots, 16^1, 16^0$.
+> [!DEFINITION]
+> **Hexadecimal** uses base 16, where:
+> - Each digit position can hold one of 16 unique values, such that:
+>     -  0 to 9 are represented as is.
+>     - 10 to 15 are represented as `A` to `F`.
+> - Each digit's position determines its contribution through powers of 16: $16^{N-1}, \dots, 16^1, 16^0$.
 
 > [!NOTE]
 > Binary numbers are typically prefixed with `0b`, while hexadecimal numbers with `0x`.
@@ -279,7 +280,8 @@
 
 ### Unicode
 
-By assigning a unique hexadecimal identifier, called a **code point**, to every character across all writing systems, **Unicode** functions as a character set standard whose code points follow the format `U+<....>`. Because it covers the original ASCII range too, Unicode is also a superset of ASCII.
+> [!DEFINITION] Unicode
+> By assigning a unique hexadecimal identifier, called a **code point**, to every character across all writing systems, **Unicode** functions as a character set standard whose code points follow the format `U+<....>`. Because it covers the original ASCII range too, Unicode is also a superset of ASCII.
 
 #### Code Point Categories
 
@@ -311,7 +313,8 @@ To convert code points into bytes for storage and transmission, Unicode defines 
 
 ### Grapheme clusters
 
-A **grapheme cluster** represents what users typically think of as a "character", that is, the smallest unit of written language that has semantic meaning.
+> [!DEFINITION]
+> A **grapheme cluster** represents what users typically think of as a "character", that is, the smallest unit of written language that has semantic meaning.
 
 For instance, the grapheme clusters in the Hindi word $"क्षत्रिय"$ are $["क्ष", "त्रि", "य"]$, where each cluster can comprise multiple Unicode code points:
 - The first grapheme $"य"$ corresponds to a single Unicode code point.
@@ -328,11 +331,13 @@ For instance, the grapheme clusters in the Hindi word $"क्षत्रिय
 
 ### Unsigned Integers
 
-An $N$-bit **unsigned integer** is an integer that can take up values in the range of $[0, 2^N - 1]$, using all of its available bits to represent positive values, including zero.
+> [!DEFINITION]
+> An $N$-bit **unsigned integer** is an integer that can take up values in the range of $[0, 2^N - 1]$, using all of its available bits to represent positive values, including zero.
 
 ### Signed Integers
 
-An $N$-bit **signed integer** is an integer that can take up values from $-2^{N-1}$ to $2^{N-1} - 1$.
+> [!DEFINITION]
+> An $N$-bit **signed integer** is an integer that can take up values from $-2^{N-1}$ to $2^{N-1} - 1$.
 
 Signed integers reserve one bit, typically the most significant bit, to indicate the sign, which reduces the range of representable positive values but enables the representation of negative numbers.
 
@@ -356,9 +361,11 @@ Step 1 exploits the fact that toggling all the bits of $b$ produces a number $\w
 
 ### Integer Overflow and Underflow
 
-**Integer overflow** occurs when an arithmetic operation produces a result too large to fit in the available bits.
+> [!DEFINITION]
+> **Integer overflow** occurs when an arithmetic operation produces a result too large to fit in the available bits.
 
-**Integer underflow** occurs when an arithmetic operation produces a result too small to fit in the available bits.
+> [!DEFINITION]
+> **Integer underflow** occurs when an arithmetic operation produces a result too small to fit in the available bits.
 
 In Rust, there are 4 different methods to handle integer overflow/underflow or integer underflow:
 - `checked_*`: returns `Option<T>`, where it returns `None` on overflow/underflow. Use when overflow is an error condition you want to handle explicitly.

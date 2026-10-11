@@ -9,7 +9,8 @@ For decades, chips got faster in two ways: higher clock speeds, and **instructio
 
 ### Shared Memory Multiprocessor Systems
 
-In a **shared memory multiprocessor system**, every processor can read and write the same physical memory. You can think of it like roommates sharing one whiteboard on the fridge. If one of them wants to tell the others something, they just write it on the board. Processors work the same way: they communicate through shared variables instead of sending each other messages.
+> [!DEFINITION]
+> In a **shared memory multiprocessor system**, every processor can read and write the same physical memory. You can think of it like roommates sharing one whiteboard on the fridge. If one of them wants to tell the others something, they just write it on the board. Processors work the same way: they communicate through shared variables instead of sending each other messages.
 
 Each processor also keeps its own private cache, which is a small, fast copy of the parts of memory it's working with. That means two processors could end up holding different copies of the same data. So these systems need **cache coherency** mechanisms to make sure every processor sees the same, correct values. We'll look at how that works in the Cache Coherence section below.
 
@@ -17,7 +18,8 @@ Shared memory systems come in two kinds, **UMA** and **NUMA**, depending on whet
 
 #### Uniform Memory-Access (UMA) System
 
-In a **UMA (Uniform Memory Access)** system, every processor takes the same amount of time to reach any part of memory.
+> [!DEFINITION] Uniform memory access
+> In a **UMA (Uniform Memory Access)** system, every processor takes the same amount of time to reach any part of memory.
 
 UMA systems are usually built using **Symmetric Multiprocessing (SMP)**. In SMP, several identical processors run under a single operating system. They all share the main memory, the I/O devices, and the interrupt system through one common connection called the system bus. Even though they share all of that, each processor can still run a different program on different data. Each one also has its own local cache, which sits between the processor and main memory as a fast middleman.
 
@@ -27,7 +29,8 @@ UMA systems are usually built using **Symmetric Multiprocessing (SMP)**. In SMP,
 
 SMP works well for a handful of processors, but it doesn't scale forever. To keep their caches consistent, SMP processors use **bus snooping**, which means every processor listens to all the traffic on the shared bus. That works up to around 8 to 16 processors. Beyond that, things start to break down. All the snooping and invalidation messages flood the bus with traffic. At high clock speeds, even the length of the wires becomes a problem, because signals take real time to travel. And a single memory controller simply can't supply enough bandwidth for that many processors at once.
 
-**NUMA (Non-Uniform Memory Access)** fixes this by splitting memory up into nodes. Each node has one or more processors and its own local memory. Every processor can still reach every memory address, so the system still has one shared address space. The difference is that access time now depends on where the data lives. Reading from your own node's memory is fast. Reading from another node's memory is much slower, because the request has to travel across the interconnect between nodes. It's a bit like a company with offices in several cities: grabbing a file from your own office is quick, but asking another office to send one over takes a while. Because there's no longer one shared bus for everyone to fight over, NUMA systems can scale to hundreds or even thousands of processors.
+> [!DEFINITION] Non-uniform memory access
+> **NUMA (Non-Uniform Memory Access)** fixes this by splitting memory up into nodes. Each node has one or more processors and its own local memory. Every processor can still reach every memory address, so the system still has one shared address space. The difference is that access time now depends on where the data lives. Reading from your own node's memory is fast. Reading from another node's memory is much slower, because the request has to travel across the interconnect between nodes. It's a bit like a company with offices in several cities: grabbing a file from your own office is quick, but asking another office to send one over takes a while. Because there's no longer one shared bus for everyone to fight over, NUMA systems can scale to hundreds or even thousands of processors.
 
 Since there's no shared bus to snoop on, NUMA systems keep their caches consistent a different way, using **directory-based protocols**. Each node has directory hardware, usually built into or near its memory controller, that keeps track of the memory living on that node. For every cache line, the directory records two things: a valid bit for each processor, which says whether that processor has the line cached, and a dirty bit, which says whether any processor has modified it.
 
@@ -57,7 +60,8 @@ Heterogeneous systems are harder to use well, because the operating system and p
 
 ## Cache Coherence
 
-Since each processor keeps its own private cache, the critical challenge in SMP systems is maintaining **cache coherency**: ensuring all processors see a consistent view of memory. When one processor modifies data, other processors may hold stale copies, creating inconsistency. SMP systems solve this through **bus snooping**, where each processor monitors a shared bus for cache events from other processors and updates its cache accordingly.
+> [!DEFINITION] Cache coherency
+> Since each processor keeps its own private cache, the critical challenge in SMP systems is maintaining **cache coherency**: ensuring all processors see a consistent view of memory. When one processor modifies data, other processors may hold stale copies, creating inconsistency. SMP systems solve this through **bus snooping**, where each processor monitors a shared bus for cache events from other processors and updates its cache accordingly.
 
 Cache coherency is managed through hardware protocols, with **MESI** being the most common (other protocols include **MOESI** and **MESIF**). 
 
@@ -167,7 +171,8 @@ So there are two windows where a core can observe stale data:
 
 ### Hardware Memory Models
 
-A **memory consistency model** defines what guarantees a CPU architecture makes about when writes become visible to other cores. Different architectures make different tradeoffs between performance and strictness.
+> [!DEFINITION]
+> A **memory consistency model** defines what guarantees a CPU architecture makes about when writes become visible to other cores. Different architectures make different tradeoffs between performance and strictness.
 
 There are four possible ordering constraints between memory operations, where X and Y are not necessarily the same address:
 

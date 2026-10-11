@@ -72,7 +72,8 @@ The most important bus connects the CPU and the memory unit. On 64-bit architect
 
 ## Instruction Set Architecture (ISA)
 
-A particular CPU implements a specific **instruction set architecture (ISA)**, which defines the set of instructions and their binary encoding, the set of CPU registers, the natural data width of a CPU, and the effects of executing instructions on the state of the processor: a machine code language.
+> [!DEFINITION]
+> A particular CPU implements a specific **instruction set architecture (ISA)**, which defines the set of instructions and their binary encoding, the set of CPU registers, the natural data width of a CPU, and the effects of executing instructions on the state of the processor: a machine code language.
 
 A **microarchitecture** defines the _circuitry_ implementation of a specific ISA. Implementations of the same ISA can differ, as long as each honors the ISA definition: Intel and AMD, for example, produce different microprocessor implementations of x86-64.
 
@@ -173,7 +174,8 @@ When the fetch-decode-execute cycle runs serially, the fetch hardware sits idle 
 
 <img src="images/without-pipelining.png" width="500">
 
-By starting the execution of the next instruction before the current one has fully completed, **instruction pipelining** keeps that idle hardware busy. It still executes instructions in order, but overlaps their execution.
+> [!DEFINITION]
+> By starting the execution of the next instruction before the current one has fully completed, **instruction pipelining** keeps that idle hardware busy. It still executes instructions in order, but overlaps their execution.
 
 For example, in the first cycle, the first instruction enters the Fetch stage. In the second cycle, that instruction advances to Decode while the second instruction begins Fetch. In the third cycle, the first instruction reaches Execute, the second moves to Decode, and the third begins Fetch. In the fourth cycle, the first instruction enters the Memory stage, and the fourth instruction begins in the Fetch stage.
 
@@ -215,7 +217,8 @@ Lastly, **structural hazards** are hazards that arise when two instructions need
 
 ### Technique 2: Out-of-Order Execution
 
-The CPU can be further optimized with **out-of-order execution**: instructions that are independent of one another execute in a different order than they appear in the program, as long as the final results respect **program order**.
+> [!DEFINITION]
+> The CPU can be further optimized with **out-of-order execution**: instructions that are independent of one another execute in a different order than they appear in the program, as long as the final results respect **program order**.
 
 For example, consider this instruction stream:
 
@@ -233,5 +236,6 @@ There are two data hazards: instruction 2 depends on the result of instruction 1
 
 ## Hardware Multithreading
 
-By using dedicated hardware resources, **hardware multithreading** lets a CPU execute multiple threads and switch to a different one whenever the current thread stalls (e.g., waiting for memory), instead of sitting idle. There are two primary types: temporal multithreading, and simultaneous multithreading. **Temporal multithreading** allows one physical core to execute instructions from only one thread per cycle, switching between threads over time. In **fine-grained multithreading**, the core _always_ switches to a different thread every cycle, regardless of whether the current thread is stalling; in **coarse-grained multithreading**, the core only switches when the current thread stalls (e.g., on a cache miss). **Simultaneous multithreading** (a.k.a. Intel's Hyperthreading) allows each physical core to execute instructions from multiple threads in the _same_ cycle, by virtualizing itself into multiple virtual cores the operating system can schedule processes onto.
+> [!DEFINITION]
+> By using dedicated hardware resources, **hardware multithreading** lets a CPU execute multiple threads and switch to a different one whenever the current thread stalls (e.g., waiting for memory), instead of sitting idle. There are two primary types: temporal multithreading, and simultaneous multithreading. **Temporal multithreading** allows one physical core to execute instructions from only one thread per cycle, switching between threads over time. In **fine-grained multithreading**, the core _always_ switches to a different thread every cycle, regardless of whether the current thread is stalling; in **coarse-grained multithreading**, the core only switches when the current thread stalls (e.g., on a cache miss). **Simultaneous multithreading** (a.k.a. Intel's Hyperthreading) allows each physical core to execute instructions from multiple threads in the _same_ cycle, by virtualizing itself into multiple virtual cores the operating system can schedule processes onto.
 

@@ -41,7 +41,8 @@ To create recursive algorithms, ask the following questions:
 
 ## Tail Recursion 
 
-In a traditional recursive function, calculations happen after the recursive call returns. In a **tail-recursive function**, the recursive call is the absolute _last_ operation executed by the function. 
+> [!DEFINITION] Tail recursion
+> In a traditional recursive function, calculations happen after the recursive call returns. In a **tail-recursive function**, the recursive call is the absolute _last_ operation executed by the function.
 
 The tail-recursive function lends itself to better memory usage, as in certain languages that support **Tail Call Optimization**, the compiler automatically optimizes tail-recursive functions into loops under the hood. Specifically, instead of adding a new stack frame for every call, it continuously reuses the same stack frame, preventing stack overflow errors. As a consequence, when the function recurses to the base case, the function can simply return the result to the original caller without going back to the previous function calls.
 
