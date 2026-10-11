@@ -15,7 +15,7 @@ computer science notes
 cargo run -- serve
 ```
 
-Site will be live at [http://localhost:8000](http://localhost:8000) (use `PORT=8001` if 8000 is taken). It rebuilds and reloads whenever a note changes.
+The dev server prints its address: [http://localhost:8000](http://localhost:8000), or the next free port if 8000 is taken. Pick a port with `cargo run -- serve 8002`. It rebuilds and reloads whenever a note changes.
 
 ## Writing notes
 

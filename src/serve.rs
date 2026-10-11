@@ -11,6 +11,48 @@ use tiny_http::{Header, Request, Response, Server};
 // sees dist/ half-deleted mid-rebuild.
 static BUILD_LOCK: RwLock<()> = RwLock::new(());
 
+/// The port asked for, in any of the ways people type it: `PORT=8002 cargo run -- serve`,
+/// `cargo run -- serve 8002`, `cargo run -- serve PORT=8002` or `--port 8002`.
+fn requested_port() -> Option<u16> {
+    let args: Vec<String> = std::env::args().skip(2).collect();
+    let from_args = args.iter().enumerate().find_map(|(i, a)| {
+        let value = a
+            .strip_prefix("PORT=")
+            .or_else(|| a.strip_prefix("--port="))
+            .or_else(|| {
+                (a == "--port")
+                    .then(|| args.get(i + 1).map(String::as_str))
+                    .flatten()
+            })
+            .unwrap_or(a);
+        value.parse().ok()
+    });
+    from_args.or_else(|| std::env::var("PORT").ok()?.parse().ok())
+}
+
+/// Binds the requested port, or the first free one from 8000 up if none was asked for.
+fn bind(requested: Option<u16>) -> (Server, String) {
+    let candidates: Vec<u16> = match requested {
+        Some(port) => vec![port],
+        None => (8000..8020).collect(),
+    };
+    for port in candidates {
+        let addr = format!("127.0.0.1:{port}");
+        if let Ok(server) = Server::http(&addr) {
+            return (server, addr);
+        }
+    }
+    match requested {
+        Some(port) => {
+            eprintln!("port {port} is already in use; pick another, e.g. `cargo run -- serve 8010`")
+        }
+        None => {
+            eprintln!("ports 8000-8019 are all in use; pick one with `cargo run -- serve <port>`")
+        }
+    }
+    std::process::exit(1);
+}
+
 pub fn run(dist_dir: &Path) -> std::io::Result<()> {
     let version = Arc::new(AtomicU64::new(0));
 
@@ -19,16 +61,7 @@ pub fn run(dist_dir: &Path) -> std::io::Result<()> {
         std::thread::spawn(move || watch_and_rebuild(version));
     }
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8000".to_string());
-    let addr = format!("127.0.0.1:{port}");
-    let server = match Server::http(&addr) {
-        Ok(server) => server,
-        Err(e) => {
-            eprintln!("failed to start dev server on {addr}: {e}");
-            eprintln!("(is another instance already running? try PORT=8001)");
-            std::process::exit(1);
-        }
-    };
+    let (server, addr) = bind(requested_port());
     println!("dev server running at http://{addr}");
 
     for request in server.incoming_requests() {
