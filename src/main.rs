@@ -1,6 +1,7 @@
 mod fmt;
 mod highlight;
 mod layout;
+mod lint;
 mod notes;
 mod render;
 mod serve;
@@ -97,6 +98,9 @@ fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) == Some("fmt") {
         return fmt::run(args.iter().any(|a| a == "--check"));
+    }
+    if args.first().map(String::as_str) == Some("lint") {
+        return lint::run();
     }
     let dev = args.first().map(String::as_str) == Some("serve");
 

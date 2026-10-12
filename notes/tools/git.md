@@ -252,7 +252,7 @@ git stash show stash@{<index>}
 git stash pop
 ```
 
-- Write the most recent stash back to working copy and does *not* remove it from the top of the stash stack
+- Write the most recent stash back to working copy and does _not_ remove it from the top of the stash stack
 
 ```bash
 git stash apply

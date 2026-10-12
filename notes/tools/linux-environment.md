@@ -117,7 +117,7 @@ The shell has its own wildcards for matching file names, called **globs**. They 
 | `?` | Exactly one character | `file?.txt` matches `file1.txt` but not `file10.txt` |
 | `[abc]` | One character from the set | `file[12].txt` matches `file1.txt` and `file2.txt` |
 | `[a-z]` | One character in the range | `[a-c]*` matches names starting with `a`, `b`, or `c` |
-| `[!abc]` | One character *not* in the set | `[!.]*` matches names not starting with `.` |
+| `[!abc]` | One character _not_ in the set | `[!.]*` matches names not starting with `.` |
 
 ## Files & Directory Management
 
@@ -152,7 +152,7 @@ mv <source> <destination>
 ```
 
 > [!NOTE]
-> Moving a file to the *same* directory under a different name renames it.
+> Moving a file to the _same_ directory under a different name renames it.
 
 > [!WARNING]
 > `mv` silently overwrites `<destination>` if it already exists. Use `mv -i` to be prompted first.
@@ -248,7 +248,7 @@ Every process has three default streams: **standard input** (stdin, defaults to 
 <command 1> | <command 2> | <...> | <command N>
 ```
 
-- show output on the screen *and* save it to `file`
+- show output on the screen _and_ save it to `file`
 
 ```bash
 <command> | tee <file>
@@ -275,7 +275,7 @@ The **lowercase** version matches something, and the **uppercase** version match
 | Notation | Description |
 | :---: | :---: |
 | `\d` | Any digit (same as `[0-9]`) |
-| `\D` | Any *non*-digit |
+| `\D` | Any _non_-digit |
 | `\w` | Any alphanumeric (letters, digits) or `_` |
 | `\W` | Neither alphanumeric nor `_` |
 | `\s` | Any whitespace (space, tab, newline) |
@@ -283,7 +283,7 @@ The **lowercase** version matches something, and the **uppercase** version match
 
 ### Alternation
 
-`<pattern>|<pattern>`: matches the pattern to its left *or* the pattern to its right
+`<pattern>|<pattern>`: matches the pattern to its left _or_ the pattern to its right
 
 > [!NOTE]
 > Alternation applies to whole subpatterns, so group when needed (e.g., `foo|barbaz` matches `foo` or `barbaz`, while `(foo|bar)baz` matches `foobaz` or `barbaz`)
@@ -342,7 +342,7 @@ The **lowercase** version matches something, and the **uppercase** version match
 > `\d+(?= dollars)` matches the number in `100 dollars` but not in `100 euros`, and the match is just `100`, not `100 dollars`, since the lookahead doesn't consume characters.
 
 > [!WARNING]
-> Lookbehind patterns in PCRE must be *fixed-width* (you can't use `*` or `+` inside them). Lookaheads have no such restriction.
+> Lookbehind patterns in PCRE must be _fixed-width_ (you can't use `*` or `+` inside them). Lookaheads have no such restriction.
 
 ## Text Manipulation
 
@@ -448,7 +448,7 @@ chmod 755 <file>        # rwxr-xr-x: typical for scripts and directories
 ```
 
 > [!WARNING]
-> Avoid `chmod 777`, which lets *every* user read, modify, and run the file. It's a common quick fix in old tutorials, but it's almost never the right one and creates a security hole.
+> Avoid `chmod 777`, which lets _every_ user read, modify, and run the file. It's a common quick fix in old tutorials, but it's almost never the right one and creates a security hole.
 
 - Change a file's owner and group (add `-R` to apply to a directory's contents)
 
@@ -475,7 +475,7 @@ su - <user>
 ```
 
 > [!TIP]
-> Prefer `sudo` over `su`. It limits root access to a single command, and it asks for *your* password rather than the root password.
+> Prefer `sudo` over `su`. It limits root access to a single command, and it asks for _your_ password rather than the root password.
 
 ### Special Bits
 
@@ -596,7 +596,7 @@ crontab -e
 crontab -l
 ```
 
-- Delete *all* your scheduled tasks
+- Delete _all_ your scheduled tasks
 
 ```bash
 crontab -r
@@ -1080,7 +1080,7 @@ sudo usermod -aG <group> <user>
 ```
 
 > [!WARNING]
-> Never leave out the `-a`. Without it, `usermod -G` *replaces* all of the user's groups instead of adding one, which can remove your own `sudo` access.
+> Never leave out the `-a`. Without it, `usermod -G` _replaces_ all of the user's groups instead of adding one, which can remove your own `sudo` access.
 
 > [!NOTE]
 > Group changes take effect the next time the user logs in.
@@ -1229,4 +1229,4 @@ scp -r <directory> <user>@<host>:<path>
 ```
 
 > [!TIP]
-> Always run `scp` from your *local* machine. The side with `<user>@<host>:` is the remote one, and the order is always `scp <source> <destination>`, just like `cp`.
+> Always run `scp` from your _local_ machine. The side with `<user>@<host>:` is the remote one, and the order is always `scp <source> <destination>`, just like `cp`.

@@ -607,4 +607,4 @@ address: 0x100 0x101 0x102 0x103
 > A raw blob has no recoverable endianness on its own.
 
 > [!NOTE]
-> On x86-64 systems (and most systems today), the byte ordering is *little* endian.
+> On x86-64 systems (and most systems today), the byte ordering is _little_ endian.

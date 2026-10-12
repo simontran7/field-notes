@@ -163,7 +163,7 @@ Separate caches also add design flexibility. Instruction streams follow mostly s
 ### Cache Associativity
 
 > [!DEFINITION]
-> A **fully-associative cache** is a cache where memory blocks can be stored *anywhere* in the cache. Each access checks _every_ line in parallel, which is still expensive for reasonably sized caches.
+> A **fully-associative cache** is a cache where memory blocks can be stored _anywhere_ in the cache. Each access checks _every_ line in parallel, which is still expensive for reasonably sized caches.
 
 To address this, caches restrict where specific memory blocks can reside, at a cost: since the cache is far smaller than main memory, multiple addresses inevitably map to the same cache location, a phenomenon called **cache aliasing**.
 

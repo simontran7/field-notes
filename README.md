@@ -57,4 +57,12 @@ cargo run -- fmt # format C, C++, Python and Rust blocks in notes/
 cargo run -- fmt --check  # only list the blocks that would change
 ```
 
+To check notes against the style rules in `notes/AGENTS.md` (no em dashes, `_` for italics, centered tables, supported callout types, `bash`/`console` shell blocks):
+
+```
+cargo run -- lint
+```
+
+It also runs on every push, and a failure stops the deploy.
+
 The format styles live in `fmt/`: 4-space indents, opening braces on the same line, no space after casts, and 80 columns so lines fit a code block on the site. 

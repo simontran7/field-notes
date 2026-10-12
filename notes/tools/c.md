@@ -30,7 +30,7 @@ void stack_free(struct stack *s);
 #endif
 ```
 
-The full definition lives *only* in `stack.c`, so this is the one file that can read or change `count`, `capacity` and `data`. Additionally, callers can't see the struct's size, so the library has to allocate it for them. 
+The full definition lives _only_ in `stack.c`, so this is the one file that can read or change `count`, `capacity` and `data`. Additionally, callers can't see the struct's size, so the library has to allocate it for them. 
 
 ```c
 // stack.c

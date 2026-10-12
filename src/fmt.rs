@@ -17,7 +17,7 @@ use regex::Regex;
 static FENCE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^((?:[ \t]*>[ \t]?)*)```([\w+#-]+)[ \t]*$").unwrap());
 
-fn markdown_files(dir: &Path, out: &mut Vec<PathBuf>) {
+pub(crate) fn markdown_files(dir: &Path, out: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(dir) else {
         return;
     };

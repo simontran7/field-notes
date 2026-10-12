@@ -112,7 +112,7 @@ $$
 > [!TIP]
 > On [LeetCode](https://leetcode.com/), assuming limits of $\sim 10^8$ simple operations per second and a 1-second time limit, for problems where all inputs share the _same_ maximum bound, we can typically deduce the slowest time complexity that the judge will tolerate:
 > | Max input size $n$ | Slowest time complexity |
-> |---|---|
+> | :---: | :---: |
 > | $n \le 10$ | $O(n!)$ |
 > | $n \le 20$ | $O(2^n)$ |
 > | $n \le 500$ | $O(n^3)$ |

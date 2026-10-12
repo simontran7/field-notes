@@ -82,7 +82,7 @@ Uniform random is the default, but ask: does real data look like this?
 - `list-vs-vec`: always insert at the **middle**. Picks the case where the two
   data structures actually differ.
 
-Rule: pick the distribution that answers *your* question, and write that choice
+Rule: pick the distribution that answers _your_ question, and write that choice
 in a comment.
 
 ### Step 2e: Sweep sizes by powers of ten
