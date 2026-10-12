@@ -54,6 +54,11 @@ It's a property of the data in memory, not of the syntax used to create it.
 
 [https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
 
+> [!WARNING]
+> ISO C: the language and its library. Works everywhere. (You’ve got this.)
+POSIX: the standard for Unix-like OSes. Adds files and file descriptors (open, read, write), processes (fork, exec, wait), threads (pthread_*), signals, sockets, pipes. Works on Linux, macOS, BSDs.
+Extensions (non-standard, OS- or library-specific): Linux things like epoll, GNU things like asprintf, macOS things like kqueue. Use them when you need them and know you’re giving up portability. Some stuff are library functions, `glibc` is an impl of a c stdlib, covering iso c, posix, and linux extensions
+
 ## Encapsulation
 
 C has no `private` keyword. To hide a struct's fields, a common C idiom is to create a header that declares the struct without defining it, which makes it an **incomplete type**, or **opaque type**. Other files can hold pointers to it and pass them to the library's functions, and only the library's own `.c` file can see the fields inside. 
