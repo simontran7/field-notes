@@ -17,22 +17,44 @@ cargo run -- serve
 
 The dev server prints its address: [http://localhost:8000](http://localhost:8000), or the next free port if 8000 is taken. Pick a port with `cargo run -- serve 8002`. It rebuilds and reloads whenever a note changes.
 
-## Writing notes
+## Writing Notes
 
-Notes are plain Markdown in `notes/`. `notes/index.md` is the home page, and every other `.md` file becomes a page at its path (`notes/tools/git.md` is served at `/tools/git/`). See `notes/AGENTS.md` for the writing conventions.
+Notes are plain Markdown in `notes/`. `notes/index.md` is the home page, and every other `.md` file becomes a page at its path (`notes/tools/git.md` is served at `/tools/git/`). 
 
-- **Links** between notes are relative paths (`[Generics](c.md#generics)`). A link to a note that doesn't exist fails the build.
-- **Images** go in an `images/` folder next to the note (`images/cpu.png`).
-- **Math** uses `$...$` and `$$...$$` (rendered with KaTeX).
-- **Math boxes**: `> [!DEFINITION]` renders as a box with a title bar, "Definition (Name)", where the name is the title after the type or else the first bolded term. `> [!THEOREM]`, `> [!PROPOSITION]` and `> [!COROLLARY]` render the same way ("Proposition (Arithmetic series)"), in pink.
-- **Callouts** use GitHub's syntax, limited to `> [!NOTE]`, `> [!TIP]` and `> [!WARNING]`. Text after the type becomes the title: `> [!PROPOSITION] Arithmetic series`.
-- **Code** is highlighted at build time with [Lumis](https://lumis.sh) (tree-sitter parsers and Neovim's highlight queries) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, resolved from JetBrains' color scheme files (the platform schemes, RustRover, PyCharm's Python plugin, the shell plugin and CLion), and `src/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt; use ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
+### Links
 
-## Formatting code blocks
+Links between notes are relative paths (e.g., `[Generics](c.md#generics)`). A link to a note that doesn't exist fails the build.
+
+### Images
+
+Images are stored the `images/` folder next to the note.
+
+### Math
+
+- Inline LaTeX: `$...$`
+- Block LaTeX: `$$...$$`
+
+### Callouts
+
+Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> (<title>)".
+
+  - `> [!DEFINITION]` 
+  - `> [!THEOREM]`
+  - `> [!PROPOSITION]`
+  - `> [!COROLLARY]`
+  - `> [!NOTE]`
+  - `> [!TIP]`
+  - `> [!WARNING]`
+
+### Code
+
+Highlighted at build time with [Lumis](https://lumis.sh) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, and `src/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt, and ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
+
+To format code blocks:
 
 ```
-cargo run -- fmt          # format C, C++, Python and Rust blocks in notes/
+cargo run -- fmt # format C, C++, Python and Rust blocks in notes/
 cargo run -- fmt --check  # only list the blocks that would change
 ```
 
-The styles live in `fmt/`: 4-space indents, opening braces on the same line, no space after casts, and 80 columns so lines fit a code block on the site. Blocks that are pieces of a larger program, or that line comments up in a column, are skipped and listed.
+The format styles live in `fmt/`: 4-space indents, opening braces on the same line, no space after casts, and 80 columns so lines fit a code block on the site. 
