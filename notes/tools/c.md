@@ -1,8 +1,58 @@
 # C
 
-## Standard Library
+## Strings
 
-[The GNU C Library Reference Manual](https://sourceware.org/glibc/manual/latest/html_node/index.html)
+A **string** is a sequence of `char`s ending at (and including) the first `\0`.
+It's a property of the data in memory, not of the syntax used to create it.
+
+- **String literal** = the double-quoted source syntax (`"hello"`). It creates an
+  unnamed static array of type `char[n+1]` with the `\0` added automatically,
+  even if one is already there: `"hello\0"` is 7 bytes (`hello\0\0`).
+- A string always lives in an array (declared, a literal's hidden array, a
+  compound literal, or `malloc`'d memory). A `char *` only *points* to one.
+
+### LHS: what you declare
+
+| Declaration      | What it is                                   | Writable? | Lifetime of the chars |
+|------------------|----------------------------------------------|-----------|-----------------------|
+| `char *s = "hi"` | pointer to the literal's hidden array        | No (UB, often crashes) | static (whole program) |
+| `char s[] = "hi"`| your own array, a *copy* of the literal; size inferred (3) | Yes | automatic in a function, static at file scope or with `static` |
+| `char s[n] = "hi"` | your own array of exactly n                | Yes       | same as above |
+
+- Prefer `const char *s = "hi";` so the compiler rejects writes.
+- `char s[n]` with explicit size:
+  - n > length: copies the chars, the rest (including the terminator) is zero-filled
+  - n == length (no room for `\0`): **legal in C, no terminator** → not a string. Error in C++.
+  - n < length: excess-elements warning/error.
+
+### RHS: where the chars come from
+
+- **String literal** `"hello"`: auto `\0`. Works with `char *`, `char[]`, `char[n]`.
+- **Brace list** `{'h','e','l','l','o','\0'}`: no auto `\0`, you must add it.
+  Only for arrays. `char *s = {...}` is wrong (treats `'h'` as an address).
+- **Compound literal** (C99) `char *s = (char[]){'h','i','\0'};`: unnamed, modifiable
+  array; automatic lifetime in a function, so don't return it.
+- **At runtime**: fill an array and set `'\0'`, or `strcpy`, `snprintf`, `fgets`, ...
+- **`malloc`**: `char *s = malloc(n);` heap memory, lives until `free`. You must
+  write the chars and the `\0` yourself. Only works with a pointer.
+
+### Gotchas
+
+- `= "..."` / `= {...}` on an array only works at **initialization**.
+  `char s[6]; s = "hello";` is an error (arrays aren't assignable) → use `strcpy`.
+- `sizeof` vs `strlen`: for `char s[] = "hello"`, `sizeof s == 6`, `strlen(s) == 5`.
+  For `char *p = "hello"`, `sizeof p` is the pointer size (8 on 64-bit).
+  `sizeof("hello") == 6` (the literal is an array).
+- Arrays **decay** to a pointer to their first element when passed to functions,
+  which is why string functions take `char *` / `const char *`.
+- A char array without `\0` is just a byte buffer; passing it to string functions
+  is UB (they read past the end). Track the length yourself (`printf("%.*s", n, buf)`).
+- Rust analogy: `const char *p = "hi";` ≈ `let p: &'static str = "hi";`, except
+  `&str` is a fat pointer (address + length) and isn't null-terminated.
+
+## ISO C Standard Library
+
+[https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
 
 ## Encapsulation
 
