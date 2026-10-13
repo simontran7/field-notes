@@ -15,7 +15,7 @@ computer science notes
 cargo run -- serve
 ```
 
-The dev server prints its address: [http://localhost:8000](http://localhost:8000), or the next free port if 8000 is taken. Pick a port with `cargo run -- serve 8002`. It rebuilds and reloads whenever a note changes.
+The dev server prints its address: [http://localhost:8000](http://localhost:8000), or the next free port if 8000 is taken. Pick a port with `cargo run -- serve 8002`. It rebuilds and reloads whenever a note changes, re-rendering only the notes that changed (adding or removing a note re-renders all of them, since that can fix or break links).
 
 ## Writing Notes
 
@@ -34,6 +34,12 @@ Images are stored the `images/` folder next to the note.
 - Inline LaTeX: `$...$`
 - Block LaTeX: `$$...$$`
 
+Rendered to HTML at build time with [katex-rs](https://github.com/katex-rs/katex-rs), a Rust port of KaTeX 0.18.5. Pages load only KaTeX's stylesheet and fonts, from `public/katex/`; update those together with the `katex-rs` version. LaTeX that doesn't parse shows up red on the page, and the build prints a warning.
+
+### Diagrams
+
+` ```mermaid ` blocks are drawn as SVG at build time with [mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer), once in Mermaid's light theme and once in its dark theme. A diagram that doesn't parse shows its source instead, and the build prints a warning.
+
 ### Callouts
 
 Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> (<title>)".
@@ -48,7 +54,7 @@ Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> 
 
 ### Code
 
-Highlighted at build time with [Lumis](https://lumis.sh) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, and `src/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt, and ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
+Highlighted at build time with [Lumis](https://lumis.sh) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, and `src/ssg/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt, and ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
 
 To format code blocks:
 

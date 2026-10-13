@@ -25,19 +25,6 @@ const COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16
 const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
 
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.prose pre code.language-mermaid').forEach(function (code) {
-    const div = document.createElement('div')
-    div.className = 'mermaid'
-    div.textContent = code.textContent
-    code.parentElement.replaceWith(div)
-  })
-
-  if (window.mermaid) {
-    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
-    mermaid.initialize({ startOnLoad: false, theme: theme })
-    mermaid.run({ querySelector: '.mermaid' })
-  }
-
   // Copy button on every highlighted code block (scripts/highlight.mjs wraps them in .code-block)
   document.querySelectorAll('.code-block').forEach(function (block) {
     // Both color variants hold the same text, so either one can be copied
@@ -54,13 +41,4 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     block.appendChild(btn)
   })
-
-  if (window.katex) {
-    document.querySelectorAll('[data-math-style]').forEach(function (el) {
-      window.katex.render(el.textContent, el, {
-        displayMode: el.dataset.mathStyle === 'display',
-        throwOnError: false,
-      })
-    })
-  }
 })

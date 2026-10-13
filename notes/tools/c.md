@@ -1,63 +1,133 @@
 # C
 
+## Arrays
+
+> [!WARNING]
+> `sizeof` on an array will return X, while on a pointer will return Y.
+
+## Pointers
+
+## Heap Memory Allocation
+
 ## Strings
 
-A **string** is a sequence of `char`s ending at (and including) the first `\0`.
-It's a property of the data in memory, not of the syntax used to create it.
+A **string** is a contiguous run of `char`s ending at (and including) the first null terminator `\0`. Any bytes in memory that fit that pattern form a string. A string of length $n$ needs $n + 1$ bytes, because the null terminator takes one byte.
 
-- **String literal** = the double-quoted source syntax (`"hello"`). It creates an
-  unnamed static array of type `char[n+1]` with the `\0` added automatically,
-  even if one is already there: `"hello\0"` is 7 bytes (`hello\0\0`).
-- A string always lives in an array (declared, a literal's hidden array, a
-  compound literal, or `malloc`'d memory). A `char *` only *points* to one.
 
-### LHS: what you declare
 
-| Declaration      | What it is                                   | Writable? | Lifetime of the chars |
-|------------------|----------------------------------------------|-----------|-----------------------|
-| `char *s = "hi"` | pointer to the literal's hidden array        | No (UB, often crashes) | static (whole program) |
-| `char s[] = "hi"`| your own array, a *copy* of the literal; size inferred (3) | Yes | automatic in a function, static at file scope or with `static` |
-| `char s[n] = "hi"` | your own array of exactly n                | Yes       | same as above |
+A **string literal** is a sequence of chars in double quotes, like `"hello"`. The
+compiler stores the chars in a _hidden_ array of length + 1 `chars` and appends one
+`\0`. Since the compiler picks the size of that array, the `\0` always fits. The
+hidden array has _static_ lifetime, so it exists for the whole run of the
+program, usually in read-only memory (`.rodata`), and writing to it is UB.
 
-- Prefer `const char *s = "hi";` so the compiler rejects writes.
-- `char s[n]` with explicit size:
-  - n > length: copies the chars, the rest (including the terminator) is zero-filled
-  - n == length (no room for `\0`): **legal in C, no terminator** → not a string. Error in C++.
-  - n < length: excess-elements warning/error.
+There are three places to store a string in your program, and you pick one by
+whether you will change the chars, how big the string is, and how long it needs
+to live:
 
-### RHS: where the chars come from
+### Pointers To String Literals
 
-- **String literal** `"hello"`: auto `\0`. Works with `char *`, `char[]`, `char[n]`.
-- **Brace list** `{'h','e','l','l','o','\0'}`: no auto `\0`, you must add it.
-  Only for arrays. `char *s = {...}` is wrong (treats `'h'` as an address).
-- **Compound literal** (C99) `char *s = (char[]){'h','i','\0'};`: unnamed, modifiable
-  array; automatic lifetime in a function, so don't return it.
-- **At runtime**: fill an array and set `'\0'`, or `strcpy`, `snprintf`, `fgets`, ...
-- **`malloc`**: `char *s = malloc(n);` heap memory, lives until `free`. You must
-  write the chars and the `\0` yourself. Only works with a pointer.
+When you assign a string literal to a `char *`, the pointer holds the address of
+the hidden array:
 
-### Gotchas
+```c
+const char *greeting(void) {
+    const char *s = "hello"; // points into the literal's hidden array
+    // s[0] = 'j';           // UB, the hidden array is read-only
+    return s; // OK, the hidden array lives for the whole program
+}
+```
 
-- `= "..."` / `= {...}` on an array only works at **initialization**.
-  `char s[6]; s = "hello";` is an error (arrays aren't assignable) → use `strcpy`.
-- `sizeof` vs `strlen`: for `char s[] = "hello"`, `sizeof s == 6`, `strlen(s) == 5`.
-  For `char *p = "hello"`, `sizeof p` is the pointer size (8 on 64-bit).
-  `sizeof("hello") == 6` (the literal is an array).
-- Arrays **decay** to a pointer to their first element when passed to functions,
-  which is why string functions take `char *` / `const char *`.
-- A char array without `\0` is just a byte buffer; passing it to string functions
-  is UB (they read past the end). Track the length yourself (`printf("%.*s", n, buf)`).
-- Rust analogy: `const char *p = "hi";` ≈ `let p: &'static str = "hi";`, except
-  `&str` is a fat pointer (address + length) and isn't null-terminated.
+> [!TIP]
+> Prefer `const char *s` over `char *s` for literals, so the compiler rejects
+> writes.
+
+### Character Arrays
+
+A character array `char s[n]` allows for mutable strings, and it has
+automatic lifetime inside a function and static lifetime at file scope or with
+`static`. You can initialize it in its declaration in two ways:
+
+- **String literal**: the chars are copied into your array. With
+  `char s[] = "hello"`, the compiler sizes the array to fit the `\0` (6 here).
+  With `char s[n] = "hello"`, you pick the capacity:
+  - n > 5: the rest of the array is zero-filled, so you get the `\0`.
+  - n == 5: legal in C, with no room for the `\0`, so `s` holds no string. C++
+    rejects it.
+  - n < 5: too many chars, a compiler warning or error.
+- **Brace list** `{'h','e','l','l','o','\0'}`: nothing is appended, so you add
+  the `\0` yourself. If the array is bigger than the list, the leftover elements
+  are zero-filled, which also gives you a `\0`. `char *s = {...}` is wrong, since
+  there is no array to fill (it treats `'h'` as an address).
+
+```c
+void example(void) {
+    char a[] = "hello";  // sizeof a == 6, includes '\0'
+    char b[8] = "hello"; // b[5] holds '\0', but so do b[6] and b[7]
+    char c[5] = "hello"; // no room for '\0', so not a string!
+    char d[] = {'h', 'i', '\0'};
+
+    a[0] = 'j';         // OK, a is your own array
+    // a = "world";     // error, arrays can't be assigned
+    strcpy(a, "world"); // OK, a has room for 5 chars and '\0'
+}
+```
+
+> [!WARNING]
+> A character array with automatic lifetime is gone once its function returns,
+> so returning a pointer to it leaves the caller with a dangling pointer.
+
+> [!NOTE] Compound literals
+> A **compound literal** (C99), `(char[]){'h', 'i', '\0'}`, creates an unnamed
+> character array inside an expression, which you reach through a pointer
+> (`char *s = (char[]){...};`). It follows the same rules as a declared array,
+> including automatic lifetime inside a function.
+
+### Pointers To Heap Memory
+
+`malloc(n)` gives you `n` bytes on the heap, which last until you pass the
+pointer to `free`. You reach them through the pointer `malloc` returns. Since
+`malloc` takes no initializer, the bytes start out as garbage, and you fill them
+by writing, the same way as a character array after its declaration. You also
+write the `\0` yourself, so a string of length `len` needs `len + 1` bytes.
+
+```c
+#include <stdlib.h>
+#include <string.h>
+
+char *copy_string(const char *src) {
+    size_t len = strlen(src);
+    char *s = malloc(len + 1); // + 1 for the '\0'
+    if (s == NULL) {
+        return NULL;
+    }
+    memcpy(s, src, len + 1); // copies the '\0' too
+    return s; // OK, the heap memory lives until free
+}
+```
+
+> [!WARNING] 
+> `strlen` counts  
+
+> [!WARNING] No `\0`, no string
+> A char array without `\0` is just a byte buffer. Passing it to string functions
+> is UB (they read past the end). 
 
 ## ISO C Standard Library
 
 [https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
 
-> [!WARNING]
-> ISO C: the language and its library. Works everywhere. (You’ve got this.)
-POSIX: the standard for Unix-like OSes. Adds files and file descriptors (open, read, write), processes (fork, exec, wait), threads (pthread_*), signals, sockets, pipes. Works on Linux, macOS, BSDs.
-Extensions (non-standard, OS- or library-specific): Linux things like epoll, GNU things like asprintf, macOS things like kqueue. Use them when you need them and know you’re giving up portability. Some stuff are library functions, `glibc` is an impl of a c stdlib, covering iso c, posix, and linux extensions
+> [!NOTE] ISO C, POSIX, and platform-specific APIs
+> - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
+> - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open`, `read`, `write`), processes (`fork`, `exec`, `wait`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
+> - **Platform-specific functions**: everything outside both standards, tied to one OS or one library, e.g. Linux's `epoll` and `inotify`, or macOS/BSD's `kqueue`. Use them when you need them, knowing you give up portability.
+>
+> One C library implementation usually covers all three. `glibc`, for example, implements ISO C, POSIX, and Linux/GNU extensions.
+
+> [!NOTE] Library functions vs. syscall wrappers
+> Every function in a C library is one of two kinds:
+> - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
+> - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
 
 ## Encapsulation
 

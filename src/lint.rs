@@ -60,7 +60,10 @@ fn check_line(line: &str) -> Vec<String> {
     if TABLE_DELIM_RE.is_match(line) {
         let cells = line.trim_start_matches(['>', ' ', '\t']).trim();
         let cells = cells.trim_start_matches('|').trim_end_matches('|');
-        if !cells.split('|').all(|c| CENTERED_CELL_RE.is_match(c.trim())) {
+        if !cells
+            .split('|')
+            .all(|c| CENTERED_CELL_RE.is_match(c.trim()))
+        {
             problems.push("table column not centered (use :---:)".to_string());
         }
     }
@@ -93,7 +96,7 @@ fn check(source: &str) -> Vec<(usize, String)> {
 }
 
 pub fn run() -> std::io::Result<()> {
-    let notes_dir = crate::notes_dir();
+    let notes_dir = crate::ssg::notes_dir();
     let mut files = Vec::new();
     crate::fmt::markdown_files(&notes_dir, &mut files);
     files.sort();

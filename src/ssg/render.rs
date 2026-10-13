@@ -76,7 +76,7 @@ static ALERT_RE: LazyLock<Regex> = LazyLock::new(|| {
 
 static TITLE_MATH_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$([^$]+)\$").unwrap());
 
-/// comrak doesn't parse `$...$` inside alert titles, so mark it for KaTeX here.
+/// comrak doesn't parse `$...$` inside alert titles, so mark it for `math::render_all` here.
 fn title_math(label: &str) -> String {
     TITLE_MATH_RE
         .replace_all(label, r#"<span data-math-style="inline">$1</span>"#)
@@ -167,7 +167,7 @@ fn fix_links(
     slugs: &HashSet<&str>,
     broken: &mut Vec<String>,
 ) -> String {
-    let base = crate::layout::base_path();
+    let base = super::layout::base_path();
     HREF_RE
         .replace_all(html, |caps: &regex::Captures| {
             let href = &caps[1];
@@ -199,7 +199,7 @@ static SRC_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"src="([^"]*)""#)
 
 /// Image paths in notes are relative to the note's folder (`images/cpu.png`).
 fn fix_image_paths(html: &str, dir: &str) -> String {
-    let base = crate::layout::base_path();
+    let base = super::layout::base_path();
     SRC_RE
         .replace_all(html, |caps: &regex::Captures| {
             let src = &caps[1];
@@ -236,7 +236,14 @@ static CODE_BLOCK_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<pre><code(?: class="language-([^"\s]+)")?>([\s\S]*?)</code></pre>"#).unwrap()
 });
 
-fn unescape_html(text: &str) -> String {
+pub(super) fn escape_html(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+pub(super) fn unescape_html(text: &str) -> String {
     text.replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
@@ -244,16 +251,19 @@ fn unescape_html(text: &str) -> String {
         .replace("&amp;", "&")
 }
 
-/// comrak emits plain `<pre><code class="language-x">` blocks; highlight each one.
-/// Mermaid blocks are left alone for site.js to turn into diagrams.
+/// comrak emits plain `<pre><code class="language-x">` blocks; highlight each one,
+/// and draw Mermaid blocks as diagrams.
 fn highlight_code_blocks(html: &str) -> String {
     CODE_BLOCK_RE
         .replace_all(html, |caps: &regex::Captures| {
             let lang = caps.get(1).map_or("text", |m| m.as_str());
-            if lang == "mermaid" {
-                return caps[0].to_string();
+            let code = unescape_html(&caps[2]);
+            if lang == "mermaid"
+                && let Some(diagram) = super::diagram::mermaid(&code)
+            {
+                return diagram;
             }
-            crate::highlight::code_block(lang, &unescape_html(&caps[2]))
+            super::highlight::code_block(lang, &code)
         })
         .into_owned()
 }
@@ -266,7 +276,9 @@ static TRAILING_ABBREVIATION_RE: LazyLock<Regex> =
 
 pub fn render_markdown(body: &str) -> String {
     let html = markdown_to_html(&prepare_callouts(body), &options());
-    highlight_code_blocks(&strip_anchors(&process_callouts(&html)))
+    super::math::render_all(&highlight_code_blocks(&strip_anchors(&process_callouts(
+        &html,
+    ))))
 }
 
 pub fn render_note(
@@ -349,7 +361,8 @@ mod tests {
     fn math_in_callout_titles_renders() {
         let html = render_markdown("> [!PROPOSITION] Formula ($i^k$ series)\n> x\n");
         assert!(
-            html.contains(r#"Formula (<span data-math-style="inline">i^k</span> series)"#),
+            html.contains(r#"Formula (<span class="katex">"#)
+                && html.contains(r#"<annotation encoding="application/x-tex">i^k</annotation>"#),
             "{html}"
         );
     }

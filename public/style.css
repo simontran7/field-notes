@@ -547,11 +547,29 @@ body {
   overflow-x: auto;
 }
 
-/* ─── Mermaid ────────────────────────────────────────────── */
-.mermaid {
+/* ─── Diagrams: Mermaid, drawn at build time in both themes ─ */
+.diagram {
+  margin: 1.25em 0;
+  overflow-x: auto;
+}
+
+.diagram > div {
   display: flex;
   justify-content: center;
-  margin: 1.25em 0;
+}
+
+.diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram .diagram-dark,
+[data-theme="dark"] .diagram .diagram-light {
+  display: none;
+}
+
+[data-theme="dark"] .diagram .diagram-dark {
+  display: flex;
 }
 
 @media (max-width: 600px) {

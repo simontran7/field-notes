@@ -2,18 +2,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 static DEV_MODE: AtomicBool = AtomicBool::new(false);
 
-const RELOAD_SCRIPT: &str = r#"<script>
-      (function () {
-        var version = null;
-        setInterval(function () {
-          fetch('/__reload__').then(function (r) { return r.text() }).then(function (v) {
-            if (version === null) { version = v; return }
-            if (v !== version) { location.reload() }
-          }).catch(function () {})
-        }, 500);
-      })();
-    </script>"#;
-
 const THEME_TOGGLE_SVG: &str = r#"<button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle dark mode">
   <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="5" />
@@ -57,17 +45,13 @@ fn asset_version(file: &str) -> String {
 pub fn page(title: &str, body: &str) -> String {
     let css_version = asset_version("style.css");
     let js_version = asset_version("site.js");
-    let reload_script = if DEV_MODE.load(Ordering::Relaxed) {
-        RELOAD_SCRIPT
-    } else {
-        ""
-    };
     let base = base_path();
-    // Mermaid is large, so only pages with a diagram load it
-    let mermaid_script = if body.contains("language-mermaid") {
-        "    <script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script>\n"
+    // Math is rendered at build time, so only its stylesheet (and the fonts it
+    // pulls in) is needed, and only on pages that have math
+    let katex_css = if body.contains(r#"class="katex""#) {
+        format!("\n    <link rel=\"stylesheet\" href=\"{base}/katex/katex.min.css\" />")
     } else {
-        ""
+        String::new()
     };
     format!(
         r#"<!doctype html>
@@ -78,8 +62,7 @@ pub fn page(title: &str, body: &str) -> String {
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="{base}/favicon.svg" />
     <link rel="manifest" href="{base}/site.webmanifest" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
-    <link rel="stylesheet" href="{base}/style.css?v={css_version}" />
+    <link rel="stylesheet" href="{base}/style.css?v={css_version}" />{katex_css}
     <script>
       (function () {{
         var saved = localStorage.getItem('theme-manual');
@@ -87,13 +70,11 @@ pub fn page(title: &str, body: &str) -> String {
         document.documentElement.setAttribute('data-theme', theme);
       }})();
     </script>
-    {reload_script}
   </head>
   <body>
     {THEME_TOGGLE_SVG}
     {body}
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-{mermaid_script}    <script defer src="{base}/site.js?v={js_version}"></script>
+    <script defer src="{base}/site.js?v={js_version}"></script>
   </body>
 </html>
 "#

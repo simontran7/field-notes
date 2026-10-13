@@ -197,7 +197,7 @@ static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
         .map(|(key, color)| (color, key))
         .collect();
 
-    let resolved: Value = serde_json::from_str(include_str!("../theme/intellij.json"))
+    let resolved: Value = serde_json::from_str(include_str!("../../theme/intellij.json"))
         .expect("theme/intellij.json is invalid");
     let schemes = ["dark", "light"]
         .into_iter()

@@ -23,7 +23,7 @@ pub(crate) fn markdown_files(dir: &Path, out: &mut Vec<PathBuf>) {
     };
     for entry in entries.flatten() {
         let path = entry.path();
-        if crate::notes::is_hidden(&entry.file_name()) {
+        if crate::ssg::notes::is_hidden(&entry.file_name()) {
             continue;
         }
         if path.is_dir() {
@@ -155,7 +155,7 @@ fn rust_statements(lang: &str, cmd: &[&str], code: &str, err: String) -> Result<
 
 pub fn run(check: bool) -> std::io::Result<()> {
     let mut files = Vec::new();
-    markdown_files(&crate::notes_dir(), &mut files);
+    markdown_files(&crate::ssg::notes_dir(), &mut files);
     files.sort();
 
     let (mut changed, mut unchanged, mut skipped) = (0, 0, Vec::new());
@@ -194,7 +194,7 @@ pub fn run(check: bool) -> std::io::Result<()> {
 
             let location = format!(
                 "{}:{}",
-                file.strip_prefix(crate::notes_dir())
+                file.strip_prefix(crate::ssg::notes_dir())
                     .unwrap_or(&file)
                     .display(),
                 i + 1

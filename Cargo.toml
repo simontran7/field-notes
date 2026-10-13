@@ -9,4 +9,9 @@ serde_json = "1"
 lumis = { version = "=0.15.0", default-features = false, features = ["lang-rust", "lang-c", "lang-cpp", "lang-python", "lang-bash", "lang-ocaml", "lang-asm"] }
 regex = "1"
 notify = "6"
-tiny_http = "0.12"
+katex-rs = "0.3"
+mermaid-rs-renderer = { version = "0.3", default-features = false }
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
+tokio = { version = "1", features = ["rt", "net"] }
+tower-http = { version = "0.7", features = ["fs"] }
+tower-livereload = "0.10"
