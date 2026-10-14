@@ -44,13 +44,15 @@ Rendered to HTML at build time with [katex-rs](https://github.com/katex-rs/katex
 
 Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> (<title>)".
 
-  - `> [!DEFINITION]` 
-  - `> [!THEOREM]`
-  - `> [!PROPOSITION]`
-  - `> [!COROLLARY]`
+- General
+  - `> [!DEFINITION]`
   - `> [!NOTE]`
   - `> [!TIP]`
   - `> [!WARNING]`
+- Math
+  - `> [!THEOREM]`
+  - `> [!PROPOSITION]`
+  - `> [!COROLLARY]`
 
 ### Code
 
