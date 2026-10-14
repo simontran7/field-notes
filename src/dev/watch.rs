@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use notify::{RecursiveMode, Watcher};
 
-/// Blocks forever, calling `on_change` once per burst of changes under `dirs`.
 pub fn watch(dirs: &[&Path], mut on_change: impl FnMut()) {
     let (tx, rx) = mpsc::channel();
     let mut watcher = notify::recommended_watcher(tx).expect("failed to create file watcher");
@@ -15,7 +14,6 @@ pub fn watch(dirs: &[&Path], mut on_change: impl FnMut()) {
     }
 
     for res in rx.iter() {
-        // Ignore editor temp files and dot-folders (e.g. .git); only real content changes count.
         let Ok(event) = res else { continue };
         let relevant = event.paths.iter().any(|p| {
             !p.components()
@@ -24,7 +22,6 @@ pub fn watch(dirs: &[&Path], mut on_change: impl FnMut()) {
         if !relevant {
             continue;
         }
-        // Debounce: an editor save often fires several events in quick succession.
         std::thread::sleep(Duration::from_millis(150));
         while rx.try_recv().is_ok() {}
 

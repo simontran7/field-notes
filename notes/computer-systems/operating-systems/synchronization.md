@@ -17,6 +17,8 @@ To prevent both data races and race conditions, we introduce **synchronization p
 
 ...
 
+## Spin Lock
+
 ## Readers-writer Lock
 
 > [!DEFINITION]

@@ -1,8 +1,3 @@
-//! `cargo run -- lint` checks notes/ against the house style in notes/AGENTS.md that
-//! the renderer doesn't enforce: no em dashes, `_` for italics, centered tables, only
-//! the supported callout types, and `bash`/`console` for shell blocks. It lists every
-//! violation and fails if there are any.
-
 use std::fs;
 use std::sync::LazyLock;
 
@@ -26,7 +21,6 @@ static FENCE_RE: LazyLock<Regex> =
 static CALLOUT_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:[ \t]*>[ \t]*)+\[!(\w+)\]").unwrap());
 
-/// A table's delimiter row, e.g. `| :---: | --- |`.
 static TABLE_DELIM_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^(?:[ \t]*>[ \t]?)*[ \t]*\|?(?:[ \t]*:?-+:?[ \t]*\|)+(?:[ \t]*:?-+:?[ \t]*)?$")
         .unwrap()
@@ -34,15 +28,12 @@ static TABLE_DELIM_RE: LazyLock<Regex> = LazyLock::new(|| {
 
 static CENTERED_CELL_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^:-+:$").unwrap());
 
-/// Inline code and math, which may contain `*` that isn't emphasis.
 static CODE_OR_MATH_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(`+)[^`]*?`+|\$\$.*?\$\$|\$[^$]*\$").unwrap());
 
-/// `*text*` with no space just inside the stars (so `a * b * c` doesn't count).
 static STAR_ITALIC_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*[^\s*](?:[^*]*[^\s*\\])?\*").unwrap());
 
-/// The style problems on one line outside a code block.
 fn check_line(line: &str) -> Vec<String> {
     let mut problems = Vec::new();
     if line.contains('\u{2014}') {
@@ -74,7 +65,6 @@ fn check_line(line: &str) -> Vec<String> {
     problems
 }
 
-/// Every style problem in a note, as (line number, problem).
 fn check(source: &str) -> Vec<(usize, String)> {
     let mut problems = Vec::new();
     let mut in_code = false;

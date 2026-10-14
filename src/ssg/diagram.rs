@@ -1,19 +1,12 @@
-//! Renders ```mermaid blocks to inline SVG at build time, once per theme.
-//! CSS shows the one matching the page's theme, like code blocks.
-
 use std::hash::{Hash, Hasher};
 use std::sync::LazyLock;
 
 use mermaid_rs_renderer::{RenderOptions, Theme, render_with_options};
 use regex::Regex;
 
-/// Every diagram names its markers `arrow-0`, `edge-0`, ..., and a page can hold
-/// several diagrams (each twice), so ids get a per-diagram prefix.
 static ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r##"(id="|url\(#|href="#)([^"\)]+)"##).unwrap());
 
-/// The full-size background rect each diagram starts with; the page's own
-/// background shows through instead.
 static BACKGROUND_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r#"^(<svg[^>]*>)<rect x="[^"]*" y="[^"]*" width="[^"]*" height="[^"]*" fill="[^"]*"/>"#,
@@ -33,7 +26,6 @@ fn render(source: &str, theme: Theme, prefix: &str) -> Result<String, String> {
         .into_owned())
 }
 
-/// The diagram as light and dark SVGs, or `None` if Mermaid can't parse it.
 pub fn mermaid(source: &str) -> Option<String> {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     source.hash(&mut hasher);

@@ -1,11 +1,3 @@
-//! `cargo run -- fmt` formats the C, C++, Python and Rust code blocks in notes/ with
-//! clang-format, ruff and rustfmt, using the styles in fmt/ (4-space indents, attached
-//! braces, 80 columns so lines fit a code block on the site). `fmt --check` only lists
-//! the blocks that would change.
-//!
-//! Blocks that are pieces of a larger program (a function split across several blocks
-//! with prose in between) can't be formatted on their own, so they're skipped and listed.
-
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -34,7 +26,6 @@ pub(crate) fn markdown_files(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-/// The formatter command for a language, or None if the language isn't formatted.
 fn formatter(lang: &str) -> Option<Vec<&'static str>> {
     Some(match lang {
         "c" | "h" => vec![
@@ -69,12 +60,10 @@ fn formatter(lang: &str) -> Option<Vec<&'static str>> {
     })
 }
 
-/// Strips string/char literals and comments so brackets inside them aren't counted.
 static C_NOISE_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?s)"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|//[^\n]*|/\*.*?\*/"#).unwrap()
 });
 
-/// Why a block can't be formatted on its own, if it can't.
 fn incomplete(lang: &str, code: &str) -> Option<&'static str> {
     let first = code.lines().find(|l| !l.trim().is_empty())?;
     if first.starts_with([' ', '\t']) {
@@ -87,13 +76,10 @@ fn incomplete(lang: &str, code: &str) -> Option<&'static str> {
                 return Some("unbalanced brackets (a piece of a larger block)");
             }
         }
-        // e.g. the cleanup labels at the end of a function split across blocks
         if Regex::new(r"^[A-Za-z_]\w*:\s*$").unwrap().is_match(first) {
             return Some("starts with a label (a piece of a larger block)");
         }
     }
-    // Comments lined up in a column (`a.checked_add(b);      // None`) are deliberate;
-    // rustfmt and ruff would collapse the gap. clang-format keeps them aligned itself.
     let aligned_comment = match lang {
         "rust" | "rs" => Some(r"\S {2,}//"),
         "python" | "py" => Some(r"\S {3,}#"),
@@ -133,8 +119,6 @@ fn run_formatter(cmd: &[&str], code: &str) -> Result<String, String> {
     }
 }
 
-/// rustfmt only formats whole items, so a snippet of statements (`let x = ...;`) is
-/// wrapped in a function, formatted, and unwrapped again.
 fn rust_statements(lang: &str, cmd: &[&str], code: &str, err: String) -> Result<String, String> {
     if !matches!(lang, "rust" | "rs") {
         return Err(err);
@@ -182,7 +166,6 @@ pub fn run(check: bool) -> std::io::Result<()> {
                 continue;
             };
 
-            // Inside a callout every line starts with "> "; empty lines may be just ">"
             let body: Option<Vec<String>> = lines[i + 1..end]
                 .iter()
                 .map(|l| {

@@ -1,2 +1,1 @@
-# Rust code blocks in notes/ (`cargo run -- fmt`): wrap at 80 so lines fit a code block on the site
 max_width = 80

@@ -1,7 +1,3 @@
-//! `cargo run -- serve`: wires the SSG to a file watcher and a web server.
-//! The watcher rebuilds `dist/` on every change; the server serves it and
-//! tells open pages to reload.
-
 mod server;
 mod watch;
 

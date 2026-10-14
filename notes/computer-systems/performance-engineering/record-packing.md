@@ -36,6 +36,8 @@ There are two kinds of padding:
 
 Since padding increases a record's size, it also increases memory consumption.
 
+To detemine whether an address is for $2^n$-byte aligned, check whether `address & (n - 1)`. This is because the low $n$ bits of the address must be $0$, given that those $n$ bits hold the remainder $\mod 2^n$. 
+
 **Example (internal padding)**:
 
 ```rust

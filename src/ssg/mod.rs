@@ -1,6 +1,3 @@
-//! The static site generator: turns `notes/` and `public/` into `dist/`.
-//! Knows nothing about watching files or serving them.
-
 mod diagram;
 mod highlight;
 mod layout;
@@ -17,7 +14,6 @@ use std::path::{Path, PathBuf};
 pub const DIST_DIR: &str = "dist";
 pub const PUBLIC_DIR: &str = "public";
 
-/// The notes the site is built from. Override with NOTES_DIR.
 pub(crate) fn notes_dir() -> PathBuf {
     std::env::var_os("NOTES_DIR")
         .map(PathBuf::from)
@@ -35,7 +31,6 @@ fn read(path: impl AsRef<Path>) -> String {
     fs::read_to_string(path).unwrap_or_else(|e| panic!("reading {path:?}: {e}"))
 }
 
-/// A note's body rendered to HTML, with the links in it to notes that don't exist.
 struct Rendered {
     html: String,
     broken: Vec<String>,
@@ -43,24 +38,17 @@ struct Rendered {
 
 pub struct Stats {
     pub notes: usize,
-    /// The notes plus the home page.
     pub pages: usize,
-    /// Pages rendered this build; the rest were unchanged and reused.
     pub rendered: usize,
 }
 
-/// Builds the site into `dist/`, and rebuilds only what changed when built again.
 pub struct Site {
-    /// Rendered notes by source file, with a hash of everything rendering them read.
     rendered: HashMap<String, (u64, Rendered)>,
-    /// A hash of each file the last build put in dist/: unchanged files aren't
-    /// rewritten, and files the next build doesn't produce are deleted.
     written: HashMap<PathBuf, u64>,
     built_once: bool,
 }
 
 impl Site {
-    /// `dev` serves pages from `/` instead of `/cs-handbook/`.
     pub fn new(dev: bool) -> Self {
         layout::set_dev_mode(dev);
         Site {
@@ -74,7 +62,6 @@ impl Site {
         let notes_dir = notes_dir();
         let dist_dir = Path::new(DIST_DIR);
 
-        // The first build starts clean, so files left from an earlier run go too.
         if !self.built_once && dist_dir.exists() {
             fs::remove_dir_all(dist_dir)?;
         }
@@ -83,7 +70,6 @@ impl Site {
 
         let notes = notes::load_notes(&notes_dir);
         let slugs: HashSet<&str> = notes.iter().map(|n| n.slug.as_str()).collect();
-        // Adding or removing a note can fix or break links in any other note.
         let mut sorted_slugs: Vec<&str> = slugs.iter().copied().collect();
         sorted_slugs.sort_unstable();
         let slugs_hash = hash(&sorted_slugs);
@@ -120,7 +106,6 @@ impl Site {
             )?;
         }
 
-        // Forget deleted notes, so the cache doesn't grow for the life of `serve`.
         let sources: HashSet<String> = notes.iter().map(|n| format!("{}.md", n.slug)).collect();
         self.rendered
             .retain(|source, _| source == "index.md" || sources.contains(source));
@@ -144,7 +129,6 @@ impl Site {
     }
 }
 
-/// The files one build puts in dist/.
 struct Output<'a> {
     dist_dir: &'a Path,
     previous: HashMap<PathBuf, u64>,
@@ -160,9 +144,6 @@ impl<'a> Output<'a> {
         }
     }
 
-    /// Writes `dest` unless the last build already wrote the same thing there.
-    /// It's written to a temporary file and renamed into place, so the dev server
-    /// never serves a half-written file.
     fn put(
         &mut self,
         dest: PathBuf,
@@ -186,8 +167,6 @@ impl<'a> Output<'a> {
         self.put(dest, hash(contents), |tmp| fs::write(tmp, contents))
     }
 
-    /// Copies every file in `src_dir` but notes, recursively; a file whose size
-    /// and modification time haven't changed since the last build is skipped.
     fn static_assets(&mut self, src_dir: &Path, dist_dir: &Path) -> std::io::Result<()> {
         for entry in fs::read_dir(src_dir)? {
             let entry = entry?;
@@ -209,8 +188,6 @@ impl<'a> Output<'a> {
         Ok(())
     }
 
-    /// Deletes what the last build wrote and this one didn't, along with any
-    /// folders that leaves empty. Returns what this build wrote.
     fn finish(self) -> HashMap<PathBuf, u64> {
         for stale in self
             .previous
@@ -218,7 +195,6 @@ impl<'a> Output<'a> {
             .filter(|p| !self.current.contains_key(*p))
         {
             let _ = fs::remove_file(stale);
-            // remove_dir only removes empty folders, so this stops at the first one in use.
             for dir in stale.ancestors().skip(1) {
                 if dir == self.dist_dir || fs::remove_dir(dir).is_err() {
                     break;

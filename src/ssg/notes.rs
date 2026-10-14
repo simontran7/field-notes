@@ -7,19 +7,15 @@ use regex::Regex;
 
 static TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#\s+(.+)$").unwrap());
 
-/// Top-level files in notes/ that aren't pages: index.md is the home page, rendered separately.
 const NOT_NOTES: [&str; 3] = ["index.md", "AGENTS.md", "README.md"];
 
 pub struct Note {
-    /// URL path without leading slash, e.g. `tools/git`
     pub slug: String,
-    /// Folder the note lives in, e.g. `tools` (used to resolve relative image paths)
     pub dir: String,
     pub title: String,
     pub body: String,
 }
 
-/// Dot-files and dot-folders (e.g. `.DS_Store`, `.git`) aren't part of the site.
 pub fn is_hidden(name: &OsStr) -> bool {
     name.to_string_lossy().starts_with('.')
 }
@@ -51,9 +47,6 @@ fn slug_for(notes_dir: &Path, file: &Path) -> String {
     rel.strip_suffix("/index").map(String::from).unwrap_or(rel)
 }
 
-/// Splits a markdown source into (title, body): the title is the first
-/// `# Heading` line anywhere, but it's only stripped from the body when
-/// it's the very first line of the file.
 pub fn split_title(source: String) -> (String, String) {
     match TITLE_RE.captures(&source) {
         Some(caps) => {

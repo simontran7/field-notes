@@ -1,13 +1,3 @@
-//! Syntax highlighting in IntelliJ's colors.
-//!
-//! Lumis (tree-sitter parsers + Neovim's highlight queries) tags each token with a
-//! capture name like `function.call`. Each capture maps to the IntelliJ color key the
-//! JetBrains IDEs use for the same thing (`DEFAULT_FUNCTION_CALL`, `org.rust.TRAIT`,
-//! `OC.MACRONAME`, ...). Where tree-sitter can't tell two things apart that the IDEs
-//! color differently (a trait vs a struct, `;` vs `.`), context rules below pick the key.
-//! Every block is then rendered twice, in IntelliJ Dark and IntelliJ Light, with the
-//! colors in theme/intellij.json (resolved from JetBrains' own color scheme files).
-
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -19,8 +9,6 @@ use serde_json::Value;
 
 const TEXT: &str = "TEXT";
 
-/// Tree-sitter capture -> IntelliJ color key. Language-specific entries (`capture.lang`)
-/// override the generic ones. `@...` keys are placeholders resolved by the context rules.
 const CAPTURES: &[(&str, &str)] = &[
     ("comment", "DEFAULT_LINE_COMMENT"),
     ("comment.documentation", "DEFAULT_DOC_COMMENT"),
@@ -56,7 +44,6 @@ const CAPTURES: &[(&str, &str)] = &[
     ("punctuation", "DEFAULT_OPERATION_SIGN"),
     ("punctuation.bracket", "DEFAULT_PARENTHS"),
     ("punctuation.delimiter", "@delimiter"),
-    // Rust (RustRover)
     ("comment.documentation.rust", "org.rust.DOC_COMMENT"),
     ("keyword.rust", "org.rust.KEYWORD"),
     ("function.rust", "org.rust.FUNCTION"),
@@ -78,7 +65,6 @@ const CAPTURES: &[(&str, &str)] = &[
     ("attribute.rust", "@rust_attribute"),
     ("attribute.builtin.rust", "@rust_attribute"),
     ("operator.rust", "@rust_operator"),
-    // Python (PyCharm)
     ("function.python", "PY.FUNC_DEFINITION"),
     ("function.method.python", "PY.FUNC_DEFINITION"),
     ("function.call.python", "PY.FUNCTION_CALL"),
@@ -91,7 +77,6 @@ const CAPTURES: &[(&str, &str)] = &[
     ("variable.member.python", "DEFAULT_IDENTIFIER"),
     ("property.python", "DEFAULT_IDENTIFIER"),
     ("punctuation.special.python", "PY.FSTRING_FRAGMENT_BRACES"),
-    // Shell
     ("keyword.bash", "BASH.KEYWORD"),
     ("string.bash", "BASH.STRING"),
     ("comment.bash", "BASH.LINE_COMMENT"),
@@ -105,7 +90,6 @@ const CAPTURES: &[(&str, &str)] = &[
     ("variable.member.bash", "BASH.VAR_USE"),
 ];
 
-/// C and C++ (CLion) share one table, registered for both languages.
 const C_CAPTURES: &[(&str, &str)] = &[
     ("keyword", "OC.KEYWORD"),
     ("keyword.directive", "OC.DIRECTIVE"),
@@ -130,7 +114,6 @@ const C_CAPTURES: &[(&str, &str)] = &[
     ("constant", "OC.ENUM_CONST"),
 ];
 
-/// A color scheme ready to render: IntelliJ key -> inline CSS, plus the `<pre>` style.
 struct Scheme {
     name: &'static str,
     styles: HashMap<String, String>,
@@ -138,9 +121,7 @@ struct Scheme {
 }
 
 struct Highlighter {
-    /// Lumis theme that colors every capture with a unique placeholder color
     theme: Theme,
-    /// placeholder color -> IntelliJ key
     keys: HashMap<String, String>,
     schemes: Vec<Scheme>,
 }
@@ -226,7 +207,6 @@ static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
     }
 });
 
-/// One highlighted piece of a line: its IntelliJ key and its (already HTML-escaped) text.
 #[derive(Clone)]
 struct Token {
     key: String,
@@ -246,8 +226,6 @@ impl Token {
 static TAG_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"<span style="color: (#[0-9a-f]{6});[^"]*">|</span>"#).unwrap());
 
-/// Splits one line of Lumis HTML into tokens. Lumis sometimes nests spans; text takes
-/// the innermost span's key.
 fn tokenize(line: &str) -> Vec<Token> {
     let keys = &HIGHLIGHTER.keys;
     let mut out = Vec::new();
@@ -280,7 +258,6 @@ fn tokenize(line: &str) -> Vec<Token> {
     out
 }
 
-/// Indices of the tokens that aren't just whitespace.
 fn words(tokens: &[Token]) -> Vec<usize> {
     (0..tokens.len()).filter(|&i| tokens[i].is_word()).collect()
 }
@@ -298,7 +275,6 @@ fn is_type_parameter_name(word: &str) -> bool {
         && word.chars().skip(1).all(|c| c.is_ascii_digit())
 }
 
-/// `;`, `,` and `.` have their own keys; tree-sitter tags them all as delimiters.
 fn split_delimiters(tokens: &mut [Token]) {
     for t in tokens.iter_mut().filter(|t| t.key == "@delimiter") {
         t.key = match t.trimmed() {
@@ -312,7 +288,6 @@ fn split_delimiters(tokens: &mut [Token]) {
 }
 
 fn rust_rules(tokens: &mut Vec<Token>) {
-    // Lifetimes: `'` (tagged like `mut`) followed by the name (tagged like an attribute)
     let mut i = 0;
     while i + 1 < tokens.len() {
         if tokens[i].key == "@rust_modifier"
@@ -341,7 +316,6 @@ fn rust_rules(tokens: &mut Vec<Token>) {
     let w = words(tokens);
     let text = |tokens: &[Token], n: usize| tokens[w[n]].trimmed().to_string();
 
-    // #[attribute] lines are ATTRIBUTE throughout (strings keep their color)
     if w.len() >= 2 && text(tokens, 0) == "#" && text(tokens, 1).starts_with('[') {
         for t in tokens
             .iter_mut()
@@ -375,7 +349,6 @@ fn rust_rules(tokens: &mut Vec<Token>) {
                 || (after_impl && for_follows)
                 || (prev == "impl" && n > 1))
         {
-            // `trait X`, `dyn X`, `impl X for Y`, and `impl X` in type position (`-> impl Iterator`)
             Some("org.rust.TRAIT")
         } else if matches!(word.as_str(), "std" | "core" | "alloc" | "crate")
             && n + 1 < w.len()
@@ -418,16 +391,14 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
         let new_key = if word == "NULL"
             || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION")
         {
-            Some("OC.MACRONAME") // NULL and SHOUTING_CASE calls are macros
+            Some("OC.MACRONAME")
         } else if (ident
             && word.ends_with("_t")
             && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE"))
             || (cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word))
         {
-            // size_t, uint8_t, ... and template parameters (OC.TEMPLATE_TYPE falls back to OC.TYPEDEF)
             Some("OC.TYPEDEF")
         } else if ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
-            // s.field / s->field are fields; s.method() is a call
             Some(if next.starts_with('(') {
                 "OC.FUNCTION"
             } else {
@@ -442,7 +413,6 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
     }
 }
 
-/// Built-in names PyCharm colors wherever they appear.
 const PYTHON_BUILTINS: &[&str] = &[
     "abs",
     "all",
@@ -519,7 +489,6 @@ fn python_rules(tokens: &mut [Token]) {
     if w.is_empty() {
         return;
     }
-    // Decorators: everything from `@` up to the arguments
     if tokens[w[0]].trimmed().starts_with('@') {
         for &i in &w {
             if tokens[i].trimmed().starts_with('(') {
@@ -559,7 +528,6 @@ static LINE_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?s)<div class="l-line" data-line="\d+">(.*?)\n?</div>"#).unwrap()
 });
 
-/// Highlights code with Lumis and returns one token list per line.
 fn tokenize_code(language: Language, code: &str) -> Vec<Vec<Token>> {
     let formatter = HtmlInlineBuilder::new()
         .language(language)
@@ -593,7 +561,6 @@ fn language_for(lang: &str) -> Language {
 
 fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
     if lang == "console" {
-        // `$ command` lines are highlighted as bash; output stays plain
         return code
             .lines()
             .map(|line| match line.strip_prefix("$ ") {
@@ -662,8 +629,6 @@ fn render(lines: &[Vec<Token>], lang: &str, scheme: &Scheme) -> String {
     html
 }
 
-/// Highlights one fenced code block in IntelliJ Dark and IntelliJ Light (CSS shows the
-/// one matching the page's theme), with its language label.
 pub fn code_block(lang: &str, code: &str) -> String {
     let code = code.strip_suffix('\n').unwrap_or(code);
     let lines = lines_for(lang, code);
@@ -744,7 +709,7 @@ mod tests {
             "BASH.EXTERNAL_COMMAND"
         );
         let html = code_block("console", "$ echo hi\nhi");
-        assert_eq!(html.matches("class=\"l-line").count(), 4, "{html}"); // 2 lines in each scheme
+        assert_eq!(html.matches("class=\"l-line").count(), 4, "{html}");
     }
 
     #[test]

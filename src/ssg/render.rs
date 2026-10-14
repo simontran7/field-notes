@@ -5,7 +5,6 @@ use regex::Regex;
 
 use std::collections::HashSet;
 
-/// Callout icons: GitHub's Octicons (primer/octicons) for GitHub's five alert types.
 fn callout_icon(callout_type: &str) -> &'static str {
     match callout_type {
         "note" => {
@@ -30,21 +29,13 @@ fn callout_icon(callout_type: &str) -> &'static str {
 const GITHUB_TYPES: [&str; 5] = ["note", "tip", "important", "warning", "caution"];
 const CUSTOM_TYPES: [&str; 4] = ["definition", "theorem", "proposition", "corollary"];
 
-/// Types drawn as boxes with a title bar, like a LaTeX math environment
-/// ("Definition (Cache)", "Proposition (Law of Addition)"), so they stand apart
-/// from callouts.
 const ENVIRONMENT_TYPES: [&str; 4] = ["definition", "theorem", "proposition", "corollary"];
 
-/// Marks a custom callout so it survives comrak, which only knows GitHub's five types.
 const CUSTOM_MARK: &str = "@@callout:";
 
 static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^((?:>[ \t]*)+)\[!(\w+)\][ \t]*(.*)$").unwrap());
 
-/// Rewrites callout headers into GitHub alerts comrak can parse. GitHub types pass
-/// through; titles (`> [!TIP] Shortcut`) and the custom types are carried in a marker:
-/// `> [!PROPOSITION] Arithmetic series` -> `> [!NOTE] @@callout:proposition@@Arithmetic series`,
-/// restored after rendering.
 fn prepare_callouts(markdown: &str) -> String {
     CALLOUT_START_RE
         .replace_all(markdown, |caps: &regex::Captures| {
@@ -76,7 +67,6 @@ static ALERT_RE: LazyLock<Regex> = LazyLock::new(|| {
 
 static TITLE_MATH_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$([^$]+)\$").unwrap());
 
-/// comrak doesn't parse `$...$` inside alert titles, so mark it for `math::render_all` here.
 fn title_math(label: &str) -> String {
     TITLE_MATH_RE
         .replace_all(label, r#"<span data-math-style="inline">$1</span>"#)
@@ -105,14 +95,11 @@ fn process_callouts(html: &str) -> String {
             let body = &caps[3];
             if ENVIRONMENT_TYPES.contains(&kind.as_str()) {
                 let heading = capitalize(&kind);
-                // The name is the explicit title, or else the first bolded term:
-                // "A **cache** is ..." -> "Definition (Cache)"
                 let name = if label != heading {
                     Some(label.clone())
                 } else if kind != "definition" {
                     None
                 } else {
-                    // A trailing abbreviation is dropped: "Control unit (CU)" -> "Control unit"
                     STRONG_RE.captures(body).map(|c| {
                         let term = TAG_STRIP_RE.replace_all(&c[1], "");
                         capitalize(TRAILING_ABBREVIATION_RE.replace(&term, "").trim())
@@ -143,7 +130,6 @@ fn strip_anchors(html: &str) -> String {
 
 static HREF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"href="([^"]*)""#).unwrap());
 
-/// Resolves `a/b/../c` style paths without touching the file system.
 fn normalize(path: &str) -> String {
     let mut parts: Vec<&str> = Vec::new();
     for part in path.split('/') {
@@ -158,8 +144,6 @@ fn normalize(path: &str) -> String {
     parts.join("/")
 }
 
-/// Turns relative note links into site URLs: from `tools/git.md`, `../tools/c.md#generics`
-/// -> `{base}/tools/c/#generics`. Links to notes that don't exist are collected in `broken`.
 fn fix_links(
     html: &str,
     source: &str,
@@ -197,7 +181,6 @@ fn fix_links(
 
 static SRC_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"src="([^"]*)""#).unwrap());
 
-/// Image paths in notes are relative to the note's folder (`images/cpu.png`).
 fn fix_image_paths(html: &str, dir: &str) -> String {
     let base = super::layout::base_path();
     SRC_RE
@@ -251,8 +234,6 @@ pub(super) fn unescape_html(text: &str) -> String {
         .replace("&amp;", "&")
 }
 
-/// comrak emits plain `<pre><code class="language-x">` blocks; highlight each one,
-/// and draw Mermaid blocks as diagrams.
 fn highlight_code_blocks(html: &str) -> String {
     CODE_BLOCK_RE
         .replace_all(html, |caps: &regex::Captures| {

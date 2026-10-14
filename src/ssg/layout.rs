@@ -22,9 +22,6 @@ pub fn set_dev_mode(enabled: bool) {
 }
 
 pub fn base_path() -> &'static str {
-    // Prefix internal links and asset URLs since GitHub Pages serves
-    // this project from /cs-handbook/, but the local dev
-    // server serves it from `/`
     if DEV_MODE.load(Ordering::Relaxed) {
         ""
     } else {
@@ -32,8 +29,6 @@ pub fn base_path() -> &'static str {
     }
 }
 
-/// A short hash of a file in public/, added to its URL (`style.css?v=3f2a9c`) so
-/// browsers fetch the new file as soon as it changes instead of a cached copy.
 fn asset_version(file: &str) -> String {
     use std::hash::{Hash, Hasher};
     let contents = std::fs::read(std::path::Path::new("public").join(file)).unwrap_or_default();
@@ -46,8 +41,6 @@ pub fn page(title: &str, body: &str) -> String {
     let css_version = asset_version("style.css");
     let js_version = asset_version("site.js");
     let base = base_path();
-    // Math is rendered at build time, so only its stylesheet (and the fonts it
-    // pulls in) is needed, and only on pages that have math
     let katex_css = if body.contains(r#"class="katex""#) {
         format!("\n    <link rel=\"stylesheet\" href=\"{base}/katex/katex.min.css\" />")
     } else {

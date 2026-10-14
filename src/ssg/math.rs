@@ -1,6 +1,3 @@
-//! Renders `$...$` and `$$...$$` to KaTeX HTML at build time, so pages need
-//! only KaTeX's stylesheet and fonts (in public/katex/), not its JavaScript.
-
 use std::sync::LazyLock;
 
 use katex::{KatexContext, Settings};
@@ -8,19 +5,15 @@ use regex::Regex;
 
 static KATEX: LazyLock<KatexContext> = LazyLock::new(KatexContext::default);
 
-/// comrak's markup for math (`math_dollars`), and `title_math`'s for callout titles.
 static MATH_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<span data-math-style="(inline|display)">([\s\S]*?)</span>"#).unwrap()
 });
 
-/// An opening tag with attributes, and one attribute in it.
 static TAG_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"<([a-zA-Z][\w:-]*)((?:\s[\w:-]+="[^"]*")+)(\s*/?)>"#).unwrap());
 static ATTRIBUTE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"\s[\w:-]+="[^"]*""#).unwrap());
 
-/// katex-rs keeps attributes in a HashMap, so their order changes from run to
-/// run. Sorting them makes every build of an unchanged note byte-for-byte the same.
 fn sort_attributes(html: &str) -> String {
     TAG_RE
         .replace_all(html, |caps: &regex::Captures| {
@@ -39,8 +32,6 @@ fn render(tex: &str, display: bool) -> String {
         .display_mode(display)
         .throw_on_error(false)
         .build();
-    // With throw_on_error off, bad LaTeX renders as red source text instead of
-    // failing, like it did in the browser.
     match katex::render_to_string(&KATEX, tex, &settings) {
         Ok(html) => sort_attributes(&html),
         Err(e) => {

@@ -61,5 +61,18 @@ A system call work as follows:
 
 <img src="images/user_mode_kernel_mode_transition.svg" width="500">
 
+## Kernel Architecture
+
+Most kernels fall into one of two designs, depending on how much of the operating system runs inside the kernel itself.
+
+> [!DEFINITION]
+> A **monolithic kernel** runs the kernel and all of its services, such as filesystems, device drivers and the networking stack, as a single program in kernel mode.
+
+> [!DEFINITION]
+> A **microkernel** keeps only the bare minimum inside the kernel: scheduling, memory management and paging, and interprocess communication (IPC). Every other service runs as a separate program in user mode.
+
+The pieces a microkernel keeps are the ones that every higher-level feature depends on. A filesystem needs to be scheduled, needs memory, and needs a way to talk to the programs that use it, so those three things have to exist before anything else can be built. The services built on top, like the networking stack, filesystems and device drivers, then run as ordinary programs that talk to the kernel and to each other through IPC, usually in the form of remote procedure calls (RPC).
+
+In a monolithic kernel, a program that reads a file makes one system call, and the kernel calls into the filesystem code directly. In a microkernel, the same read becomes a message from the program to the kernel, which passes it on to the filesystem process, which sends its reply back through the kernel. Each of those hops is a switch between processes, so microkernels have traditionally been slower than monolithic kernels because of this IPC overhead.
 
 

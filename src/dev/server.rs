@@ -5,8 +5,6 @@ use axum::Router;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_livereload::LiveReloadLayer;
 
-/// The port asked for, in any of the ways people type it: `PORT=8002 cargo run -- serve`,
-/// `cargo run -- serve 8002`, `cargo run -- serve PORT=8002` or `--port 8002`.
 fn requested_port() -> Option<u16> {
     let args: Vec<String> = std::env::args().skip(2).collect();
     let from_args = args.iter().enumerate().find_map(|(i, a)| {
@@ -24,7 +22,6 @@ fn requested_port() -> Option<u16> {
     from_args.or_else(|| std::env::var("PORT").ok()?.parse().ok())
 }
 
-/// Binds the requested port, or the first free one from 8000 up if none was asked for.
 fn bind(requested: Option<u16>) -> (TcpListener, String) {
     let candidates: Vec<u16> = match requested {
         Some(port) => vec![port],
@@ -47,15 +44,11 @@ fn bind(requested: Option<u16>) -> (TcpListener, String) {
     std::process::exit(1);
 }
 
-/// Serves `dist_dir` until the process exits. `livereload` adds a script to every
-/// page that reloads it when the watcher calls its reloader.
 pub fn run(dist_dir: &Path, livereload: LiveReloadLayer) -> std::io::Result<()> {
     let (listener, addr) = bind(requested_port());
     listener.set_nonblocking(true)?;
     println!("dev server running at http://{addr}");
 
-    // ServeDir redirects /foo to /foo/ and serves its index.html, like GitHub Pages,
-    // and refuses paths that escape dist/.
     let files =
         ServeDir::new(dist_dir).not_found_service(ServeFile::new(dist_dir.join("404.html")));
     let app = Router::new().fallback_service(files).layer(livereload);
