@@ -175,7 +175,6 @@ So there are two windows where a core can observe stale data:
 > A **memory consistency model** defines what guarantees a CPU architecture makes about when writes become visible to other cores. Different architectures make different tradeoffs between performance and strictness.
 
 There are four possible ordering constraints between memory operations, where X and Y are not necessarily the same address:
-
 - **W→R**: a write to X must commit before a subsequent read from Y
 - **W→W**: a write to X must commit before a subsequent write to Y
 - **R→R**: a read from X must commit before a subsequent read from Y
@@ -185,7 +184,7 @@ A memory model is defined by which of these it enforces. Relaxing a constraint m
 
 #### Sequential Consistency (SC)
 
-Defined by Lamport (1976), sequential consistency is the ideal model that enforces all four orderings. It makes two guarantees: every memory operation across every core appears to execute in one global sequential order, and each core's own operations appear in that order exactly as they appear in the program (program order). The system therefore behaves as if all cores share a single memory with no caches or buffers, like a switch that picks one core at a time, completes its memory operation atomically, then picks another.
+Defined by Lamport (1976), **sequential consistency** is the ideal model that enforces all four orderings. It makes two guarantees: every memory operation across every core appears to execute in one global sequential order, and each core's own operations appear in that order exactly as they appear in the program (program order). The system therefore behaves as if all cores share a single memory with no caches or buffers, like a switch that picks one core at a time, completes its memory operation atomically, then picks another.
 
 In practice, no modern high-performance CPU implements sequential consistency fully, since doing so would require flushing the store buffer and draining the invalidation queue on every operation, eliminating the very optimizations that make out-of-order and pipelined execution fast.
 

@@ -1,7 +1,7 @@
 # TODO
 
 - [ ] computer systems
-  - https://web.stanford.edu/class/cs107/
+  - https://web.stanford.edu/class/archive/cs/cs107/cs107.1268/
   - https://courses.cs.washington.edu/courses/cse351/20sp/lectures/
 - [ ] operating systems
   - https://web.stanford.edu/class/cs111/

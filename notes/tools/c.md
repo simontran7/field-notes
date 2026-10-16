@@ -2,7 +2,7 @@
 
 ## Variables
 
-Where a variable lives depends on where you declare it, and that decides how long it lasts and what it holds before you write to it.
+Where a variable lives depends on where you declare it.
 
 | Declared | Lives in | No initializer | Lifetime |
 | :---: | :---: | :---: | :---: |
@@ -541,7 +541,9 @@ char *copy_string(const char *src) {
 
 ### String Length
 
-The **length** of a string is the number of characters before its `\0`, so it is one less than the bytes the string takes. [`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen` finds it by walking from the first character until it reaches the `\0`, which takes time proportional to the length.
+The **length** of a string is the number of characters before its `\0`. 
+
+[`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen` works by by walking the string from the first character until it reaches the `\0`, worst-case $O(l)$ time.
 
 `sizeof` measures something different. On a `char` array, it gives the array's capacity, which counts the `\0` and any unused space after it. On a pointer, it gives the size of the pointer itself, whatever string it points to.
 
@@ -559,11 +561,10 @@ int main(void) {
     printf("%zu\n", sizeof p);  // sizeof(char *), usually 8
 }
 ```
-
+  
 > [!TIP]
 > Since `strlen` walks the whole string each time, call it once and keep the
-> result instead of calling it in a loop condition like
-> `for (size_t i = 0; i < strlen(s); i++)`, which makes the loop quadratic.
+> result instead of calling it in a for loop condition.
 
 > [!WARNING]
 > `strlen` keeps reading until it finds a `\0`, so calling it on a byte buffer
@@ -598,7 +599,9 @@ int main(void) {
 > - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
 > - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
 
-## Encapsulation
+## OOP
+
+### Encapsulation
 
 C has no `private` keyword. To hide a struct's fields, a common C idiom is to create a header that declares the struct without defining it, which makes it an **incomplete type**, or **opaque type**. Other files can hold pointers to it and pass them to the library's functions, and only the library's own `.c` file can see the fields inside. 
 
@@ -770,7 +773,39 @@ peek.c:9:22: error: invalid use of undefined type ‘struct stack’
 
 Hiding the fields has two costs. Callers can't declare a `struct stack` on the stack or embed one in their own structs, so every stack lives on the heap. Every access also goes through a function call in another file, which the compiler can only inline when link-time optimization (`-flto`) is enabled.
 
-## Generics
+### Abstraction
+
+C has no namespaces or classes, so a “class” becomes a header plus a naming convention: stack_new, stack_push, stack_free. The header is the public interface, and the explicit self pointer as the first argument stands in for this.
+
+For an abstraction with multiple implementations, the header exposes only the ops struct and constructors. That makes it an interface in the Java sense.
+
+### Inheritance
+
+You put the parent struct as the first member. The C standard guarantees that a pointer to a struct, suitably cast, points to its first member, so upcasting is just a cast:
+
+c
+struct animal { const struct animal_ops *ops; const char *name; };
+struct dog    { struct animal base; int good_boy; };
+
+struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = 1 };
+struct animal *a = (struct animal *)&d;     // upcast
+struct dog *back = (struct dog *)a;         // downcast, unchecked
+
+When the parent isn’t the first member, or an object embeds several “bases” (like implementing multiple interfaces), you use container_of, the Linux kernel’s macro that subtracts offsetof to get from a member pointer back to its enclosing struct:
+
+c
+#define container_of(ptr, type, member) \
+    ((type *)((char *)(ptr) - offsetof(type, member)))
+
+Inherited behaviour works by building the child’s vtable from the parent’s: the child copies the slots it doesn’t override and replaces the ones it does. GObject does this at class-init time, and simpler code does it with a statically initialized ops struct.
+
+### Polymorphism
+
+#### Dynamic 
+
+https://web.archive.org/web/20250124083637/https://pabloariasal.github.io/2017/06/10/understanding-virtual-tables/
+
+#### Static
 
 https://youtu.be/3IAlJSIjvH0?t=541
 
