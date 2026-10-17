@@ -1,32 +1,107 @@
 # C
 
-## Variables
+## Hello, World!
 
-Where a variable lives depends on where you declare it.
+Every hosted C program must define a function named `main`. 
 
-| Declared | Lives in | No initializer | Lifetime |
-| :---: | :---: | :---: | :---: |
-| outside any function, or inside one with `static` | static memory (`.data` / `.bss`) | zero-filled | whole program |
-| inside a function, without `static` | stack | garbage | until the block ends |
+When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main`. The program ends when `main` returns an integer (or when `exit()` is called). Alternatively, in C99 or later, if control reaches the closing brace of `main`, it is treated as `return 0;`. The integer value returned by `main` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+
+`main` must be declared as either:
+- `int main(void)`
+- `int main(int argc, char **argv)`, where `argv` represents an array of string command-line arguments, and `argc` the number of arguments in `argv`.
 
 ```c
-int count;            // static memory, starts as 0
-static int limit = 8; // static memory, only visible in this file
+#include <stdio.h>
 
-void f(void) {
-    static int calls; // static memory, starts as 0 and keeps its value
-    int x;            // stack, garbage until written
-    calls++;
+int main(void) {
+    printf("Hello, World!\n");
+    return 0;
 }
 ```
 
-A `static` local variable keeps its value between calls, since it isn't recreated each time the function runs. At file scope, `static` doesn't change where the variable lives, and it only hides the name from other files.
+## Comments
 
-These rules apply to every variable, arrays and structs included. Memory whose size you only know at run time, or that has to outlive the function that creates it, goes on the [heap](#dynamic-memory-allocation) instead.
+Comments are used to write anything that is to be ignored by the compiler.
+
+```c
+/*
+ * Multi-line comments 
+ */
+
+// Single-line comments
+```
+
+## Imports
+
+```c
+#include <name.h> // C standard library imports are written with angle brackets
+
+#include "name.h" // Local libraries are written with quotes
+```
+
+## Primitive Types
+
+A **type** is the rule that defines how to store values in memory and which operations are admissible on those values.
+
+Each type requires a certain amount of memory and permits a relevant set of operations.
+
+A type defines the number of bytes available for storing values and hence the range of possible values. We use different types to store different information.
+
+### `char`
+
+A `char` occupies one byte.
+
+### `int`
+
+An `int` occupies one word and can store an integer value. 
+
+- `int`: occupies one word and can store an integer value
+- `float`: occupies 4 bytes and can store a single-precision, floating-point number
+- `double`: occupies 8 bytes and can store a double-precision, floating-point number
+
+C treats a nonzero value as `true`, and a zero value as `false`.
+
+```c
+#include <stdbool.h>  // for bool
+
+int main(void) {
+    short d; // Short integer
+    long e; // Long integer
+    int a; // Integer
+    unsigned int b; // Unsigned integers 
+    char c; // Character
+    float f; // Floating point integer
+    double g; // Double-precision floating point integer
+    bool h; // Boolean `TRUE` or `FALSE`
+    return 0;
+}
+```
+
+## Variables
+
+In C, a declaration takes the form:
+
+```
+[const] type identifier [= initial value];
+```
 
 > [!WARNING]
-> A stack variable is gone once its function returns, so returning a pointer to
-> it leaves the caller with a dangling pointer.
+> Identifiers are case sensitive. This means `foo` and `FOO` are two different identifiers.
+
+## If Statements
+
+## Loops
+
+### For Loops
+
+### While Loops
+
+## Functions
+
+
+
+
+
 
 ## Arrays
 
@@ -586,6 +661,10 @@ int main(void) {
 ## ISO C Standard Library
 
 [https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
+
+`printf(text, arg1, arg2, arg3,...);`
+
+
 
 > [!NOTE] ISO C, POSIX, and platform-specific APIs
 > - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
