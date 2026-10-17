@@ -559,7 +559,52 @@ fn language_for(lang: &str) -> Language {
     }
 }
 
+static PLACEHOLDER_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"&lt;([^&<>]+)&gt;(\?|\+,?)?").unwrap());
+
+static DEFINITION_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^&lt;([^&<>]+)&gt;:(.*)$").unwrap());
+
+fn syntax_placeholders(text: &str) -> String {
+    PLACEHOLDER_RE
+        .replace_all(text, |caps: &regex::Captures| {
+            let count = match caps.get(2).map(|m| m.as_str()) {
+                Some("?") => r#"<sub class="syntax-count">opt</sub>"#,
+                Some("+") => r#"<sup class="syntax-count">+</sup>"#,
+                Some("+,") => r#"<sup class="syntax-count">+,</sup>"#,
+                _ => "",
+            };
+            format!(r#"<em class="syntax-placeholder">{}</em>{count}"#, &caps[1])
+        })
+        .into_owned()
+}
+
+/// One line of a `syntax` block: each `<placeholder>` is shown in italics without its brackets,
+/// `<placeholder>?` also gets a subscript "opt" to mark it optional, `<placeholder>+` a
+/// superscript "+" to mark one or more, and `<placeholder>+,` a superscript "+," to mark one or
+/// more separated by commas. A line that starts with
+/// `<placeholder>:` begins that placeholder's definition, and the colon and any note after it
+/// (such as "one or more") are notation. Everything else is literal.
+fn syntax_line(line: &str) -> Token {
+    let escaped = html_escape(line);
+    let text = match DEFINITION_RE.captures(&escaped) {
+        Some(caps) => format!(
+            r#"<em class="syntax-placeholder">{}</em><span class="syntax-meta">:{}</span>"#,
+            &caps[1], &caps[2]
+        ),
+        None => syntax_placeholders(&escaped),
+    };
+    Token {
+        key: TEXT.into(),
+        text,
+    }
+}
+
 fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
+    if lang == "syntax" {
+        return code.lines().map(|line| vec![syntax_line(line)]).collect();
+    }
+
     if lang == "console" {
         return code
             .lines()
@@ -654,6 +699,40 @@ mod tests {
             .find(|t| t.trimmed() == word)
             .map(|t| t.key)
             .unwrap_or_else(|| panic!("{word} not found in {code}"))
+    }
+
+    #[test]
+    fn syntax_placeholders_become_italic() {
+        let line = syntax_line("<type> <identifier>[<capacity>] <initializer>?;");
+        assert_eq!(
+            line.text,
+            r#"<em class="syntax-placeholder">type</em> <em class="syntax-placeholder">identifier</em>[<em class="syntax-placeholder">capacity</em>] <em class="syntax-placeholder">initializer</em><sub class="syntax-count">opt</sub>;"#
+        );
+        // Literal brackets around a placeholder stay, and a spaced ? is literal
+        assert_eq!(
+            syntax_line("#include <<header>>").text,
+            r#"#include &lt;<em class="syntax-placeholder">header</em>&gt;"#
+        );
+        assert_eq!(
+            syntax_line("<values>: comma-separated").text,
+            r#"<em class="syntax-placeholder">values</em><span class="syntax-meta">: comma-separated</span>"#
+        );
+        assert_eq!(
+            syntax_line("{ <case>+ }").text,
+            r#"{ <em class="syntax-placeholder">case</em><sup class="syntax-count">+</sup> }"#
+        );
+        assert_eq!(
+            syntax_line("    case <constant>: <statements>").text,
+            r#"    case <em class="syntax-placeholder">constant</em>: <em class="syntax-placeholder">statements</em>"#
+        );
+        assert_eq!(
+            syntax_line("{ <value>+, }").text,
+            r#"{ <em class="syntax-placeholder">value</em><sup class="syntax-count">+,</sup> }"#
+        );
+        assert_eq!(
+            syntax_line("<a> ? <b> : <c>").text,
+            r#"<em class="syntax-placeholder">a</em> ? <em class="syntax-placeholder">b</em> : <em class="syntax-placeholder">c</em>"#
+        );
     }
 
     #[test]

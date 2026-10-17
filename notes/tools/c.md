@@ -1,17 +1,17 @@
 # C
 
-## Hello, World!
+## Entry Point
 
-Every hosted C program must define a function named `main`. 
+Every C program must define a function named `main`, which is the program's **entry point**: the first of your code to run.
 
-When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main`. The program ends when `main` returns an integer (or when `exit()` is called). Alternatively, in C99 or later, if control reaches the closing brace of `main`, it is treated as `return 0;`. The integer value returned by `main` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main`. The program ends cleanly in three ways: when `main` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main`, which is treated as `return 0;`. The integer value returned by `main` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
 
 `main` must be declared as either:
 - `int main(void)`
 - `int main(int argc, char **argv)`, where `argv` represents an array of string command-line arguments, and `argc` the number of arguments in `argv`.
 
 ```c
-#include <stdio.h>
+#include <stdio.h> // printf()
 
 int main(void) {
     printf("Hello, World!\n");
@@ -31,81 +31,653 @@ Comments are used to write anything that is to be ignored by the compiler.
 // Single-line comments
 ```
 
-## Imports
+## Primitive Data Types
 
-```c
-#include <name.h> // C standard library imports are written with angle brackets
+| Type | Minimum width |
+| :---: | :---: |
+| `bool`  | 8 bits (1 byte), holds only `0` or `1` |
+| `char` | 8 bits (1 byte) |
+| `signed char` | 8 bits (1 byte) |
+| `unsigned char` | 8 bits (1 byte) |
+| `signed short int` | 16 bits (2 bytes) |
+| `unsigned short int` | 16 bits (2 bytes) |
+| `signed int` | 16 bits (2 bytes) |
+| `unsigned int` | 16 bits (2 bytes) |
+| `signed long int` | 32 bits (4 bytes) |
+| `unsigned long int` | 32 bits (4 bytes) |
+| `signed long long int` | 64 bits (8 bytes) |
+| `unsigned long long int` | 64 bits (8 bytes) |
+| `float` | ~6 decimal digits of precision |
+| `double` | ~10 decimal digits of precision |
+ 
+Integer types follow the general form:
 
-#include "name.h" // Local libraries are written with quotes
+```syntax
+<sign>? <size>? int
+<sign>? char
+
+<sign>:
+    signed
+    unsigned
+<size>:
+    short
+    long
+    long long
 ```
 
-## Primitive Types
-
-A **type** is the rule that defines how to store values in memory and which operations are admissible on those values.
-
-Each type requires a certain amount of memory and permits a relevant set of operations.
-
-A type defines the number of bytes available for storing values and hence the range of possible values. We use different types to store different information.
-
-### `char`
-
-A `char` occupies one byte.
-
-### `int`
-
-An `int` occupies one word and can store an integer value. 
-
-- `int`: occupies one word and can store an integer value
-- `float`: occupies 4 bytes and can store a single-precision, floating-point number
-- `double`: occupies 8 bytes and can store a double-precision, floating-point number
-
-C treats a nonzero value as `true`, and a zero value as `false`.
+- `signed` is the default for every integer type except `char`, so it can be omitted.
+- `int` can be omitted when `signed`, `unsigned`, `short`, `long`, `long long`, is present.
 
 ```c
-#include <stdbool.h>  // for bool
-
-int main(void) {
-    short d; // Short integer
-    long e; // Long integer
-    int a; // Integer
-    unsigned int b; // Unsigned integers 
-    char c; // Character
-    float f; // Floating point integer
-    double g; // Double-precision floating point integer
-    bool h; // Boolean `TRUE` or `FALSE`
-    return 0;
-}
+// all four declarations name the same type
+signed long int a; 
+signed long b;
+long int c;
+long d; 
 ```
+
+> [!TIP]
+> Since the size of `int`s, and the signness of `char`s depends on the target platform (architecture + OS + compiler/ABI), make sure to use the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator) to check. Or, just use [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint) for fixed-width types.
+
+> [!WARNING]
+> C treats a nonzero value as `true`, and a zero value as `false`.
 
 ## Variables
 
-In C, a declaration takes the form:
+An **object** is a region of memory that holds a value of some type. A **variable** is an object with a name.
 
+> [!NOTE]
+> "Object" here is the C standard's term for storage, unrelated to objects in object-oriented programming.
+
+A variable takes the form:
+
+```syntax
+<storage class>? <qualifier>? <type> <identifier> <initializer>?;
+
+<storage class>:
+    static
+    extern
+<qualifier>:
+    const
+    constexpr
+<initializer>:
+    = <value>
 ```
-[const] type identifier [= initial value];
+
+### Declaration
+
+A declaration introduces a variable's name and type.
+
+```c
+int count;
+```
+
+A declaration that also creates the variable's storage is a **definition**. For variables, this is almost always the case.
+
+### Initialization
+
+A declaration with an initialization gives the variable its first value in the same statement.
+
+```c
+int total = 0;
+```
+
+Variables declared inside a function without an initialization hold garbage until you assign them. Global variables and `static` variables are initialized to zero (see [Storage Duration](#storage-duration)).
+
+```c
+int global;             // 0
+
+int main(void) {
+    int local;          // garbage
+    static int counter; // 0
+}
+```
+
+### Multi-Declaration and Multi-Initialization
+
+You can declare multiple variables at once, and initialize any of them.
+
+```c
+char a = 'x', b;
+```
+
+### Assignment
+
+Variables can be assigned later, but `const` variable can't later be assigned.
+
+```c
+signed int foo;
+const double pi = 3.14159;
+
+foo = 5; // works
+pi = 3.0; // error
+```
+
+### Constants
+
+`const` makes a variable read-only after its initialization. `constexpr` (C23) goes further and makes it a compile-time constant, so its initializer must be a constant expression and it can be used where C requires one, such as an array size.
+
+```c
+const int n = get_count(); // fixed at run time
+constexpr int size = 16;   // fixed at compile time
+int buf[size];             // works, size is a constant
+```
+
+### Scope
+
+A variable's **scope** is the part of the code where its name is visible. A variable declared inside `{ }` has **block scope** and is visible until the closing brace. A variable declared outside any function has **file scope** (often called a _global_ variable) and is visible from there to the end of the file.
+
+```c
+int total; // file scope
+
+void f(void) {
+    int x = 1; // block scope
+    if (x) {
+        int y = 2; // visible only inside this if
+    }
+    // y = 3; // error, y is out of scope
+}
+```
+
+An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
+
+```c
+int x = 1;
+{
+    int x = 2; // shadows the outer x
+    printf("%d\n", x); // 2
+}
+printf("%d\n", x); // 1
+```
+
+### Storage Duration
+
+An object's **storage duration** is how long its memory exists.
+
+| Storage duration | Variables | Created | Destroyed | Starts as |
+| :---: | :---: | :---: | :---: | :---: |
+| Automatic | locals | when the block starts (stack) | when the block ends | garbage |
+| Static | file scope and `static` locals | when the program starts (`.data` or `.bss`) | when the program ends | zero |
+| Allocated | [`malloc`](#dynamic-memory-allocation) memory | at `malloc` | at `free` | garbage |
+
+### Static Local Variables
+
+A local variable declared `static` has static [storage duration](#storage-duration), so it keeps its value between calls. Its initialization happens only once, before the program starts.
+
+```c
+void tick(void) {
+    static int count; // starts at 0, initialized only once
+    count += 1;
+    printf("%d\n", count);
+}
+
+tick(); // 1
+tick(); // 2
+```
+
+### File-Scoped Variables
+
+A variable at file scope can be used from other files too, through [`extern`](#external-variables). Declaring it `static` keeps it private to the file it is declared in.
+
+```c
+int shared;           // other .c files can use it
+static int file_only; // invisible to other .c files
+```
+
+### External Variables
+
+An `extern` declaration refers to a variable that is defined in another file, without creating it. Exactly one file defines it, and every other file that uses it declares it with `extern`, usually through a header.
+
+```c
+// counter.c
+int counter = 0; // definition
+
+// main.c
+extern int counter; // declaration, the storage is in counter.c
 ```
 
 > [!WARNING]
 > Identifiers are case sensitive. This means `foo` and `FOO` are two different identifiers.
 
+## Expressions
+
+An **expression** is anything that produces a value, such as `x + 1`, `a < b` or `f()`.
+
+> [!NOTE]
+> Adding a `;` after any expression turns it into a **statement**. `x = 5;` and `f();` are expression statements, and so is `x + 1;`, which computes a value and throws it away.
+
+### Arithmetic
+
+| Operator | Description |
+| :---: | :---: |
+| `+` | Addition |
+| `-` | Subtraction |
+| `*` | Multiplication |
+| `/` | Division that rounds toward zero (i.e., truncates the fraction) |
+| `%` | Remainder (i.e., takes the sign of the dividend) |
+| `+x` | Unary plus (i.e., gives `x` unchanged) |
+| `-x` | Negation |
+| `x++` | Post-increment: adds 1 to `x`, and gives the old value |
+| `x--` | Post-decrement: subtracts 1 from `x`, and gives the old value |
+| `++x` | Pre-increment: adds 1 to `x`, and gives the new value |
+| `--x` | Pre-decrement: subtracts 1 from `x`, and gives the new value |
+
+```c
+int a = 7 + 2; // 9, addition
+int b = 7 - 2; // 5, subtraction
+int c = 7 * 2; // 14, multiplication
+int d = 7 / 2; // 3, division
+int e = 7 % 2; // 1, remainder
+```
+
+```c
+int i = 5;
+int x = i++; // x is 5, i is 6
+
+int j = 5;
+int y = ++j; // y is 6, j is 6
+```
+
+```c
+7 / 2;  // 3
+7 % 2;  // 1
+
+-7 / 2; // -3, since -3.5 rounded toward zero 
+-7 % 2; // -1, since -7 is negative
+
+7 / -2 // -3, since -3.5 rounded toward zero 
+7 % -2 // 1, since 7 is positive
+```
+
+> [!NOTE]
+> Arithmetic operators from highest to lowest precedence. Parentheses go first, and operators on the same row group by their associativity.
+>
+> | Precedence | Operators | Associativity |
+> | :---: | :---: | :---: |
+> | 1 | `x++`, `x--` | left to right |
+> | 2 | `++x`, `--x`, unary `+x`, `-x` | right to left |
+> | 3 | `*`, `/`, `%` | left to right |
+> | 4 | `+`, `-` | left to right |
+>
+> ```c
+> int f = 7 + 2 * 3;   // 13
+> int g = (7 + 2) * 3; // 27
+> int h = 10 - 4 - 3;  // 3, (10 - 4) - 3
+> ```
+
+> [!NOTE] Theory on Division and Modulo
+> Division and modulo always come as a pair that satisfies the identity:
+>
+> $$x = q \cdot n + r$$
+>
+> where $q$ is the quotient ($x \operatorname{div} n$) and $r$ is the remainder ($x \bmod n$).
+>
+> This means that defining one of the two operations fully determines the other. Once $x$ and $n$ are fixed, the identity ties $q$ and $r$ together, so choosing either one decides the other:
+>
+> - **Define $q$ (division), and $r$ follows:** $r = x - q \cdot n$
+> - **Define $r$ (modulo), and $q$ follows:** $q = (x - r) / n$
+>
+> We can define division in five ways. The first four pick a rounding rule for $q$, and the range of $r$ follows from the identity. The fifth, **Euclidean**, starts from the range of $r$ instead, and $q$ is whatever the identity then forces.
+>
+> | Rule | $q$ | $r$ |
+> |---|---|---|
+> | Ceil | round up | $r \in \begin{cases} (-n, \, 0] & n > 0 \\ [0, \, \lvert n \rvert) & n < 0 \end{cases}$ |
+> | Floor | round down | $r \in \begin{cases} [0, \, n) & n > 0 \\ (n, \, 0] & n < 0 \end{cases}$ |
+> | Round | round to nearest | $r \in [-\lvert n \rvert/2, \, \lvert n \rvert/2]$ |
+> | Truncate | round toward zero | $r \in \begin{cases} [0, \, \lvert n \rvert) & x \ge 0 \\ (-\lvert n \rvert, \, 0] & x < 0 \end{cases}$ |
+> | Euclidean | $\begin{cases} \text{round down} & n > 0 \\ \text{round up} & n < 0 \end{cases}$ | $r \in [0, \, \lvert n \rvert)$ |
+>
+> Of the five, floor and Euclidean are the most useful, because when $n > 0$ both give $r \in [0, n)$, even for negative $x$. That makes their remainder a valid index for wrap-around, as in circular arrays. 
+> 
+> As such, floor is often preferred because it's simpler than Euclidean division (i.e., it's just $\lfloor x/n \rfloor$), and the floor modulo can easily calculate the Euclidean remainder via $x \bmod \lvert n \rvert$.
+
+> [!TIP]
+> To get floored division and floored modulo, assuming `n > 0`:
+>
+> ```c
+> int div_floor(int x, int n) {
+>     int q = x / n;
+>     if (x % n < 0) {
+>         q -= 1;
+>     }
+>     return q;
+> }
+>
+> int mod_floor(int x, int n) {
+>     int r = x % n;
+>     if (r < 0) {
+>         r += n;
+>     }
+>     return r;
+> }
+> ```
+
+### Boolean
+
+Relational operators compare two values, and logical operators combine conditions. Both give an `int`: `1` for true and `0` for false.
+
+| Operator | Description |
+| :---: | :---: |
+| `==` | Equal to |
+| `!=` | Not equal to |
+| `<` | Less than |
+| `>` | Greater than |
+| `<=` | Less than or equal to |
+| `>=` | Greater than or equal to |
+
+| Operator | Description |
+| :---: | :---: |
+| `&&` | Logical AND: true if both sides are true |
+| `\|\|` | Logical OR: true if either side is true |
+| `!` | Logical NOT: true if the operand is false |
+
+```c
+int in_range = x >= 0 && x < 10;
+int not_zero = !(x == 0);
+```
+
+`&&` and `||` short-circuit, so the right side only runs when the left side doesn't already decide the result.
+
+```c
+if (p != nullptr && *p > 0) { ... } // *p is never read when p is null
+```
+
+> [!TIP]
+> To negate a combined condition, apply two separate rules in order:
+>
+> 1. **De Morgan's laws** move the $\lnot$ onto each part, and swap $\land$ and $\lor$:
+>
+>    $$\lnot (a \land b) = \lnot a \lor \lnot b \qquad \lnot (a \lor b) = \lnot a \land \lnot b$$
+>
+> 2. **Each negated comparison becomes its opposite:**
+>
+>    $$\lnot(x < y) = x \ge y \qquad \lnot(x > y) = x \le y \qquad \lnot(x = y) = x \ne y$$
+>
+> For example:
+>
+> $$
+> \begin{aligned}
+> \lnot (x \ge 0 \land x < 10) &= \lnot(x \ge 0) \lor \lnot(x < 10) && \text{step 1} \\
+> &= x < 0 \lor x \ge 10 && \text{step 2}
+> \end{aligned}
+> $$
+>
+> More examples:
+>
+> $$
+> \begin{aligned}
+> \lnot (x = 0 \lor y = 0) &= x \ne 0 \land y \ne 0 \\
+> \lnot (a > b \land c \le d) &= a \le b \lor c > d \\
+> \lnot (\lnot a \lor b) &= a \land \lnot b \\
+> \lnot (a \land (b \lor c)) &= \lnot a \lor (\lnot b \land \lnot c)
+> \end{aligned}
+> $$
+>
+> Step 2 doesn't hold for floating-point values that may be NaN (e.g., from `0.0 / 0.0`). NaN isn't less than, equal to or greater than anything, so `<`, `<=`, `>`, `>=` and `==` with NaN are all false (and `!=` is true). If `x` is NaN, `!(x < y)` is true but `x >= y` is false.
+
+> [!WARNING]
+> `=` assigns and `==` compares. `if (x = 0)` sets `x` to `0` and is always false.
+
+### Bitwise
+
+Bitwise operators work on the individual bits of integers. See [Bitwise Operators](../computer-systems/computer-organization/data-representation.md#bitwise-operations) for truth tables, bit masks and common operations.
+
+| Operator | Description |
+| :---: | :---: |
+| `&` | Bitwise AND |
+| `\|` | Bitwise OR |
+| `^` | Bitwise XOR |
+| `~` | Bitwise NOT |
+| `<<` | Left shift |
+| `>>` | Right shift |
+
+```c
+unsigned flags = 0b0101;
+flags & 0b0001; // 1, the lowest bit is set
+flags | 0b0010; // 0b0111, set a bit
+flags << 1;     // 0b1010, each shift left doubles the value
+```
+
+> [!WARNING]
+> Bitwise operators have low precedence, so parenthesize them whenever they're mixed with other operators. `&`, `|` and `^` bind looser than `==` and `!=`, so `x & 1 == 0` means `x & (1 == 0)`, which is always `0`. Write `(x & 1) == 0`. Shifts also bind looser than `+` and `-`, so `1 << n + 1` means `1 << (n + 1)`.
+
+> [!WARNING]
+> A shift happens in the type of its _left_ operand, after promotion: types narrower than `int` (e.g., `char`, `uint8_t`) are promoted to signed `int` first. This leads to undefined behaviour in two cases:
+> - The shift amount is negative, or at least the width of the left operand (e.g., `1u << 32` for a 32-bit `unsigned`).
+> - A signed value is shifted left into or past the sign bit, or a negative value is shifted left (e.g., `1 << 31` for a 32-bit `int`).
+>
+> Right-shifting a negative value is also implementation-defined (usually an arithmetic shift). To avoid all of these, shift unsigned fixed-width types that are wide enough (e.g., `(uint32_t) x << k` or `1u << k`), and keep `k` within the width.
+
+### Assignment
+
+`=` stores a value in a variable. Every arithmetic and bitwise operator also has a compound form that applies the operator to the variable itself.
+
+```c
+int x = 10;
+x += 5;  // same as x = x + 5
+x <<= 1; // same as x = x << 1
+```
+
+An assignment is itself an expression that gives the assigned value, so it can be used inside other expressions.
+
+```c
+a = b = 0;                     // (b = 0) gives 0, which is then assigned to a
+while ((c = getchar()) != EOF) // assign, then compare the assigned value
+if (x = 0)                     // compiles: assigns 0, then tests 0, so it is always false
+```
+
+### Type Casts
+
+A type cast takes the form:
+
+```syntax
+(<type>) <expression>
+```
+
+A cast converts a value to another type, for example to get a fractional result from integer division.
+
+```c
+int a = 7, b = 2;
+double d = (double) a / b; // 3.5, not 3.0
+```
+
+### Ternary Operator
+
+A ternary operator takes the form:
+
+```syntax
+<condition> ? <value if true> : <value if false>
+```
+
+It picks one of two values, like a short if-else that gives a result.
+
+```c
+int max = a > b ? a : b;
+```
+
 ## If Statements
+
+An if statement takes the form:
+
+```syntax
+if (<condition>) <statement>
+if (<condition>) <statement> else <statement>
+```
+
+## Switch Statements
+
+A switch statement jumps to a matching value. 
+
+It takes the form:
+
+```syntax
+switch (<expression>) { <case>+ <default case>? }
+
+<case>:
+    case <constant>: <statements>
+<default case>:
+    default: <statements>
+```
+
+The expression must be an integer (including a `char` or an enum), and each `case` must be a constant.
+
+`default` runs when no case matches. It is optional, and without it a switch with no matching case does nothing. It is usually written last, but it can go anywhere, and it falls through like any other case.
+
+```c
+switch (day) {
+case 0:
+    printf("Sunday\n");
+    break;
+case 6:
+    printf("Saturday\n");
+    break;
+default:
+    printf("Weekday\n");
+}
+```
+
+Without a `break`, execution **falls through** into the next case and keeps going until a `break` or the end of the switch. This lets several cases share the same code.
+
+```c
+switch (c) {
+case 'a':
+case 'e':
+case 'i':
+case 'o':
+case 'u':
+    printf("vowel\n");
+    break;
+default:
+    printf("consonant\n");
+}
+```
+
+To fall through on purpose after a case that has code, mark it with `[[fallthrough]];` (C23). This tells readers it isn't a missing `break`, and silences the compiler's `-Wimplicit-fallthrough` warning.
+
+```c
+switch (level) {
+case 2:
+    printf("debug\n");
+    [[fallthrough]]; // also print everything below
+case 1:
+    printf("info\n");
+    break;
+default:
+    printf("quiet\n");
+}
+```
+
+> [!WARNING]
+> A forgotten `break` silently runs the next case too.
 
 ## Loops
 
+### While Loops
+
+A while loop takes the form:
+
+```syntax
+while (<condition>) <statement>
+```
+
+do-while loop takes the form:
+
+```syntax
+do <statement> while (<condition>);
+```
+
 ### For Loops
 
-### While Loops
+A for loop takes the form:
+
+```syntax
+for (<init>?; <condition>?; <update>?) <statement>
+```
 
 ## Functions
 
+```syntax
+<return type> <identifier>(<parameters>)
 
+<parameters>:
+    void
+    <parameter>+,
+<parameter>:
+    <type> <name>?
+```
 
+A **declaration** gives a function's name, return type and parameter types. A **definition** also gives its body, which creates the function. A function can be declared many times but defined only once.
 
+A function header that receives an array's address takes either form:
 
+```syntax
+<return type> <identifier>(<type> <array>[])
+<return type> <identifier>(<type> *<array>)
+```
+
+### File-Scoped Functions
+
+Like a [file-scoped variable](#file-scoped-variables), a function declared `static` can only be called from its own file. This is how helper functions stay private to the file that uses them.
+
+```c
+static int clamp(int x, int lo, int hi) { // only this file can call clamp
+    return x < lo ? lo : x > hi ? hi : x;
+}
+```
+
+### External Functions
+
+Functions are `extern` by default, so any file can call a function defined in another, as long as it sees a declaration. The declaration usually comes from a header.
+
+```c
+// add.c
+int add(int a, int b) { // definition
+    return a + b;
+}
+
+// add.h
+int add(int a, int b); // declaration, same as extern int add(int a, int b);
+
+// main.c
+#include "add.h" // add()
+int main(void) {
+    return add(1, 2);
+}
+```
+
+### Function Pointers
+
+A function pointer declaration takes the form:
+
+```syntax
+<return type> (*<identifier>)(<parameters>)
+```
 
 ## Arrays
 
 An **array** `T a[n]` is $n$ elements of type `T` stored back to back in memory, so `a[i]` sits `i * sizeof(T)` bytes after `a[0]`. The size $n$ is fixed when the array is created.
+
+The definition of an array takes the form:
+
+```syntax
+<type> <identifier>[<capacity>] <initializer>?;
+
+<initializer>:
+    = {<value>+,}
+```
+
+The definition of a two-dimensional array takes the form:
+
+```syntax
+<type> <identifier>[<row count>][<column count>] <initializer>?;
+
+<initializer>:
+    = {<row>+,}
+<row>:
+    {<value>+,}
+```
+
+The brace lists are covered in [Initializing Arrays](#initializing-arrays) and [2D Arrays](#2d-arrays).
 
 ### Initializing Arrays
 
@@ -113,7 +685,7 @@ You can fill an array in its declaration with a **brace list**, or leave out the
 
 - With `T a[] = {...}`, the compiler sizes the array to fit the list.
 - With `T a[n] = {...}`, you pick the size $n$, and what happens to a list of $k$ values depends on how they compare (table below).
-- With no initializer, the starting contents depend on [where the array lives](#variables).
+- With no initializer, the starting contents depend on [where the array lives](#storage-duration).
 
 | Size | Result |
 | :---: | :---: |
@@ -138,7 +710,7 @@ In almost every expression, an array `a` is converted to a pointer to its _first
 Passing an array to a function also decays it, so the function only receives a pointer. A parameter declared as an array is adjusted to a pointer, and any size written in its brackets is ignored.
 
 ```c
-#include <stdio.h>
+#include <stdio.h> // printf()
 
 void print_size(int a[10]) {
     printf("%zu\n", sizeof a); // sizeof(int *), usually 8
@@ -182,8 +754,8 @@ C has no array methods. Instead, the standard library has functions that take a 
 | Search a sorted array | [`bsearch(&key, a, n, size, cmp)`](https://beej.us/guide/bgclr/html/#man-bsearch) | in `<stdlib.h>`, same comparison as `qsort` |
 
 ```c
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> // qsort()
+#include <string.h> // memcpy(), memmove(), memset()
 
 int cmp_int(const void *x, const void *y) {
     int a = *(const int *)x;
@@ -205,8 +777,8 @@ int main(void) {
 ```
 
 > [!WARNING]
-> To fill an array with any value other than zero, write a loop. `memset` copies
-> one byte into every byte, so it can't set an `int` to `1`.
+> To fill an array with any value other than zero, write a loop since `memset` copies
+> one byte into every byte, so it can't set an `int` to `1`..
 
 ### 2D Arrays
 
@@ -236,15 +808,15 @@ In C, stepping `j` (the last index) moves to the next element in memory, while s
 
 ```c
 // fast: the inner loop walks along a row, through contiguous memory
-for (size_t i = 0; i < rows; i++) {
-    for (size_t j = 0; j < cols; j++) {
+for (size_t i = 0; i < rows; i += 1) {
+    for (size_t j = 0; j < cols; j += 1) {
         sum += m[i][j];
     }
 }
 
 // slow on large arrays: the inner loop jumps a whole row each step
-for (size_t j = 0; j < cols; j++) {
-    for (size_t i = 0; i < rows; i++) {
+for (size_t j = 0; j < cols; j += 1) {
+    for (size_t i = 0; i < rows; i += 1) {
         sum += m[i][j];
     }
 }
@@ -265,12 +837,12 @@ Since `m` is an array of rows, it decays like any other array, to a pointer to i
 When you pass a 2D array to a function, the parameter gets the decayed type, so every size except the first has to be part of it. A parameter written as `int m[][3]` is adjusted to `int (*m)[3]`. If the column count is only known at run time, pass it before the array and use it in the parameter type.
 
 ```c
-#include <stddef.h>
-#include <stdio.h>
+#include <stddef.h> // size_t
+#include <stdio.h>  // printf()
 
 void print_matrix(size_t rows, size_t cols, int m[rows][cols]) {
-    for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < cols; j++) {
+    for (size_t i = 0; i < rows; i += 1) {
+        for (size_t j = 0; j < cols; j += 1) {
             printf("%d ", m[i][j]);
         }
         printf("\n");
@@ -302,11 +874,23 @@ free(m);
 
 A **pointer** `T *p` holds the address of an object of type `T`. `&x` gives the address of `x`, and `*p` reads or writes the object at the address in `p`.
 
+A pointer declaration takes the form:
+
+```syntax
+<type> *<identifier> <initializer>?;
+
+<initializer>:
+    = <address>
+```
+
 ```c
 int x = 1;
 int *p = &x; // p holds the address of x
 *p = 2;      // x is now 2
 ```
+
+> [!TIP]
+> [Zig type system illustrated using ascii diagrams](https://gist.github.com/lobre/4fbf32961513784dde2a9ef4e6a4a1d9) draws pointers, arrays and slices as memory diagrams. It uses Zig syntax, but its pointers and arrays are laid out in memory the same way as in C. C has no slices, but a slice is just a pointer and a length, which is what C functions take as two parameters.
 
 ### Pointer Arithmetic
 
@@ -350,9 +934,9 @@ Decay produces a temporary address value and leaves `a` an array, so operations 
 
 ```c
 int *p = a;
-p++;      // OK, p is a variable holding an address
-// a++;   // error, a is the array, with no stored address to change
-// a = p; // error, same reason
+p += 1;    // OK, p is a variable holding an address
+// a += 1; // error, a is the array, with no stored address to change
+// a = p;  // error, same reason
 ```
 
 Some consequences of `[]` being defined this way:
@@ -432,9 +1016,9 @@ A `const T *p` can read the object but not write to it through `p`, which lets t
 ```c
 size_t count_spaces(const char *s) {
     size_t n = 0;
-    for (; *s != '\0'; s++) {
+    for (; *s != '\0'; s += 1) {
         if (*s == ' ') {
-            n++;
+            n += 1;
         }
     }
     // *s = 'x'; // error, s points to const char
@@ -460,6 +1044,8 @@ int *p = v;   // and back again
 
 [`malloc(n)`](https://beej.us/guide/bgclr/html/#man-malloc) gives you `n` bytes on the **heap**, and returns a pointer to the first one (or a null pointer if it fails). The bytes last until you pass that pointer to [`free()`](https://beej.us/guide/bgclr/html/#man-free), so heap memory can outlive the function that allocated it, and its size can be decided at run time.
 
+The bytes are an [object](#variables) with no name, so you reach it only through the pointer. It has no type of its own either, and holds whatever you store in it: one value, a struct, or several values used as an array.
+
 `malloc` returns a [`void *`](#void-pointers), which converts implicitly to whatever pointer type you assign it to, so you don't need to cast it.
 
 > [!TIP]
@@ -470,14 +1056,14 @@ int *p = v;   // and back again
 Since `malloc` takes no initializer, the bytes start out as garbage, and you fill them at run time. [`calloc(count, size)`](https://beej.us/guide/bgclr/html/#man-malloc) allocates `count * size` bytes that start zero-filled, and it checks the multiplication for overflow.
 
 ```c
-#include <stdlib.h>
+#include <stdlib.h> // malloc(), free()
 
 int *make_range(size_t n) {
     int *a = malloc(n * sizeof *a); // n ints, garbage until written
     if (a == nullptr) {
         return nullptr;
     }
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i += 1) {
         a[i] = (int)i;
     }
     return a; // OK, the heap memory lives until free
@@ -502,18 +1088,7 @@ Since a string is just `char`s in memory, you create one the same way as any oth
 Any text in double quotes in your source code is a **string literal**. What the compiler does with it depends on where you write it:
 
 - When it initializes a character array, the literal is just a convenient way to write the initial characters, and they are copied into your array.
-- Everywhere else, the compiler stores the characters plus a `\0` in a _hidden_ array and the literal evaluates to a pointer to its first character. The hidden array has static lifetime and usually sits in read-only memory (`.rodata`).
-
-Only an array initialized from a literal holds its own copy of the characters, so it is the only one you can change.
-
-```c
-char a[] = "foo"; // initializer: a is your own array of 'f','o','o','\0'
-char *p = "foo";  // pointer to a hidden read-only array
-printf("foo");    // also a pointer to a hidden read-only array
-
-a[0] = 'g'; // OK, a is your own array
-p[0] = 'g'; // UB, writes to read-only memory
-```
+- Everywhere else, the compiler stores the characters plus a `\0` in a _hidden_ array and the literal evaluates to a pointer to its first character. The hidden array has static storage duration and usually sits in read-only memory (`.rodata`).
 
 > [!WARNING]
 > A character array without a `\0` is just a _byte buffer_. Passing it to string functions is undefined behaviour (they read past the end).
@@ -588,7 +1163,7 @@ void example(int count) {
 ```
 
 > [!WARNING]
-> A character array with automatic lifetime is gone once its function returns,
+> A character array with automatic storage duration is gone once its function returns,
 > so returning a pointer to it leaves the caller with a dangling pointer.
 
 ### Pointers To Heap Memory
@@ -600,8 +1175,8 @@ by writing, the same way as a character array filled at run time. You also
 write the `\0` yourself, so a string of length `len` needs `len + 1` bytes.
 
 ```c
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> // malloc(), free()
+#include <string.h> // memcpy(), strlen()
 
 char *copy_string(const char *src) {
     size_t len = strlen(src);
@@ -616,15 +1191,15 @@ char *copy_string(const char *src) {
 
 ### String Length
 
-The **length** of a string is the number of characters before its `\0`. 
+The **length** of a string is the number of characters before its `\0`, which is always less than the capacity of the array holding it.
 
-[`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen` works by by walking the string from the first character until it reaches the `\0`, worst-case $O(l)$ time.
+[`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen` works by walking the string from the first character until it reaches the `\0`, worst-case $O(l)$ time, where $l$ is the length of the string.
 
 `sizeof` measures something different. On a `char` array, it gives the array's capacity, which counts the `\0` and any unused space after it. On a pointer, it gives the size of the pointer itself, whatever string it points to.
 
 ```c
-#include <stdio.h>
-#include <string.h>
+#include <stdio.h>  // printf()
+#include <string.h> // strlen()
 
 int main(void) {
     char a[16] = "hello";
@@ -638,8 +1213,8 @@ int main(void) {
 ```
   
 > [!TIP]
-> Since `strlen` walks the whole string each time, call it once and keep the
-> result instead of calling it in a for loop condition.
+> Since `strlen` is $O(l)$, call it once and keep the result instead of calling
+> it in a for loop condition.
 
 > [!WARNING]
 > `strlen` keeps reading until it finds a `\0`, so calling it on a byte buffer
@@ -658,314 +1233,28 @@ int main(void) {
 > which leaves `dst` as a byte buffer. `snprintf(dst, n, "%s", src)` always
 > writes the `\0`, cutting the string short if it doesn't fit.
 
-## ISO C Standard Library
+## Records
 
-[https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
+A record (product type) definition takes the form:
 
-`printf(text, arg1, arg2, arg3,...);`
+```syntax
+struct <tag> { <member>+ };
 
-
-
-> [!NOTE] ISO C, POSIX, and platform-specific APIs
-> - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
-> - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open`, `read`, `write`), processes (`fork`, `exec`, `wait`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
-> - **Platform-specific functions**: everything outside both standards, tied to one OS or one library, e.g. Linux's `epoll` and `inotify`, or macOS/BSD's `kqueue`. Use them when you need them, knowing you give up portability.
->
-> One C library implementation usually covers all three. `glibc`, for example, implements ISO C, POSIX, and Linux/GNU extensions.
-
-> [!NOTE] Library functions vs. syscall wrappers
-> Every function in a C library is one of two kinds:
-> - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
-> - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
-
-## OOP
-
-### Encapsulation
-
-C has no `private` keyword. To hide a struct's fields, a common C idiom is to create a header that declares the struct without defining it, which makes it an **incomplete type**, or **opaque type**. Other files can hold pointers to it and pass them to the library's functions, and only the library's own `.c` file can see the fields inside. 
-
-For example, let's build a fixed-capacity stack of `int`s across three files.
-
-The header is the public interface. `struct stack;` tells callers that the type exists and says nothing about its fields. Every operation goes through a function that takes a `struct stack *`. 
-
-```c
-// stack.h
-#ifndef STACK_H
-#define STACK_H
-
-#include <stddef.h>
-
-struct stack;
-
-[[nodiscard]] struct stack *stack_new(size_t capacity);
-void stack_free(struct stack *s);
-[[nodiscard]] bool stack_push(struct stack *s, int value);
-[[nodiscard]] bool stack_pop(struct stack *s, int *out);
-[[nodiscard]] size_t stack_count(const struct stack *s);
-
-#endif
+<member>:
+    <type> <name>;
 ```
 
-The full definition lives _only_ in `stack.c`, so this is the one file that can read or change `count`, `capacity` and `data`. Additionally, callers can't see the struct's size, so the library has to allocate it for them. 
+## Enumerated Types
 
-```c
-// stack.c
-#include "stack.h"
+An enumerated type definition takes the form:
 
-#include <stdckdint.h>
-#include <stdlib.h>
+```syntax
+enum <tag> { <enumerator>+, };
 
-struct stack {
-    size_t count;
-    size_t capacity;
-    int *data;
-};
-
-struct stack *stack_new(size_t capacity) {
-    size_t items_size;
-    if (ckd_mul(&items_size, capacity, sizeof(int))) {
-        goto out;
-    }
-
-    struct stack *s = malloc(sizeof *s);
-    if (s == nullptr) {
-        goto out;
-    }
-
-    s->data = malloc(items_size);
-    if (s->data == nullptr) {
-        goto free_stack;
-    }
-
-    s->count = 0;
-    s->capacity = capacity;
-    return s;
-
-free_stack:
-    free(s);
-out:
-    return nullptr;
-}
-
-void stack_free(struct stack *s) {
-    if (s == nullptr) {
-        return;
-    }
-    free(s->items);
-    free(s);
-}
-
-bool stack_push(struct stack *s, int value) {
-    if (s->count == s->capacity) {
-        return false;
-    }
-
-    s->data[s->len++] = value;
-
-    return true;
-}
-
-bool stack_pop(struct stack *s, int *out) {
-    if (s->count == 0) {
-        return false;
-    }
-
-    *out = s->data[--s->count];
-
-    return true;
-}
-
-size_t stack_count(const struct stack *s) {
-    return s->count;
-}
+<enumerator>:
+    <NAME>
+    <NAME> = <value>
 ```
-
-`main.c` includes only the header:
-
-```c
-// main.c
-#include <stdio.h>
-
-#include "stack.h"
-
-int main(void) {
-    constexpr size_t capacity = 2;
-    struct stack *s = stack_new(capacity);
-    if (s == nullptr) {
-        return 1;
-    }
-
-    for (int v = 10; v <= 30; v += 10) {
-        if (!stack_push(s, v)) {
-            printf("push %d: stack is full\n", v);
-        }
-    }
-    printf("size: %zu\n", stack_size(s));
-
-    int value;
-    while (stack_pop(s, &value)) {
-        printf("popped %d\n", value);
-    }
-
-    stack_free(s);
-    return 0;
-}
-```
-
-Compile `stack.c` once into an object file, then link it with `main.c`.
-
-```console
-$ gcc -std=c23 -Wall -Wextra -c stack.c
-$ gcc -std=c23 -Wall -Wextra -o main main.c stack.o
-$ ./main
-push 30: stack is full
-size: 2
-popped 20
-popped 10
-```
-
-To see the encapsulation at work, here is a program `peek.c` that tries to read `len` directly.
-
-```c
-// peek.c
-#include <stdio.h>
-
-#include "stack.h"
-
-int main(void) {
-    struct stack *s = stack_new(4);
-    printf("%zu\n", s->count);
-    stack_free(s);
-    return 0;
-}
-```
-
-The compiler rejects it, because `peek.c` only knows the incomplete type from the header.
-
-```console
-$ gcc -std=c23 -Wall -Wextra -c peek.c
-peek.c: In function ‘main’:
-peek.c:9:22: error: invalid use of undefined type ‘struct stack’
-    9 |     printf("%zu\n", s->len);
-      |                      ^~
-```
-
-Hiding the fields has two costs. Callers can't declare a `struct stack` on the stack or embed one in their own structs, so every stack lives on the heap. Every access also goes through a function call in another file, which the compiler can only inline when link-time optimization (`-flto`) is enabled.
-
-### Abstraction
-
-C has no namespaces or classes, so a “class” becomes a header plus a naming convention: stack_new, stack_push, stack_free. The header is the public interface, and the explicit self pointer as the first argument stands in for this.
-
-For an abstraction with multiple implementations, the header exposes only the ops struct and constructors. That makes it an interface in the Java sense.
-
-### Inheritance
-
-You put the parent struct as the first member. The C standard guarantees that a pointer to a struct, suitably cast, points to its first member, so upcasting is just a cast:
-
-c
-struct animal { const struct animal_ops *ops; const char *name; };
-struct dog    { struct animal base; int good_boy; };
-
-struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = 1 };
-struct animal *a = (struct animal *)&d;     // upcast
-struct dog *back = (struct dog *)a;         // downcast, unchecked
-
-When the parent isn’t the first member, or an object embeds several “bases” (like implementing multiple interfaces), you use container_of, the Linux kernel’s macro that subtracts offsetof to get from a member pointer back to its enclosing struct:
-
-c
-#define container_of(ptr, type, member) \
-    ((type *)((char *)(ptr) - offsetof(type, member)))
-
-Inherited behaviour works by building the child’s vtable from the parent’s: the child copies the slots it doesn’t override and replaces the ones it does. GObject does this at class-init time, and simpler code does it with a statically initialized ops struct.
-
-### Polymorphism
-
-#### Dynamic 
-
-https://web.archive.org/web/20250124083637/https://pabloariasal.github.io/2017/06/10/understanding-virtual-tables/
-
-#### Static
-
-https://youtu.be/3IAlJSIjvH0?t=541
-
-## Deferred Cleanup
-
-C has no `defer` statement, so a function that acquires several resources needs another way to release them on every exit path. The common idiom uses `goto` to jump forward to a chain of cleanup labels at the end of the function.
-
-This example opens a file, allocates a buffer, and reads into it. Each of those steps can fail. The buffer size is a `constexpr` constant, so `malloc` and `fread` always agree on it.
-
-```c
-#include <stdio.h>
-#include <stdlib.h>
-
-constexpr size_t buf_size = 4096;
-```
-
-`result` starts as the failure value and becomes `0` only when every step succeeds, so each early exit returns an error without any extra code.
-
-```c
-static int process(const char *path) {
-    int result = -1;
-```
-
-When a step fails, jump to the label that releases everything acquired _before_ it. A failed `fopen` has nothing to release yet, so it jumps straight to `out`.
-
-```c
-    FILE *f = fopen(path, "r");
-    if (f == nullptr) {
-        goto out;
-    }
-
-    char *buf = malloc(buf_size);
-    if (buf == nullptr) {
-        goto close_file;
-    }
-
-    size_t n = fread(buf, 1, buf_size, f);
-    if (ferror(f)) {
-        goto free_buf;
-    }
-
-    printf("read %zu bytes from %s\n", n, path);
-    result = 0;
-```
-
-The labels appear in the reverse order of acquisition. The success path falls through all of them, and each failure enters partway down, so every resource is released exactly once.
-
-```c
-free_buf:
-    free(buf);
-close_file:
-    fclose(f);
-out:
-    return result;
-}
-```
-
-```c
-int main(int argc, char **argv) {
-    if (argc < 2) {
-        fprintf(stderr, "usage: %s FILE\n", argv[0]);
-        return 1;
-    }
-    return process(argv[1]) == 0 ? 0 : 1;
-}
-```
-
-Run it on its own source file, then on a file that doesn't exist. The second run takes the `goto out` path and exits with status `1`.
-
-```console
-$ gcc -std=c23 -Wall -Wextra -o cleanup cleanup.c
-$ ./cleanup cleanup.c
-read 720 bytes from cleanup.c
-$ ./cleanup missing.txt; echo $?
-1
-```
-
-> [!WARNING]
-> **`goto` pitfalls**:
-> - `goto` can't jump forward past a variable-length array, because its memory is allocated only when execution reaches the declaration.
-> - Variable initializations skipped by a `goto` never run, so reading those variables is undefined behavior. In the example above, `goto out` skips the initialization of `buf`, which is safe only because nothing after `out` reads `buf`.
 
 ## Tagged Unions
 
@@ -974,7 +1263,7 @@ A union stores one of several types in the same memory, but it has no way of rec
 This example builds a `value` that holds an `int`, a `double`, or a string. The tag lists the possible kinds.
 
 ```c
-#include <stdio.h>
+#include <stdio.h> // printf()
 
 enum value_kind {
     VALUE_INT,
@@ -1040,7 +1329,7 @@ int main(void) {
         value_string("hello"),
     };
 
-    for (size_t i = 0; i < sizeof values / sizeof values[0]; i++) {
+    for (size_t i = 0; i < sizeof values / sizeof values[0]; i += 1) {
         value_print(values[i]);
     }
     printf("sizeof(struct value) = %zu\n", sizeof(struct value));
@@ -1061,6 +1350,379 @@ sizeof(struct value) = 16
 > [!WARNING]
 > Nothing stops code from reading a member the tag doesn't allow. Reading `v.d` when `v.kind` is `VALUE_INT` reinterprets the `int`'s bytes as a `double` and quietly produces a garbage number, so every read must go through a check of the tag.
 
+## Type Aliases
+
+A type alias takes the form:
+
+```syntax
+typedef <existing type> <new name>;
+```
+
+## Macros
+
+A macro definition takes the form:
+
+```syntax
+#define <NAME> <replacement>
+```
+
+## Imports
+
+An include takes either form:
+
+```syntax
+#include <<header>>
+#include "<header>"
+```
+
+```c
+#include <name.h> // Systems libraries where the compiler searches in the systems directories 
+
+#include "name.h" // Local libraries where the compiler searches in the relative path
+```
+
+## ISO C Standard Library
+
+[https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
+
+> [!NOTE] ISO C, POSIX, and platform-specific APIs
+> - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
+> - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open`, `read`, `write`), processes (`fork`, `exec`, `wait`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
+> - **Platform-specific functions**: everything outside both standards, tied to one OS or one library, e.g. Linux's `epoll` and `inotify`, or macOS/BSD's `kqueue`. Use them when you need them, knowing you give up portability.
+>
+> One C library implementation usually covers all three. `glibc`, for example, implements ISO C, POSIX, and Linux/GNU extensions.
+
+> [!NOTE] Library functions vs. syscall wrappers
+> Every function in a C library is one of two kinds:
+> - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
+> - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
+
+## OOP
+
+### Encapsulation
+
+C has no `private` keyword. To hide a struct's fields, a common C idiom is to create a header that declares the struct without defining it, which makes it an **incomplete type**, or **opaque type**. Other files can hold pointers to it and pass them to the library's functions, and only the library's own `.c` file can see the fields inside. 
+
+For example, let's build a fixed-capacity stack of `int`s across three files.
+
+The header is the public interface. `struct stack;` tells callers that the type exists and says nothing about its fields. Every operation goes through a function that takes a `struct stack *`. 
+
+```c
+// stack.h
+#ifndef STACK_H
+#define STACK_H
+
+#include <stddef.h> // size_t
+
+struct stack;
+
+[[nodiscard]] struct stack *stack_new(size_t capacity);
+void stack_free(struct stack *s);
+[[nodiscard]] bool stack_push(struct stack *s, int value);
+[[nodiscard]] bool stack_pop(struct stack *s, int *out);
+[[nodiscard]] size_t stack_count(const struct stack *s);
+
+#endif
+```
+
+The full definition lives _only_ in `stack.c`, so this is the one file that can read or change `count`, `capacity` and `data`. Additionally, callers can't see the struct's size, so the library has to allocate it for them. 
+
+```c
+// stack.c
+#include "stack.h" // stack_new(), stack_free(), stack_push(), stack_pop(), stack_count()
+
+#include <stdckdint.h> // ckd_mul()
+#include <stdlib.h>    // malloc(), free()
+
+struct stack {
+    size_t count;
+    size_t capacity;
+    int *data;
+};
+
+struct stack *stack_new(size_t capacity) {
+    size_t items_size;
+    if (ckd_mul(&items_size, capacity, sizeof(int))) {
+        goto out;
+    }
+
+    struct stack *s = malloc(sizeof *s);
+    if (s == nullptr) {
+        goto out;
+    }
+
+    s->data = malloc(items_size);
+    if (s->data == nullptr) {
+        goto free_stack;
+    }
+
+    s->count = 0;
+    s->capacity = capacity;
+    return s;
+
+free_stack:
+    free(s);
+out:
+    return nullptr;
+}
+
+void stack_free(struct stack *s) {
+    if (s == nullptr) {
+        return;
+    }
+    free(s->data);
+    free(s);
+}
+
+bool stack_push(struct stack *s, int value) {
+    if (s->count == s->capacity) {
+        return false;
+    }
+
+    s->data[s->count] = value;
+    s->count += 1;
+
+    return true;
+}
+
+bool stack_pop(struct stack *s, int *out) {
+    if (s->count == 0) {
+        return false;
+    }
+
+    s->count -= 1;
+    *out = s->data[s->count];
+
+    return true;
+}
+
+size_t stack_count(const struct stack *s) {
+    return s->count;
+}
+```
+
+`main.c` includes only the header:
+
+```c
+// main.c
+#include <stdio.h> // printf()
+
+#include "stack.h" // stack_new(), stack_push(), stack_pop(), stack_count(), stack_free()
+
+int main(void) {
+    constexpr size_t capacity = 2;
+    struct stack *s = stack_new(capacity);
+    if (s == nullptr) {
+        return 1;
+    }
+
+    for (int v = 10; v <= 30; v += 10) {
+        if (!stack_push(s, v)) {
+            printf("push %d: stack is full\n", v);
+        }
+    }
+    printf("size: %zu\n", stack_count(s));
+
+    int value;
+    while (stack_pop(s, &value)) {
+        printf("popped %d\n", value);
+    }
+
+    stack_free(s);
+    return 0;
+}
+```
+
+Compile `stack.c` once into an object file, then link it with `main.c`.
+
+```console
+$ gcc -std=c23 -c stack.c
+$ gcc -std=c23 -o main main.c stack.o
+$ ./main
+push 30: stack is full
+size: 2
+popped 20
+popped 10
+```
+
+To see the encapsulation at work, here is a program `peek.c` that tries to read `count` directly.
+
+```c
+// peek.c
+#include <stdio.h> // printf()
+
+#include "stack.h" // stack_new(), stack_free()
+
+int main(void) {
+    struct stack *s = stack_new(4);
+    printf("%zu\n", s->count);
+    stack_free(s);
+    return 0;
+}
+```
+
+The compiler rejects it, because `peek.c` only knows the incomplete type from the header.
+
+```console
+$ gcc -std=c23 -Wall -Wextra -c peek.c
+peek.c: In function ‘main’:
+peek.c:8:22: error: invalid use of undefined type ‘struct stack’
+    8 |     printf("%zu\n", s->count);
+      |                      ^~
+```
+
+Hiding the fields has two costs:
+- Callers can't declare a `struct stack` on the stack or embed one in their own structs, so every stack lives on the heap. 
+- Every access also goes through a function call in another file, which the compiler can only inline when link-time optimization (`-flto`) is enabled.
+
+### Abstraction
+
+C has no namespaces or classes, so a “class” becomes a header plus a naming convention: stack_new, stack_push, stack_free. The header is the public interface, and the explicit self pointer as the first argument stands in for this.
+
+For an abstraction with multiple implementations, the header exposes only the ops struct and constructors. That makes it an interface in the Java sense.
+
+### Interfaces
+
+An **interface** is a set of operations that a type promises to support, with no data and no implementation of its own. This is different from a header being a module's "public interface", which only means the functions it exposes.
+
+In C, an interface is a struct of function pointers, often called an **ops struct**.
+
+```c
+struct shape;
+
+struct shape_ops {
+    double (*area)(struct shape *s);
+    const char *(*name)(struct shape *s);
+};
+
+struct shape {
+    const struct shape_ops *ops; // which implementation this shape uses
+};
+```
+
+A type implements the interface by filling in an ops struct with its own functions.
+
+```c
+static const struct shape_ops circle_ops = {
+    .area = circle_area,
+    .name = circle_name,
+};
+```
+
+Code that only knows the interface calls through the ops pointer, so it works with any implementation. Picking the function at run time this way is [dynamic dispatch](#dynamic-dispatch), and [Step 4](#step-4-polymorphism-with-a-vtable) builds the full example.
+
+```c
+double area = s->ops->area(s); // circle_area for a circle, rect_area for a rect
+```
+
+### Inheritance
+
+You put the parent struct as the first member. The C standard guarantees that a pointer to a struct, suitably cast, points to its first member, so upcasting is just a cast:
+
+c
+struct animal { const struct animal_ops *ops; const char *name; };
+struct dog    { struct animal base; int good_boy; };
+
+struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = 1 };
+struct animal *a = (struct animal *)&d;     // upcast
+struct dog *back = (struct dog *)a;         // downcast, unchecked
+
+When the parent isn’t the first member, or an object embeds several “bases” (like implementing multiple interfaces), you use container_of, the Linux kernel’s macro that subtracts offsetof to get from a member pointer back to its enclosing struct:
+
+c
+#define container_of(ptr, type, member) \
+    ((type *)((char *)(ptr) - offsetof(type, member)))
+
+Inherited behaviour works by building the child’s vtable from the parent’s: the child copies the slots it doesn’t override and replaces the ones it does. GObject does this at class-init time, and simpler code does it with a statically initialized ops struct.
+
+### Polymorphism
+
+#### Static Dispatch
+
+https://youtu.be/3IAlJSIjvH0?t=541
+
+#### Dynamic Dispatch
+
+https://web.archive.org/web/20250124083637/https://pabloariasal.github.io/2017/06/10/understanding-virtual-tables/
+
+## Deferred Cleanup
+
+C has no `defer` statement, so a function that acquires several resources needs another way to release them on every exit path. The common idiom uses `goto` to jump forward to a chain of cleanup labels at the end of the function.
+
+This example opens a file, allocates a buffer, and reads into it. Each of those steps can fail. The buffer size is a `constexpr` constant, so `malloc` and `fread` always agree on it.
+
+```c
+#include <stdio.h>  // printf(), fprintf(), fopen(), fread(), fclose()
+#include <stdlib.h> // malloc(), free()
+
+constexpr size_t buf_size = 4096;
+```
+
+`result` starts as the failure value and becomes `0` only when every step succeeds, so each early exit returns an error without any extra code.
+
+```c
+static int process(const char *path) {
+    int result = -1;
+```
+
+When a step fails, jump to the label that releases everything acquired _before_ it. A failed `fopen` has nothing to release yet, so it jumps straight to `out`.
+
+```c
+    FILE *f = fopen(path, "r");
+    if (f == nullptr) {
+        goto out;
+    }
+
+    char *buf = malloc(buf_size);
+    if (buf == nullptr) {
+        goto close_file;
+    }
+
+    size_t n = fread(buf, 1, buf_size, f);
+    if (ferror(f)) {
+        goto free_buf;
+    }
+
+    printf("read %zu bytes from %s\n", n, path);
+    result = 0;
+```
+
+The labels appear in the reverse order of acquisition. The success path falls through all of them, and each failure enters partway down, so every resource is released exactly once.
+
+```c
+free_buf:
+    free(buf);
+close_file:
+    fclose(f);
+out:
+    return result;
+}
+```
+
+```c
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s FILE\n", argv[0]);
+        return 1;
+    }
+    return process(argv[1]) == 0 ? 0 : 1;
+}
+```
+
+Run it on its own source file, then on a file that doesn't exist. The second run takes the `goto out` path and exits with status `1`.
+
+```console
+$ gcc -std=c23 -Wall -Wextra -o cleanup cleanup.c
+$ ./cleanup cleanup.c
+read 720 bytes from cleanup.c
+$ ./cleanup missing.txt; echo $?
+1
+```
+
+> [!WARNING] `goto` pitfalls
+> - `goto` can't jump forward past a variable-length array, because its memory is allocated only when execution reaches the declaration.
+> - Variable initializations skipped by a `goto` never run, so reading those variables is undefined behavior. In the example above, `goto out` skips the initialization of `buf`, which is safe only because nothing after `out` reads `buf`.
+
 ## Inheritance and Intrusive Data Structures with `container_of`
 
 The `container_of` macro takes a pointer to a struct member and returns a pointer to the struct that contains it. The Linux kernel uses it everywhere, because it gives C two features the language lacks:
@@ -1074,11 +1736,11 @@ The examples below build up to both, one program at a time.
 `offsetof(type, member)`, from `<stddef.h>`, gives the byte distance from the start of a struct to one of its members.
 
 ```c
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>  // printf()
+#include <stddef.h> // offsetof()
 ```
 
-`tag` is a single `char`, and `x` needs 4-byte alignment, so the compiler inserts 3 bytes of padding after `tag`. Because of padding, a member's offset can be larger than the sum of the sizes of the members before it (see [Record Packing](../computer-systems/performance-engineering/record-packing.md)).
+`tag` is a single `char`, and `x` needs 4-byte alignment, so the compiler inserts 3 bytes of padding after `tag`. Because of padding, a member's offset can be larger than the sum of the sizes of the members before it (see [Padding](../computer-systems/computer-organization/data-representation.md#padding)).
 
 ```c
 struct point {
@@ -1117,8 +1779,8 @@ y:   8
 Given a pointer to a member, subtracting that member's offset recovers the address of the whole struct.
 
 ```c
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>  // printf()
+#include <stddef.h> // offsetof()
 ```
 
 The cast to `char *` makes the subtraction count in bytes. Subtracting from an `int *` would move in steps of `sizeof(int)`.
@@ -1169,8 +1831,8 @@ tag:      A
 In an intrusive list, the list node lives inside your data. The list code works only with nodes, so it never needs to know your type, and adding an object to a list needs no `void *` and no extra allocation.
 
 ```c
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>  // printf()
+#include <stddef.h> // offsetof()
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
@@ -1278,8 +1940,8 @@ team:
 A base type holds a pointer to a table of function pointers, called a **vtable**. Each derived type embeds the base, and its methods use `container_of` to get from the base back to the derived type.
 
 ```c
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>  // printf()
+#include <stddef.h> // size_t, offsetof()
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
@@ -1370,7 +2032,7 @@ int main(void) {
 
     struct shape *shapes[] = { &c.base, &r.base };
 
-    for (size_t i = 0; i < sizeof shapes / sizeof shapes[0]; i++) {
+    for (size_t i = 0; i < sizeof shapes / sizeof shapes[0]; i += 1) {
         print_shape(shapes[i]);
     }
     return 0;
@@ -1391,8 +2053,8 @@ rectangle with area 12.00
 Give the base `struct shape` a list hook, and any shape can live in a generic list. Walking that list takes two `container_of` hops: from the list node to the `shape` in the loop, then from the `shape` to the `circle` or `rect` inside each method.
 
 ```c
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>  // printf()
+#include <stddef.h> // offsetof()
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \

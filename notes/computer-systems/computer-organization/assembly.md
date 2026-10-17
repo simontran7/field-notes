@@ -27,6 +27,16 @@
 <label> <directive> <content>
 ```
 
+> [!NOTE]
+> Data is placed back-to-back with no [padding](data-representation.md#padding), so aligning it is up to you. The `align <N>` directive pads with bytes until the next address is a multiple of `N` (see [Alignment](data-representation.md#alignment)). The stack must also be 16-byte aligned at every `call` (System V).
+>
+> ```asm
+> section .data
+>     flag  db 1
+>     align 8
+>     count dq 0 ; 8-byte aligned, after 7 bytes of padding
+> ```
+
 ## File Sections 
 
 ```asm
@@ -78,6 +88,30 @@ _start:
 | `r14` |  | `r14b` | `r14w` | `r14d` | General purpose; callee-saved by convention |
 | `r15` |  | `r15b` | `r15w` | `r15d` | General purpose; callee-saved by convention |
 | `rip` |  |  |  | `eip` | **Special**: instruction pointer, holds address of next instruction; not directly accessible as an operand in most instructions |
+
+## Bitwise Instructions
+
+Each [bitwise operator](data-representation.md#bitwise-operations) is a single instruction, which stores its result in the destination operand.
+
+| Instruction | C equivalent | Description |
+| :---: | :---: | :---: |
+| `and rax, rbx` | `rax &= rbx` | Bitwise AND |
+| `or rax, rbx` | `rax \|= rbx` | Bitwise OR |
+| `xor rax, rbx` | `rax ^= rbx` | Bitwise XOR |
+| `not rax` | `rax = ~rax` | Bitwise NOT |
+| `shl rax, k` | `rax <<= k` | Left shift |
+| `shr rax, k` | `rax >>= k` (unsigned) | Logical right shift, fills with `0`s |
+| `sar rax, k` | `rax >>= k` (signed) | Arithmetic right shift, fills with copies of the sign bit |
+| `rol rax, k` / `ror rax, k` | | [Rotate](data-representation.md#rotates-bits) left / right |
+| `popcnt rax, rbx` | `rax = stdc_count_ones(rbx)` | [Count set bits](data-representation.md#count-the-number-of-set-bits) |
+| `lzcnt rax, rbx` / `tzcnt rax, rbx` | `rax = stdc_leading_zeros(rbx)` / `stdc_trailing_zeros(rbx)` | Count [leading](data-representation.md#count-the-amount-of-leading-zeroes) / [trailing](data-representation.md#count-the-amount-of-trailing-zeroes) zeroes |
+| `bswap rax` | | Reverse the bytes, converting between [byte orders](data-representation.md#byte-order) |
+
+> [!NOTE]
+> The shift amount `k` is either an immediate or the `cl` register (e.g., `shl rax, cl`), and only its low 6 bits are used (5 bits for 32-bit operands). Shifting by the full width is therefore well-defined here, unlike in [C](../../tools/c.md#bitwise).
+
+> [!TIP]
+> `xor rax, rax` is the conventional way to set a register to `0`, since `x ^ x = 0` and the instruction is shorter than `mov rax, 0`.
 
 ## Hello, World!
 

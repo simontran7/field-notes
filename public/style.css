@@ -211,13 +211,14 @@ body {
 }
 
 /* ─── Headings ───────────────────────────────────────────── */
+/* Font sizes match GitHub's Markdown styling */
 .prose :is(h1, h2, h3, h4, h5, h6) {
   line-height: 1.2;
   margin: 1.5em 0 0.6em;
 }
 
 .prose h1 {
-  font-size: 1.802em;
+  font-size: 2em;
   font-weight: 700;
   margin-top: 0;
   text-align: center;
@@ -225,7 +226,7 @@ body {
 
 /* A thin divider under h2 and more space above, so sections separate clearly */
 .prose h2 {
-  font-size: 1.602em;
+  font-size: 1.5em;
   font-weight: 600;
   margin-top: 1.75em;
   padding-bottom: 0.3em;
@@ -233,17 +234,22 @@ body {
 }
 
 .prose h3 {
-  font-size: 1.424em;
+  font-size: 1.25em;
   font-weight: 600;
 }
 
 .prose h4 {
-  font-size: 1.266em;
+  font-size: 1em;
   font-weight: 600;
 }
 
-.prose :is(h5, h6) {
-  font-size: 1.125em;
+.prose h5 {
+  font-size: 0.875em;
+  font-weight: 600;
+}
+
+.prose h6 {
+  font-size: 0.85em;
   font-weight: 600;
 }
 
@@ -342,6 +348,38 @@ body {
 
 .code-block pre code {
   font-family: inherit;
+}
+
+/* syntax blocks: placeholders are italic between faint ⟨ ⟩, everything else is literal */
+.syntax-placeholder {
+  font-style: italic;
+}
+
+.syntax-placeholder::before {
+  content: "\27E8"; /* ⟨ */
+}
+
+.syntax-placeholder::after {
+  content: "\27E9"; /* ⟩ */
+}
+
+.syntax-placeholder::before,
+.syntax-placeholder::after {
+  color: var(--text-faint);
+  font-style: normal;
+  user-select: none;
+}
+
+/* The ":" that starts a definition, and notes such as "one or more" */
+.syntax-meta {
+  color: var(--text-faint);
+}
+
+/* The subscript "opt" (optional) and superscript "+" (one or more) after a placeholder */
+.syntax-count {
+  font-size: 0.7em;
+  font-style: italic;
+  line-height: 0;
 }
 
 .code-block .code-dark,

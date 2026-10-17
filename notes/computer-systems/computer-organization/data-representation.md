@@ -402,8 +402,8 @@ println!("after: {after:b}");  //                      1111 0100 0000 0000
 In this example, `before`'s casted value remains the _same_ value:
 
 ```rust
-let before: u32 = -3;
-let after: u16 = before as u16;
+let before: i32 = -3;
+let after: i16 = before as i16;
 println!("before: {before:b}"); // 1111 1111 1111 1111 1111 1111 1111 1101
 println!("after: {after:b}"); //                       1111 1111 1111 1101
 ```
@@ -411,7 +411,7 @@ println!("after: {after:b}"); //                       1111 1111 1111 1101
 #### Casting to a Wider Integer
 
 On the other hand, casting from an integer to a wider integer causes no issues, since we're just adding extra bits that don't affect the value.
-  - For unsigned values: prepend the signed bit until it is as wide as the new larger data type
+  - For unsigned values: prepend `0`s until it is as wide as the new larger data type (a.k.a **zero extension**)
 
   ```rust
   let before: i16 = 4;           
@@ -445,6 +445,296 @@ println!("x: {x:b}"); // 11111111111111111100111111000111
 println!("y: {y:b}"); // 11111111111111111100111111000111 
 println!("z: {z:b}"); // z: 11000000111001
 ```
+
+## Bitwise Operations
+
+### Bitwise Operators
+
+Bitwise operators work on the individual bits of an integer, which means the operator is applied to each pair of corresponding bits independently. 
+
+#### AND Operator (`&`)
+
+The AND of 2 bits is 1 if both bits are 1, and 0 otherwise.
+
+| a | b | output |
+| :---: | :---: | :---: |
+| 0 | 0 | 0      |
+| 0 | 1 | 0      |
+| 1 | 0 | 0      |
+| 1 | 1 | 1      |
+
+**Properties:**
+
+- **Identity:** `x & 1 = x`, i.e., AND with 1 lets the bit through unchanged.
+- **Annihilator:** `x & 0 = 0`, i.e., AND with 0 forces the bit to 0.
+
+#### OR Operator (`|`)
+
+The OR of 2 bits is 1 if either (or both) bits is 1, and 0 otherwise.
+
+| a | b | output |
+| :---: | :---: | :---: |
+| 0 | 0 | 0      |
+| 0 | 1 | 1      |
+| 1 | 0 | 1      |
+| 1 | 1 | 1      |
+
+**Properties:**
+
+- **Identity:** `x | 0 = x`, i.e., OR with 0 leaves the bit alone.
+- **Annihilator:** `x | 1 = 1`, i.e., OR with 1 forces the bit to 1.
+
+#### NOT Operator (`~`)
+
+The NOT of a bit is 1 if the bit is 0, and 0 otherwise.
+
+| a | output |
+| :---: | :---: |
+| 0 | 1      |
+| 1 | 0      |
+
+> [!NOTE]
+> `~x` operator flips every bit in the width of `x`'s type. For unsigned integers, `~x == MAX - x` (e.g. `!0u32 == 4294967295`). For signed integers in [two's complement](#signed-integers), `~x == -x - 1`, since negating is flipping every bit and adding 1.
+
+#### XOR Operator (`^`)
+
+The XOR of 2 bits is 1 if _exactly_ one of the bits is 1, and 0 otherwise.
+
+| a | b | output |
+| :---: | :---: | :---: |
+| 0 | 0 | 0      |
+| 0 | 1 | 1      |
+| 1 | 0 | 1      |
+| 1 | 1 | 0      |
+
+**Properties:**
+
+- **Identity:** `x ^ 0 = x`, so XOR with 0 leaves the bit alone.
+- **Negation:** `x ^ 1 = ~x`, so XOR with 1 flips the bit.
+
+#### Left Shift Operator (`<<`)
+
+`n << k` moves all bits in `n` over by `k` places to the left. Bits shifted past the left of the type are discarded, and `0`s fill in from the right.
+
+> [!PROPOSITION] Left shift multiplies
+> `x << n` is equivalent to $x \cdot 2^n$, as long as no set bits fall off the top.
+
+#### Right Shift Operator (`>>`)
+
+`n >> k` moves all bits in `n` over by `k` places to the right. Bits shifted past the right of the type are discarded. What fills in from the left depends on the type:
+- Unsigned Integers (**logical right shift**): fills `0`s from the left.
+- Signed Integers (**arithmetic right shift**): fills copies of the sign bit from the left (sign extension). 
+
+> [!PROPOSITION] Right shift floor-divides
+> `x >> n` is equivalent to $\lfloor \frac{x}{2^n} \rfloor$.
+
+> [!NOTE]
+> x86-64 has separate instructions for the two right shifts (`shr` and `sar`), and a language picks one based on the operand's type. What happens when `k` is at least the width of `n` also differs: x86-64 only uses the low 5 or 6 bits of `k`, while languages may forbid it (e.g., Rust panics in debug builds, and it's undefined behaviour in [C](../../tools/c.md#bitwise)).
+
+### Bit Masks
+
+A **bit mask** is an integer used to isolate specific bit(s) in another integer. Common masks:
+
+```rust
+// single bit k
+let mask: u32 = 1 << k;
+
+// lowest k bits (k < 32; for k == 32 use u32::MAX)
+let mask: u32 = (1 << k) - 1;
+
+// contiguous range, bits i..j inclusive (j - i + 1 < 32)
+let mask: u32 = ((1 << (j - i + 1)) - 1) << i;
+
+// arbitrary bits (e.g. 3 and 5)
+let mask: u32 = (1 << 5) | (1 << 3);
+
+// everything except bit k
+let mask: u32 = !(1 << k);
+```
+
+### Common Bit Operations
+
+Almost every bit manipulation operation on an integer `x` follows two steps:
+1. Build a bitmask using shift operators.
+2. Combine the bitmask with `x` using AND, OR, XOR, or NOT operator.
+
+#### Check Bit
+
+Uses AND's identity on bit `k` and annihilator everywhere else, leaving only bit `k`.
+
+```rust
+fn check_bit(x: u32, k: u32) -> bool {
+    (x & (1 << k)) != 0
+}
+```
+
+#### Set Bit
+
+Uses OR's annihilator on bit `k` (forces it to 1) and identity everywhere else.
+
+```rust
+fn set_bit(x: u32, k: u32) -> u32 {
+    x | (1 << k)
+}
+```
+
+#### Clear Bit
+
+Uses AND's annihilator on bit `k` (forces it to 0) and identity everywhere else.
+
+```rust
+fn clear_bit(x: u32, k: u32) -> u32 {
+    x & !(1 << k)
+}
+```
+
+#### Toggle Bit
+
+Uses XOR's negation on bit `k` (flips it) and identity everywhere else.
+
+```rust
+fn toggle_bit(x: u32, k: u32) -> u32 {
+    x ^ (1 << k)
+}
+```
+
+#### Count the number of Set Bits
+
+`x & (x - 1)` clears the lowest set bit of `x`, so we count how many times we can do that before reaching `0`.
+
+```rust
+fn count_ones(mut x: u32) -> u32 {
+    let mut count = 0;
+    while x != 0 {
+        count += 1;
+        x &= x - 1;
+    }
+
+    count
+}
+```
+
+> [!TIP]
+> x86-64 counts set bits in a single instruction (`popcnt`), which `x.count_ones()` compiles to.
+
+#### Count the Amount of Leading Zeroes
+
+Each right shift removes one bit from the bottom, so the number of shifts it takes `x` to reach `0` is the number of bits up to and including the most significant set bit. The rest of the 32 bits are leading zeroes.
+
+```rust
+fn count_leading_zeros(mut x: u32) -> u32 {
+    let mut count = 32;
+    while x != 0 {
+        count -= 1;
+        x >>= 1;
+    }
+
+    count
+}
+```
+
+> [!TIP]
+> x86-64 does this in a single instruction (`lzcnt`), which `x.leading_zeros()` compiles to.
+
+#### Count the Amount of Trailing Zeroes
+
+Check the lowest bit and shift right until a `1` reaches the bottom. `x == 0` has no set bit to stop at, so it's handled separately.
+
+```rust
+fn count_trailing_zeros(mut x: u32) -> u32 {
+    if x == 0 {
+        return 32;
+    }
+
+    let mut count = 0;
+    while x & 1 == 0 {
+        count += 1;
+        x >>= 1;
+    }
+
+    count
+}
+```
+
+> [!TIP]
+> x86-64 does this in a single instruction (`tzcnt`), which `x.trailing_zeros()` compiles to.
+
+#### Find the Index of the Most Significant Bit
+
+The index of the most significant bit of some integer `x > 0` is $\lfloor \log_2(x) \rfloor$.
+
+That is, how many times do I need to divide $x$ by 2 to get to 1.
+
+```rust
+fn most_significant_bit(mut x: u32) -> i32 {
+    let mut bit_index = -1; // so we can get 0-based index (and -1 for `x` == 0)
+    while x != 0 {
+        bit_index += 1;
+        x >>= 1;
+    }
+
+    bit_index
+}
+```
+
+> [!WARNING]
+> We take `x` as **unsigned** so that `>>=` is a logical shift. Right-shifting a negative signed `x` sign-extends indefinitely and will never reach `0` (leading to an infinite loop). Don't fix this with `abs` like you might in Python, since `i32::MIN.abs()` overflows.
+
+> [!TIP]
+> Rust provides `x.ilog2()`, which equals `most_significant_bit(x)` for `x > 0` (and panics for `0`).
+
+#### Check if the Number is a Power of 2
+
+A power of 2 has exactly one set bit. Since `x & (x - 1)` clears the lowest set bit, the result is `0` exactly when there was only one. `0` has no set bits at all, so it's excluded separately.
+
+```rust
+fn is_power_of_two(x: u32) -> bool {
+    x != 0 && (x & (x - 1)) == 0
+}
+```
+
+> [!TIP]
+> Rust provides `x.is_power_of_two()`.
+
+#### Rotates Bits
+
+A rotate is a shift where the bits that fall off one end come back in on the other, so no bits are lost. Rotating left by `k` combines `x << k` (the bits that move up) with `x >> (32 - k)` (the top `k` bits, which wrap around to the bottom). Rotating right is the mirror image.
+
+```rust
+fn rotate_left(x: u32, k: u32) -> u32 {
+    let k = k % 32;
+    if k == 0 {
+        return x; // x >> 32 would shift by the full width, which panics
+    }
+
+    (x << k) | (x >> (32 - k))
+}
+```
+
+> [!TIP]
+> x86-64 has `rol` and `ror` instructions. Rust provides `x.rotate_left(k)` and `x.rotate_right(k)`.
+
+#### Reverse Bits
+
+Take bits off the bottom of `x` one at a time, and push each onto the bottom of the result, so the first bit taken ends up at the top.
+
+```rust
+fn reverse_bits(mut x: u32) -> u32 {
+    let mut result = 0;
+    for _ in 0..32 {
+        result = (result << 1) | (x & 1);
+        x >>= 1;
+    }
+
+    result
+}
+```
+
+> [!TIP]
+> Rust provides `x.reverse_bits()`.
+
+> [!NOTE]
+> Reversing bits is different from reversing bytes, which converts between [byte orders](#byte-order) (`bswap` on x86-64, `x.swap_bytes()` in Rust).
 
 ## Floating-Point Representation
 
@@ -607,4 +897,64 @@ address: 0x100 0x101 0x102 0x103
 > A raw blob has no recoverable endianness on its own.
 
 > [!NOTE]
-> On x86-64 systems (and most systems today), the byte ordering is _little_ endian.
+> On x86-64, the byte ordering is _little_ endian.
+
+## Alignment
+
+Every type carries an **alignment requirement**, a number of bytes $N$ that determines which memory addresses its objects can occupy: if a type $T$ has an alignment requirement of $N$, every object of type $T$ must be placed at an address that's a multiple of $N$.
+
+A primitive type has a **natural alignment requirement**, which is equal to its byte size (e.g., a 4-byte integer is 4-byte aligned). A record is aligned to the largest alignment of its fields, and an array to the alignment of its elements. The exact values depend on the language (e.g., [Rust](../../tools/rust.md#alignment)).
+
+Alignment matters because x86-64 reads memory in aligned chunks. A misaligned access may need two reads instead of one (e.g., when it straddles two cache lines), and some instructions refuse it outright: SSE's `movaps` faults on an address that isn't 16-byte aligned (`movups` doesn't). The x86-64 calling convention also requires the stack to be 16-byte aligned at every `call`, and the assembler's `align` directive places data on aligned addresses (see [Assembly](assembly.md#data-layout)).
+
+To determine whether an address is $2^n$-byte aligned, check whether `(address & ((1 << n) - 1)) == 0`. This works because the low $n$ bits of the address hold its remainder $\bmod 2^n$, which must be $0$.
+
+### Padding
+
+To satisfy alignment requirements, the compiler may insert **padding**, unused bytes holding no data, into record types.
+
+There are two kinds of padding:
+- **Internal padding**: unused bytes added after a field so the next field is aligned.
+- **External padding**: unused bytes added after the last field so, in an array of structs, the next record object is aligned.
+
+Since padding increases a record's size, it also increases memory consumption (see [Data Packing](../performance-engineering/data-packing.md) to reduce it).
+
+**Example (internal padding)**:
+
+```rust
+// offset
+//   0    1        4          8
+//   ↓    ↓        ↓          ↓
+//   ┌────┬────────┬──────────┐
+//   │ a  │   P    │    b     │
+//   │1 B │ 3 bytes│  4 bytes │
+//   └────┴────────┴──────────┘
+//   └──────── 8 bytes ───────┘
+
+#[repr(C)]
+struct Foo {
+    a: u8,
+    b: u32,
+}
+```
+
+**Example (external padding)**:
+
+```rust
+// offset
+//   0                  8       12    14   15
+//   ↓                  ↓        ↓     ↓    ↓
+//   ┌──────────────────┬────────┬─────┬────┬─┐
+//   │        a         │   b    │  c  │ d  │P│
+//   │     8 bytes      │4 bytes │2 B  │1 B │1│
+//   └──────────────────┴────────┴─────┴────┴─┘
+//   └────────────── 16 bytes ────────────────┘
+
+#[repr(C)]
+struct Foo {
+    a: u64,
+    b: u32,
+    c: u16,
+    d: u8,
+}
+```

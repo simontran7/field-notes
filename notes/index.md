@@ -40,7 +40,6 @@
     - [Interval Merge](data-structures-and-algorithms/algorithmic-techniques/interval-merge.md)
     - [Monotonic Stack](data-structures-and-algorithms/algorithmic-techniques/monotonic-stack.md)
     - [Monotonic Deque](data-structures-and-algorithms/algorithmic-techniques/monotonic-deque.md)
-    - [Bit Manipulation](data-structures-and-algorithms/algorithmic-techniques/bit-manipulation.md)
     - [Math](data-structures-and-algorithms/algorithmic-techniques/math.md)
 
 ## Computer Systems
@@ -59,7 +58,7 @@
     - [Synchronization](computer-systems/operating-systems/synchronization.md)
 - Performance Engineering
     - [Benchmarking](computer-systems/performance-engineering/benchmarking.md)
-    - [Record Packing](computer-systems/performance-engineering/record-packing.md)
+    - [Data Packing](computer-systems/performance-engineering/data-packing.md)
     - [Atomics](computer-systems/performance-engineering/atomics.md)
 
 ## Tools
