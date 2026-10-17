@@ -33,13 +33,6 @@ fn formatter(lang: &str) -> Option<Vec<&'static str>> {
             "--style=file:fmt/clang-format",
             "--assume-filename=block.c",
         ],
-        "cpp" | "c++" | "cc" | "hpp" => {
-            vec![
-                "clang-format",
-                "--style=file:fmt/clang-format",
-                "--assume-filename=block.cpp",
-            ]
-        }
         "python" | "py" => vec![
             "ruff",
             "format",
@@ -69,7 +62,7 @@ fn incomplete(lang: &str, code: &str) -> Option<&'static str> {
     if first.starts_with([' ', '\t']) {
         return Some("starts indented (a piece of a larger block)");
     }
-    if matches!(lang, "c" | "h" | "cpp" | "c++" | "cc" | "hpp") {
+    if matches!(lang, "c" | "h") {
         let code = C_NOISE_RE.replace_all(code, "");
         for (open, close) in [('{', '}'), ('(', ')'), ('[', ']')] {
             if code.matches(open).count() != code.matches(close).count() {

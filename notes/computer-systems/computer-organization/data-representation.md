@@ -446,7 +446,7 @@ println!("y: {y:b}"); // 11111111111111111100111111000111
 println!("z: {z:b}"); // z: 11000000111001
 ```
 
-## Bitwise Operations
+## Bitwise Manipulation
 
 ### Bitwise Operators
 

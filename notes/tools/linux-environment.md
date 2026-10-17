@@ -4,13 +4,13 @@
 
 - Open the full manual for a command (`q` to quit, `/<pattern>` to search)
 
-```bash
+```syntax
 man <command>
 ```
 
 - Print a one-line description of a command
 
-```bash
+```syntax
 whatis <command>
 ```
 
@@ -72,39 +72,39 @@ whatis <command>
 
 - print the name of the current working directory
 
-```bash
-pwd
+```console
+$ pwd
 ```
 
 - Change directory
 
-```bash
+```syntax
 cd <directory>
 ```
 
 - Go to your home directory
 
-```bash
-cd
+```console
+$ cd
 ```
 
 - Go back to the previous directory
 
-```bash
-cd -
+```console
+$ cd -
 ```
 
 - list contents (including dot files) of directory(s) in detailed format
 
-```bash
+```syntax
 ls -al <directory 1> <...> <directory N>
 ```
 
 - Generate several words from one pattern (brace expansion)
 
-```bash
-mkdir {src,docs,tests}       # src docs tests
-touch file{1..3}.txt         # file1.txt file2.txt file3.txt
+```console
+$ mkdir {src,docs,tests}       # src docs tests
+$ touch file{1..3}.txt         # file1.txt file2.txt file3.txt
 ```
 
 ### Globbing (Shell Wildcards)
@@ -123,31 +123,31 @@ The shell has its own wildcards for matching file names, called **globs**. They 
 
 - Create a file
 
-```bash
+```syntax
 touch <file>
 ```
 
 - Creating a directory, while creating missing parents automatically
 
-```bash
+```syntax
 mkdir -p <folder>
 ```
 
 - Copying files
 
-```bash
+```syntax
 cp <source> <destination>
 ```
 
 - Copying directories and everything inside them
 
-```bash
+```syntax
 cp -r <source> <destination>
 ```
 
 - Moving files and directories
 
-```bash
+```syntax
 mv <source> <destination>
 ```
 
@@ -159,19 +159,19 @@ mv <source> <destination>
 
 - Removing files
 
-```bash
+```syntax
 rm <file>
 ```
 
 - Remove an empty directory
 
-```bash
+```syntax
 rmdir <directory>
 ```
 
 - Remove a directory and everything inside it
 
-```bash
+```syntax
 rm -r <directory>
 ```
 
@@ -180,19 +180,19 @@ rm -r <directory>
 
 - Find files by name, searching recursively from the current directory
 
-```bash
+```syntax
 find . -name '<pattern>'
 ```
 
 - Create a symbolic link (a shortcut that points to another path)
 
-```bash
+```syntax
 ln -s <target> <link name>
 ```
 
 - Create a hard link (a second name for the same file data)
 
-```bash
+```syntax
 ln <target> <link name>
 ```
 
@@ -205,31 +205,31 @@ Every process has three default streams: **standard input** (stdin, defaults to 
 
 - redirect stdout to `file` (overwriting `file` if it exists)
 
-```bash
+```syntax
 <command> > <file>
 ```
 
 - append stdout to `file`
 
-```bash
+```syntax
 <command> >> <file>
 ```
 
 - redirect stderr to `file`
 
-```bash
+```syntax
 <command> 2> <file>
 ```
 
 - redirect both stdout and stderr to `file`
 
-```bash
+```syntax
 <command> &> <file>
 ```
 
 - discard error messages
 
-```bash
+```syntax
 <command> 2> /dev/null
 ```
 
@@ -238,19 +238,19 @@ Every process has three default streams: **standard input** (stdin, defaults to 
 
 - redirect stdin to come from `file` instead of the keyboard
 
-```bash
+```syntax
 <command> < <file>
 ```
 
 - pipe stdout of `command 1` into stdin of `command 2`
 
-```bash
+```syntax
 <command 1> | <command 2> | <...> | <command N>
 ```
 
 - show output on the screen _and_ save it to `file`
 
-```bash
+```syntax
 <command> | tee <file>
 ```
 
@@ -258,9 +258,23 @@ Every process has three default streams: **standard input** (stdin, defaults to 
 
 ### Character Classes
 
-- `[<pattern>]`: matches any single character inside the enclosing square brackets.
-- `[<start>-<end>]`: range
-- `[^<pattern>]`: negates the list
+- Match any single character inside the square brackets
+
+```syntax
+[<pattern>]
+```
+
+- Match any single character in a range
+
+```syntax
+[<start>-<end>]
+```
+
+- Match any single character _not_ inside the square brackets
+
+```syntax
+[^<pattern>]
+```
 
 > [!NOTE]
 > Special characters (e.g., `.`, `+`, `*`) lose their meaning when placed in a character class
@@ -283,47 +297,122 @@ The **lowercase** version matches something, and the **uppercase** version match
 
 ### Alternation
 
-`<pattern>|<pattern>`: matches the pattern to its left _or_ the pattern to its right
+- Match the pattern to its left _or_ the pattern to its right
+
+```syntax
+<pattern>|<pattern>
+```
 
 > [!NOTE]
 > Alternation applies to whole subpatterns, so group when needed (e.g., `foo|barbaz` matches `foo` or `barbaz`, while `(foo|bar)baz` matches `foobaz` or `barbaz`)
 
 ### Wildcards
 
-| Notation | Description                            |
-| :---: | :---: |
-| `.`      | Matches to any character               |
-| `?`      | Optional previous (i.e., 0 or 1 of previous) |
-| `*`      | 0 or more of previous                  |
-| `+`      | 1 or more of previous                  |
-| `{n}`    | Exactly `n` of previous                |
-| `{n,}`   | `n` or more of previous                |
-| `{n, m}` | Between `n` and `m` times of previous  |
+- Match any character
+
+```syntax
+.
+```
+
+- Match `pattern` 0 or 1 times (i.e., optional)
+
+```syntax
+(?:<pattern>)?
+```
+
+- Match `pattern` 0 or more times
+
+```syntax
+(?:<pattern>)*
+```
+
+- Match `pattern` 1 or more times
+
+```syntax
+(?:<pattern>)+
+```
+
+- Match `pattern` exactly $n$ times
+
+```syntax
+(?:<pattern>){<n>}
+```
+
+- Match `pattern` $n$ or more times
+
+```syntax
+(?:<pattern>){<n>,}
+```
+
+- Match `pattern` between $n$ and $m$ times
+
+```syntax
+(?:<pattern>){<n>,<m>}
+```
 
 > [!NOTE]
-> To match it literally, escape it (i.e., `\<wildcard>`).
+> A quantifier applies only to the single character, class, or group right before it, so `abc?` makes only the `c` optional. The `(?:<pattern>)` group makes it apply to the whole pattern, and isn't needed for a single character, class, or group (e.g., `a?`, `\d+`, `[a-z]*`).
+
+> [!NOTE]
+> To match a wildcard character literally, escape it with a backslash (e.g., `\.`, `\?`, `\*`).
 
 > [!NOTE]
 > These are regex wildcards. The shell uses different wildcards for matching file names; see [Globbing](#globbing-shell-wildcards).
 
 > [!NOTE]
-> By default, quantifiers are **greedy** (i.e., they match as much as possible). Append `?` to make them **lazy** (i.e., match as little as possible): `*?`, `+?`, `??`, `{n, m}?`.
+> By default, quantifiers are **greedy** (i.e., they match as much as possible). Append `?` to make them **lazy** (i.e., match as little as possible): `*?`, `+?`, `??`, `{n,m}?`.
 
 ### Anchors
 
-- `^`: anchors the match to the start of the string (or start of the line in multiline mode)
-- `$`: anchors the match to the end of the string (or end of the line in multiline mode)
-- `\b`: word boundary (i.e., matches the position between a `\w` and a `\W` character (or the start/end of the string))
-- `\B`: non-word boundary (i.e., matches any position that `\b` does not)
+- Anchor the match to the start of the string (or start of the line in multiline mode)
 
-> [!NOTE]
-> Using `^<pattern>$` forces the entire string to match the pattern, instead of letting the regex match a substring somewhere in the middle.
+```syntax
+^
+```
+
+- Anchor the match to the end of the string (or end of the line in multiline mode)
+
+```syntax
+$
+```
+
+- Match a word boundary (i.e., the position between a `\w` and a `\W` character, or the start/end of the string)
+
+```syntax
+\b
+```
+
+- Match a non-word boundary (i.e., any position that `\b` does not match)
+
+```syntax
+\B
+```
+
+> [!TIP]
+> To force the entire string to match the pattern (rather than match a substring somewhere in the middle):
+> ```syntax
+> ^<pattern>$
+> ```
 
 ### Groups and Backreferences
 
-- `(<pattern>)`: capturing group (i.e., records what was matched); referenced by position with `\1`, `\2`, … (within the pattern) or `$1`, `$2`, … (in a replacement string)
-- `(?:<pattern>)`: non-capturing group (i.e., groups without recording); preferred when you don't need a backreference, as it keeps group numbering cleaner
-- `(?<name><pattern>)`: named capturing group; referenced with `\k<name>` within the pattern
+- Capturing group (i.e., records what was matched); referenced by position with `\1`, `\2`, … (within the pattern) or `$1`, `$2`, … (in a replacement string)
+
+```syntax
+(<pattern>)
+```
+
+- Non-capturing group (i.e., groups without recording); preferred when you don't need a backreference, as it keeps group numbering cleaner
+
+```syntax
+(?:<pattern>)
+```
+
+- Named capturing group; match the same text again later in the pattern with the backreference `\k<name>`
+
+```syntax
+(?<<name>><pattern>)
+```
 
 > [!NOTE]
 > `(\w+) \1` matches a repeated word like `hello hello`, because `\1` must match whatever `(\w+)` captured.
@@ -333,10 +422,29 @@ The **lowercase** version matches something, and the **uppercase** version match
 > [!DEFINITION]
 > **Lookarounds** are zero-width assertions, which means they check for a pattern at the current position without consuming any characters.
 
-- `(?=<pattern>)`: positive lookahead (i.e., matches if `pattern` follows)
-- `(?!<pattern>)`: negative lookahead (i.e., matches if `pattern` does not follow)
-- `(?<=<pattern>)`: positive lookbehind (i.e., matches if `pattern` precedes)
-- `(?<!<pattern>)`: negative lookbehind (i.e., matches if `pattern` does not precede)
+- Positive lookahead (i.e., matches if `pattern` follows)
+
+```syntax
+(?=<pattern>)
+```
+
+- Negative lookahead (i.e., matches if `pattern` does not follow)
+
+```syntax
+(?!<pattern>)
+```
+
+- Positive lookbehind (i.e., matches if `pattern` precedes)
+
+```syntax
+(?<=<pattern>)
+```
+
+- Negative lookbehind (i.e., matches if `pattern` does not precede)
+
+```syntax
+(?<!<pattern>)
+```
 
 > [!NOTE]
 > `\d+(?= dollars)` matches the number in `100 dollars` but not in `100 euros`, and the match is just `100`, not `100 dollars`, since the lookahead doesn't consume characters.
@@ -348,31 +456,31 @@ The **lowercase** version matches something, and the **uppercase** version match
 
 - Print the entire file to the screen
 
-```bash
+```syntax
 cat <file>
 ```
 
 - Page through the file interactively (`space` for next page, `q` to quit)
 
-```bash
+```syntax
 less <file>
 ```
 
-- Show the first \\(n\\) lines
+- Show the first $n$ lines
 
-```bash
+```syntax
 head -n <n> <file>
 ```
 
-- Show the last \\(n\\) lines
+- Show the last $n$ lines
 
-```bash
+```syntax
 tail -n <n> <file>
 ```
 
 - Follow a file as new lines are added (useful for logs, `Ctrl+C` to stop)
 
-```bash
+```syntax
 tail -f <file>
 ```
 
@@ -384,25 +492,25 @@ tail -f <file>
 
 - Search for a pattern recursively
 
-```bash
+```syntax
 grep -rnEI --color=auto --exclude-dir={.git,target} '<pattern>' .
 ```
 
 - Count lines, words, and characters in a file
 
-```bash
+```syntax
 wc -lwc <file>
 ```
 
 - Search and replace a single file
 
-```bash
+```syntax
 sed -i 's/<old text>/<new text>/g' <file to search>
 ```
 
 - Search and replace across several files
 
-```bash
+```syntax
 grep -rIEl '<old text>' . | xargs sed -i 's/<old text>/<new text>/g'
 ```
 
@@ -411,95 +519,122 @@ grep -rIEl '<old text>' . | xargs sed -i 's/<old text>/<new text>/g'
 
 ## Permissions & Ownership
 
-Every file has an **owner**, a **group**, and three sets of permissions: one for the owner (`u`), one for the group (`g`), and one for everyone else (`o`). Each set is made of **read** (`r`), **write** (`w`), and **execute** (`x`).
+```
+..........
+│└┬┘└┬┘└┬┘
+│ │  │  └── others (o) permissions
+│ │  └───── group (g) permissions
+│ └──────── owner (u) permissions
+└────────── file type
+```
 
-For example, `-rwxr-xr--` breaks down as:
+The first character is the file type:
 
-| Part | Meaning |
+| Type | Meaning |
 | :---: | :---: |
-| `-` | File type (`-` for a file, `d` for a directory, `l` for a symbolic link) |
-| `rwx` | Owner can read, write, and execute |
-| `r-x` | Group can read and execute |
-| `r--` | Everyone else can only read |
+| `-` | Regular file |
+| `d` | Directory |
+| `l` | Symbolic link |
+| `c` | Character device (e.g., a terminal, `/dev/null`) |
+| `b` | Block device (e.g., a disk) |
+| `p` | Named pipe (FIFO) |
+| `s` | Socket |
 
-- View permissions, owner, and group
+The other nine characters are three sets of permissions, for the owner, group, and others, and each set has the same three read, write, and execute bits:
 
-```bash
+```
+...
+│││
+││└── execute (x)
+│└─── write (w)
+└──── read (r)
+```
+
+| Bit | On a file | On a directory |
+| :---: | :---: | :---: |
+| `r` | Read its contents | List the names inside it |
+| `w` | Change its contents | Create, delete, and rename entries inside it |
+| `x` | Run it as a program | Enter it (`cd`) and access the entries inside it |
+
+A bit is on when it shows its letter, and `-` when it's off.
+
+### Viewing Permissions
+
+```syntax
 ls -l <file>
 ```
 
-- Make a file executable
+### Changing Permissions
 
-```bash
-chmod +x <file>
+```syntax
+chmod <who><operator><permissions> <file>
 ```
 
-- Add or remove permissions for specific sets (e.g., `u+w`, `g-w`, `o-r`)
+| Who | Meaning |
+| :---: | :---: |
+| `u` | Owner |
+| `g` | Group |
+| `o` | Others |
+| `a` | owner, group, and others |
 
-```bash
-chmod <who><+ or -><permissions> <file>
-```
+| Operator | Meaning |
+| :---: | :---: |
+| `+` | Add the permissions |
+| `-` | Remove the permissions |
+| `=` | Set exactly these permissions, removing any others |
 
-- Set permissions with numbers (read = 4, write = 2, execute = 1, added together per set)
+| Permission | Meaning |
+| :---: | :---: |
+| `r` | [Read](#permission-types) |
+| `w` | [Write](#permission-types) |
+| `x` | [Execute](#permission-types) |
+| `s` | [setuid](#special-bits) with `u`, [setgid](#special-bits) with `g` |
+| `t` | [Sticky bit](#special-bits) |
 
-```bash
-chmod 644 <file>        # rw-r--r--: typical for regular files
-chmod 755 <file>        # rwxr-xr-x: typical for scripts and directories
-```
+> [!NOTE]
+> Combine letters to change several groups and permissions at once.
 
-> [!WARNING]
-> Avoid `chmod 777`, which lets _every_ user read, modify, and run the file. It's a common quick fix in old tutorials, but it's almost never the right one and creates a security hole.
+### Changing Ownership
 
-- Change a file's owner and group (add `-R` to apply to a directory's contents)
-
-```bash
+```syntax
 sudo chown <user>:<group> <file>
 ```
 
+### Running as Another User
+
 - Run a single command as root
 
-```bash
+```syntax
 sudo <command>
 ```
 
 - Re-run the previous command with `sudo` (useful after "permission denied")
 
-```bash
-sudo !!
+```console
+$ sudo !!
 ```
 
 - Switch to another user (defaults to root without a user name)
 
-```bash
+```syntax
 su - <user>
 ```
 
 > [!TIP]
 > Prefer `sudo` over `su`. It limits root access to a single command, and it asks for _your_ password rather than the root password.
 
-### Special Bits
-
-| Bit | Number | Effect |
-| :---: | :---: | :---: |
-| setuid | `4` | Executable runs as the file's owner instead of the user who ran it (e.g., `passwd`) |
-| setgid | `2` | On a directory, new files inherit the directory's group |
-| sticky | `1` | On a directory, only a file's owner can delete it (e.g., `/tmp`) |
-
-> [!NOTE]
-> Special bits go in front of the regular numbers, so `chmod 1777 <directory>` sets the sticky bit plus `rwxrwxrwx`. In `ls -l` output they show up as `s` or `t` in place of `x`.
-
 ## Process Management
 
 - List running processes associated with the _current_ shell
 
-```bash
-ps
+```console
+$ ps
 ```
 
 - Display a _full_ listing of _all_ running processes
 
-```bash
-ps -ef # or `ps aux`
+```console
+$ ps -ef # or `ps aux`
 ```
 
 | Field | Description |
@@ -515,14 +650,14 @@ ps -ef # or `ps aux`
 
 - Find a process by name
 
-```bash
+```syntax
 ps -ef | grep <name>
 ```
 
 - Monitor processes interactively, sorted by CPU usage (`q` to quit)
 
-```bash
-htop
+```console
+$ htop
 ```
 
 > [!NOTE]
@@ -530,13 +665,13 @@ htop
 
 - Ask a process to stop (sends `SIGTERM`, letting it clean up first)
 
-```bash
+```syntax
 kill <PID>
 ```
 
 - Force a process to stop immediately (sends `SIGKILL`)
 
-```bash
+```syntax
 kill -9 <PID>
 ```
 
@@ -545,7 +680,7 @@ kill -9 <PID>
 
 - Stop processes by name instead of PID
 
-```bash
+```syntax
 pkill <name>
 ```
 
@@ -553,7 +688,7 @@ pkill <name>
 
 - Run a command in the background
 
-```bash
+```syntax
 <command> &
 ```
 
@@ -563,19 +698,19 @@ pkill <name>
 
 - List background and suspended jobs
 
-```bash
-jobs
+```console
+$ jobs
 ```
 
 - Bring a job back to the foreground
 
-```bash
+```syntax
 fg %<job number>
 ```
 
 - Resume a suspended job in the background
 
-```bash
+```syntax
 bg %<job number>
 ```
 
@@ -583,8 +718,8 @@ bg %<job number>
 
 - Edit your scheduled tasks (opens your crontab in an editor)
 
-```bash
-crontab -e
+```console
+$ crontab -e
 ```
 
 > [!NOTE]
@@ -592,14 +727,14 @@ crontab -e
 
 - List your scheduled tasks
 
-```bash
-crontab -l
+```console
+$ crontab -l
 ```
 
 - Delete _all_ your scheduled tasks
 
-```bash
-crontab -r
+```console
+$ crontab -r
 ```
 
 > [!WARNING]
@@ -609,7 +744,7 @@ crontab -r
 
 Each line in the crontab is one task: five time fields followed by the command to run.
 
-```text
+```syntax
 * * * * * <command>
 │ │ │ │ │
 │ │ │ │ └── day of week (0–7, Sunday is 0 or 7)
@@ -636,7 +771,7 @@ Each line in the crontab is one task: five time fields followed by the command t
 
 - Example: run a backup script every day at 2:00 AM, saving its output to a log
 
-```text
+```
 0 2 * * * /home/<user>/scripts/backup.sh >> /home/<user>/backup.log 2>&1
 ```
 
@@ -652,26 +787,26 @@ Each line in the crontab is one task: five time fields followed by the command t
 
 - Show previously run commands
 
-```bash
-history
+```console
+$ history
 ```
 
 - Show the full path of the program that runs when you type a command
 
-```bash
+```syntax
 which <command>
 ```
 
 - Exit the current shell (closes the terminal, or ends an SSH session)
 
-```bash
-exit
+```console
+$ exit
 ```
 
 - Log out of a login shell (like an SSH session or a TTY)
 
-```bash
-logout
+```console
+$ logout
 ```
 
 > [!NOTE]
@@ -681,8 +816,8 @@ logout
 
 - Set a shell variable
 
-```bash
-NAME="VALUE"
+```console
+$ NAME="VALUE"
 ```
 
 > [!WARNING]
@@ -690,14 +825,14 @@ NAME="VALUE"
 
 - Print a variable
 
-```bash
-echo "$NAME"
+```console
+$ echo "$NAME"
 ```
 
 - Set an environment variable (visible to programs started from this shell)
 
-```bash
-export NAME="VALUE"
+```console
+$ export NAME="VALUE"
 ```
 
 > [!NOTE]
@@ -705,13 +840,13 @@ export NAME="VALUE"
 
 - List all environment variables
 
-```bash
-env
+```console
+$ env
 ```
 
 - Add a directory to `PATH` (the list of directories searched for commands)
 
-```bash
+```syntax
 export PATH="<directory>:$PATH"
 ```
 
@@ -722,27 +857,27 @@ export PATH="<directory>:$PATH"
 
 - Reload `~/.bashrc` after editing it, without opening a new terminal
 
-```bash
-source ~/.bashrc
+```console
+$ source ~/.bashrc
 ```
 
 ### Aliases
 
 - Create a shortcut for a longer command
 
-```bash
+```syntax
 alias <name>='<command>'
 ```
 
 - List all aliases
 
-```bash
-alias
+```console
+$ alias
 ```
 
 - Remove an alias
 
-```bash
+```syntax
 unalias <name>
 ```
 
@@ -756,25 +891,25 @@ unalias <name>
 
 - Print the exit code of the last command
 
-```bash
-echo $?
+```console
+$ echo $?
 ```
 
 - Run `command 2` only if `command 1` succeeds
 
-```bash
+```syntax
 <command 1> && <command 2>
 ```
 
 - Run `command 2` only if `command 1` fails
 
-```bash
+```syntax
 <command 1> || <command 2>
 ```
 
 - End a script with a specific exit code
 
-```bash
+```syntax
 exit <code>
 ```
 
@@ -782,17 +917,9 @@ exit <code>
 
 The first line of a script, starting with `#!`, tells the kernel which interpreter should run the file. Running `./hello.sh` with `#!/bin/bash` at the top is equivalent to running `/bin/bash ./hello.sh`.
 
-- Run a script with Bash
-
-```bash
-#!/usr/bin/env bash
-
-echo "Hello World!"
-```
-
 - Run a script with an interpreter found on your `PATH` (e.g., Bash, Python, Node)
 
-```bash
+```syntax
 #!/usr/bin/env <interpreter>
 ```
 
@@ -801,7 +928,7 @@ echo "Hello World!"
 
 - Make a script executable, then run it
 
-```bash
+```syntax
 chmod +x <script>
 ./<script>
 ```
@@ -816,25 +943,25 @@ chmod +x <script>
 
 - Create a compressed archive
 
-```bash
+```syntax
 tar -czvf <archive>.tar.gz <file or directory>
 ```
 
 - Extract an archive (into the current directory)
 
-```bash
+```syntax
 tar -xvf <archive>.tar.gz
 ```
 
 - Extract an archive into a specific directory
 
-```bash
+```syntax
 tar -xvf <archive>.tar.gz -C <directory>
 ```
 
 - List an archive's contents without extracting
 
-```bash
+```syntax
 tar -tvf <archive>.tar.gz
 ```
 
@@ -843,13 +970,13 @@ tar -tvf <archive>.tar.gz
 
 - Create a zip archive
 
-```bash
+```syntax
 zip -r <archive>.zip <file or directory>
 ```
 
 - Extract a zip archive
 
-```bash
+```syntax
 unzip <archive>.zip
 ```
 
@@ -868,13 +995,13 @@ unzip <archive>.zip
 
 - Install a package
 
-```bash
+```syntax
 sudo apt install <package>
 ```
 
 - Install a local `.deb` file 
 
-```bash
+```syntax
 sudo apt install ./<package>.deb
 ```
 
@@ -883,37 +1010,37 @@ sudo apt install ./<package>.deb
 
 - Reinstall a package
 
-```bash
+```syntax
 sudo apt reinstall <package>
 ```
 
 - Remove a package (keeping its config files and its dependencies)
 
-```bash
+```syntax
 sudo apt remove <package>
 ```
 
 - Remove a package and its config files (keeping its dependencies)
 
-```bash
+```syntax
 sudo apt purge <package>
 ```
 
 - Remove orphaned dependencies
 
-```bash
-sudo apt autoremove
+```console
+$ sudo apt autoremove
 ```
 
 - Remove orphaned dependencies and their config files
 
-```bash
-sudo apt autoremove --purge
+```console
+$ sudo apt autoremove --purge
 ```
 
 - Remove a package, its config files, and orphaned dependencies
 
-```bash
+```syntax
 sudo apt purge --autoremove <package>
 ```
 
@@ -921,69 +1048,69 @@ sudo apt purge --autoremove <package>
 
 - Refresh package lists
 
-```bash
-sudo apt update
+```console
+$ sudo apt update
 ```
 
 - Upgrade all packages 
 
-```bash
-sudo apt upgrade
+```console
+$ sudo apt upgrade
 ```
 
 - Upgrade all packages (may install or remove packages to resolve dependency conflicts)
 
-```bash
-sudo apt full-upgrade
+```console
+$ sudo apt full-upgrade
 ```
 
 - Upgrade a single package (without installing it if it's missing)
 
-```bash
+```syntax
 sudo apt install --only-upgrade <package>
 ```
 
 - Refresh and upgrade in one go
 
-```bash
-sudo apt update && sudo apt upgrade -y
+```console
+$ sudo apt update && sudo apt upgrade -y
 ```
 
 ### Search & Inspect
 
 - Search packages by name and description
 
-```bash
+```syntax
 apt search <keyword>
 ```
 
 - Show package details (version, dependencies, size, description)
 
-```bash
+```syntax
 apt show <package>
 ```
 
 - List all installed packages
 
-```bash
-apt list --installed
+```console
+$ apt list --installed
 ```
 
 - List packages with pending updates
 
-```bash
-apt list --upgradable
+```console
+$ apt list --upgradable
 ```
 
 - List what a package depends on
 
-```bash
+```syntax
 apt depends <package>
 ```
 
 - List what depends on a package
 
-```bash
+```syntax
 apt rdepends <package>
 ```
 
@@ -991,91 +1118,91 @@ apt rdepends <package>
 
 - Prevent a package from being upgraded
 
-```bash
+```syntax
 sudo apt-mark hold <package>
 ```
 
 - Allow a held package to be upgraded again
 
-```bash
+```syntax
 sudo apt-mark unhold <package>
 ```
 
 - List held packages
 
-```bash
-apt-mark showhold
+```console
+$ apt-mark showhold
 ```
 
 ### Cleanup
 
 - Delete all cached `.deb` files
 
-```bash
-sudo apt clean
+```console
+$ sudo apt clean
 ```
 
 - Delete only cached `.deb` files that can no longer be downloaded
 
-```bash
-sudo apt autoclean
+```console
+$ sudo apt autoclean
 ```
 
 ### Fixing Problems
 
 - Fix broken or unmet dependencies
 
-```bash
-sudo apt --fix-broken install
+```console
+$ sudo apt --fix-broken install
 ```
 
 - Finish interrupted installs
 
-```bash
-sudo dpkg --configure -a
+```console
+$ sudo dpkg --configure -a
 ```
 
 ## Users & Groups
 
 - Print the current username
 
-```bash
-whoami
+```console
+$ whoami
 ```
 
 - Show your user ID and every group you belong to
 
-```bash
-id
+```console
+$ id
 ```
 
 - Show who is logged in and what they're doing
 
-```bash
-w
+```console
+$ w
 ```
 
 - Change the current user's password
 
-```bash
-passwd
+```console
+$ passwd
 ```
 
 - Create a new user (prompts for a password and details)
 
-```bash
+```syntax
 sudo adduser <user>
 ```
 
 - Delete a user
 
-```bash
+```syntax
 sudo deluser <user>
 ```
 
 - Add a user to a group
 
-```bash
+```syntax
 sudo usermod -aG <group> <user>
 ```
 
@@ -1094,87 +1221,87 @@ sudo usermod -aG <group> <user>
 
 - Print kernel and system details
 
-```bash
-uname -a
+```console
+$ uname -a
 ```
 
 - Show which distribution and version you're running
 
-```bash
-cat /etc/os-release
+```console
+$ cat /etc/os-release
 ```
 
 - Print the current date and time
 
-```bash
-date
+```console
+$ date
 ```
 
 - Show how long the system has been running
 
-```bash
-uptime
+```console
+$ uptime
 ```
 
 ### Disk & Memory
 
 - Show free space on each drive, in human-readable sizes
 
-```bash
-df -h
+```console
+$ df -h
 ```
 
 - Show the total size of a directory
 
-```bash
+```syntax
 du -sh <directory>
 ```
 
 - Show memory usage
 
-```bash
-free -h
+```console
+$ free -h
 ```
 
 - List drives and their partitions
 
-```bash
-lsblk
+```console
+$ lsblk
 ```
 
 ### Power
 
 - Shut down the system immediately
 
-```bash
-sudo shutdown now
+```console
+$ sudo shutdown now
 ```
 
 - Schedule a shutdown
 
-```bash
+```syntax
 sudo shutdown +<n>       # in <n> minutes
 sudo shutdown <hh:mm>    # at a specific time
 ```
 
 - Cancel a scheduled shutdown
 
-```bash
-sudo shutdown -c
+```console
+$ sudo shutdown -c
 ```
 
 - Restart the system
 
-```bash
-sudo reboot
+```console
+$ sudo reboot
 ```
 
 ## Networking
 
 - Show your network interfaces and local IP addresses
 
-```bash
-ip address
+```console
+$ ip address
 ```
 
 > [!NOTE]
@@ -1182,49 +1309,49 @@ ip address
 
 - Show your public IP address
 
-```bash
-curl ifconfig.me
+```console
+$ curl ifconfig.me
 ```
 
 - Check whether a host is reachable (sends 4 packets)
 
-```bash
+```syntax
 ping -c 4 <host>
 ```
 
 - Download a file into the current directory
 
-```bash
+```syntax
 curl -O <url>
 ```
 
 - Show which ports are open and which programs are listening on them
 
-```bash
-sudo ss -tulpn
+```console
+$ sudo ss -tulpn
 ```
 
 - Connect to a remote machine
 
-```bash
+```syntax
 ssh <user>@<host>
 ```
 
 - Copy a file to a remote machine
 
-```bash
+```syntax
 scp <file> <user>@<host>:<path>
 ```
 
 - Copy a file from a remote machine to your local machine
 
-```bash
+```syntax
 scp <user>@<host>:<path/to/file> <local path>
 ```
 
 - Copy a directory and everything inside it (works in either direction)
 
-```bash
+```syntax
 scp -r <directory> <user>@<host>:<path>
 ```
 

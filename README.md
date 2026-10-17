@@ -36,10 +36,6 @@ Images are stored the `images/` folder next to the note.
 
 Rendered to HTML at build time with [katex-rs](https://github.com/katex-rs/katex-rs), a Rust port of KaTeX 0.18.5. Pages load only KaTeX's stylesheet and fonts, from `public/katex/`; update those together with the `katex-rs` version. LaTeX that doesn't parse shows up red on the page, and the build prints a warning.
 
-### Diagrams
-
-` ```mermaid ` blocks are drawn as SVG at build time with [mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer), once in Mermaid's light theme and once in its dark theme. A diagram that doesn't parse shows its source instead, and the build prints a warning.
-
 ### Callouts
 
 Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> (<title>)".
@@ -56,16 +52,16 @@ Callouts are written as `[!<kind>] <title>`, where they are rendered as "<kind> 
 
 ### Code
 
-Highlighted at build time with [Lumis](https://lumis.sh) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, and `src/ssg/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `cpp`, `python`, `bash`, `console`, `ocaml`, `asm`. ` ```bash ` blocks get a `$` prompt, and ` ```console ` for sessions with output (`$ ` lines are highlighted as bash, output stays plain).
+Highlighted at build time with [Lumis](https://lumis.sh) in IntelliJ's own colors: IntelliJ Dark in dark mode and IntelliJ Light in light mode. `theme/intellij.json` holds both schemes, and `src/ssg/highlight.rs` maps tree-sitter captures to IntelliJ's color keys. Supported: `rust`, `c`, `python`, `bash`, `console`, `asm`. ` ```console ` is for commands typed at a prompt: start each command with `$ ` and put its output on the lines under it (commands are highlighted as bash, output stays plain, and the copy button copies only the commands). ` ```bash ` is for the contents of a script file. Commands with `<placeholders>` go in ` ```syntax ` blocks instead.
 
 To format code blocks:
 
 ```
-cargo run -- fmt # format C, C++, Python and Rust blocks in notes/
+cargo run -- fmt # format C, Python and Rust blocks in notes/
 cargo run -- fmt --check  # only list the blocks that would change
 ```
 
-To check notes against the style rules in `notes/AGENTS.md` (no em dashes, `_` for italics, centered tables, supported callout types, `bash`/`console` shell blocks):
+To check notes against the style rules in `notes/AGENTS.md` (no em dashes, `_` for italics, centered tables, supported callout types, `console`/`bash` shell blocks):
 
 ```
 cargo run -- lint

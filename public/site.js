@@ -34,7 +34,14 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.setAttribute('aria-label', 'Copy code')
     btn.innerHTML = COPY_ICON
     btn.addEventListener('click', function () {
-      navigator.clipboard.writeText(pre.textContent).then(function () {
+      // A console block copies only its commands, without the "$ " prompts
+      var prompts = pre.querySelectorAll('.console-prompt')
+      var text = prompts.length
+        ? Array.prototype.map.call(prompts, function (p) {
+            return p.parentNode.textContent.slice(p.textContent.length).replace(/\n$/, '')
+          }).join('\n')
+        : pre.textContent
+      navigator.clipboard.writeText(text).then(function () {
         btn.innerHTML = CHECK_ICON
         setTimeout(function () { btn.innerHTML = COPY_ICON }, 2000)
       })

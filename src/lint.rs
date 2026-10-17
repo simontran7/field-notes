@@ -72,7 +72,7 @@ fn check(source: &str) -> Vec<(usize, String)> {
         if let Some(caps) = FENCE_RE.captures(line) {
             let lang = &caps[1];
             if !in_code && SHELL_LANGS.contains(&lang) {
-                problems.push((i + 1, format!("```{lang} block (use bash or console)")));
+                problems.push((i + 1, format!("```{lang} block (use console for commands, bash for scripts)")));
             }
             in_code = !in_code;
             continue;

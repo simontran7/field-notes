@@ -137,10 +137,10 @@ matklad's `sort` does the manual version: "64MiB round = 42ms".
 
 ### Step 6: Run it right
 
-```bash
-cargo bench                          # release mode, always
-cargo bench -- sum                   # filter to one bench
-RUSTFLAGS="-C target-cpu=native" cargo bench   # if you want SIMD (find2 does this)
+```console
+$ cargo bench                          # release mode, always
+$ cargo bench -- sum                   # filter to one bench
+$ RUSTFLAGS="-C target-cpu=native" cargo bench   # if you want SIMD (find2 does this)
 ```
 
 - Close heavy apps. Plug in the laptop.

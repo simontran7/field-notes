@@ -1,6 +1,6 @@
 # Data Packing
 
-**Data packing** shrinks data so that more of it fits in each cache line, which cuts memory use and the number of trips to memory. It builds on [alignment and padding](../computer-organization/data-representation.md#alignment) and [bit masks](../computer-organization/data-representation.md#bit-masks).
+**Data packing** shrinks data so that more of it fits in each cache line, which cuts memory use and the number of trips to memory.
 
 ## Record Packing
 
@@ -35,7 +35,7 @@ struct After {
 
 ## Bit Packing
 
-Record packing works in whole bytes. **Bit packing** goes further by storing several small fields in the bits of a single integer, using shifts to place each field and [masks](../computer-organization/data-representation.md#bit-masks) to read it back.
+### Bit Fields
 
 For example, an RGB colour with 8 bits per channel fits in one `u32` instead of three separate fields:
 
@@ -49,7 +49,9 @@ fn red(color: u32) -> u8 {
 }
 ```
 
-**Flags** are the extreme case: each boolean takes a single bit, so one `u32` holds 32 of them instead of 32 one-byte `bool`s.
+### Bit Flags
+
+Each boolean takes a single bit, so one `u32` holds 32 of them instead of 32 one-byte `bool`s.
 
 ```rust
 const VISIBLE: u32 = 1 << 0;
@@ -62,19 +64,3 @@ flags &= !LOCKED;                      // clear
 let is_visible = flags & VISIBLE != 0; // check
 ```
 
-C also has **bit-fields**, which let the compiler do the shifting and masking for you:
-
-```c
-struct Color {
-    unsigned r : 8;
-    unsigned g : 8;
-    unsigned b : 8;
-};
-```
-
-> [!WARNING]
-> The layout of C bit-fields (bit order, padding between them) is implementation-defined, so don't rely on it for file formats or network protocols. You also can't take the address of a bit-field.
-
-### Trade-Off
-
-Packed data is smaller, but every read and write now costs extra shift and mask instructions. Bit packing pays off when there are many objects and memory traffic is the bottleneck (e.g., large arrays scanned in a loop), and is usually not worth it for a handful of objects.

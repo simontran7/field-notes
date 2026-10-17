@@ -1,4 +1,3 @@
-mod diagram;
 mod highlight;
 mod layout;
 mod math;

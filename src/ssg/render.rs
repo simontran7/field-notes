@@ -239,11 +239,6 @@ fn highlight_code_blocks(html: &str) -> String {
         .replace_all(html, |caps: &regex::Captures| {
             let lang = caps.get(1).map_or("text", |m| m.as_str());
             let code = unescape_html(&caps[2]);
-            if lang == "mermaid"
-                && let Some(diagram) = super::diagram::mermaid(&code)
-            {
-                return diagram;
-            }
             super::highlight::code_block(lang, &code)
         })
         .into_owned()

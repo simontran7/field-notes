@@ -145,9 +145,7 @@ static HIGHLIGHTER: LazyLock<Highlighter> = LazyLock::new(|| {
     let mut entries: Vec<(String, &str)> =
         CAPTURES.iter().map(|(c, k)| (c.to_string(), *k)).collect();
     for (capture, key) in C_CAPTURES {
-        for lang in ["c", "cpp"] {
-            entries.push((format!("{capture}.{lang}"), key));
-        }
+        entries.push((format!("{capture}.c"), key));
     }
 
     let mut placeholder_of: HashMap<String, String> = HashMap::new();
@@ -364,7 +362,7 @@ fn rust_rules(tokens: &mut Vec<Token>) {
     }
 }
 
-fn c_rules(tokens: &mut [Token], cpp: bool) {
+fn c_rules(tokens: &mut [Token]) {
     let w = words(tokens);
     let text = |tokens: &[Token], n: usize| tokens[w[n]].trimmed().to_string();
     for n in 0..w.len() {
@@ -392,10 +390,9 @@ fn c_rules(tokens: &mut [Token], cpp: bool) {
             || (all_caps && next.starts_with('(') && key != "OC.FUNCTION_DECLARATION")
         {
             Some("OC.MACRONAME")
-        } else if (ident
+        } else if ident
             && word.ends_with("_t")
-            && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE"))
-            || (cpp && key == "OC.STRUCT_LIKE" && is_type_parameter_name(&word))
+            && matches!(key, "OC.BUILTIN_TYPE_KEYWORD" | "OC.STRUCT_LIKE")
         {
             Some("OC.TYPEDEF")
         } else if ident && (prev.ends_with('.') || prev.ends_with("-&gt;")) {
@@ -554,7 +551,6 @@ fn language_for(lang: &str) -> Language {
         "py" => Language::Python,
         "rs" => Language::Rust,
         "h" => Language::C,
-        "c++" | "cc" | "hpp" => Language::CPlusPlus,
         other => other.parse().unwrap_or(Language::PlainText),
     }
 }
@@ -587,7 +583,11 @@ fn syntax_placeholders(text: &str) -> String {
 /// (such as "one or more") are notation. Everything else is literal.
 fn syntax_line(line: &str) -> Token {
     let escaped = html_escape(line);
-    let text = match DEFINITION_RE.captures(&escaped) {
+    // `<scope>: <summary>` is a template line, not a definition of `scope`
+    let definition = DEFINITION_RE
+        .captures(&escaped)
+        .filter(|caps| !PLACEHOLDER_RE.is_match(&caps[2]));
+    let text = match definition {
         Some(caps) => format!(
             r#"<em class="syntax-placeholder">{}</em><span class="syntax-meta">:{}</span>"#,
             &caps[1], &caps[2]
@@ -611,8 +611,8 @@ fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
             .map(|line| match line.strip_prefix("$ ") {
                 Some(command) => {
                     let mut tokens = vec![Token {
-                        key: "DEFAULT_LINE_COMMENT".into(),
-                        text: "$ ".into(),
+                        key: TEXT.into(),
+                        text: r#"<span class="console-prompt">$ </span>"#.into(),
                     }];
                     tokens.extend(
                         lines_for("bash", command)
@@ -636,8 +636,7 @@ fn lines_for(lang: &str, code: &str) -> Vec<Vec<Token>> {
         split_delimiters(tokens);
         match language {
             Language::Rust => rust_rules(tokens),
-            Language::C => c_rules(tokens, false),
-            Language::CPlusPlus => c_rules(tokens, true),
+            Language::C => c_rules(tokens),
             Language::Python => python_rules(tokens),
             _ => {}
         }
@@ -717,6 +716,15 @@ mod tests {
             syntax_line("<values>: comma-separated").text,
             r#"<em class="syntax-placeholder">values</em><span class="syntax-meta">: comma-separated</span>"#
         );
+        // A ? or + after a closing paren is literal, as in a regex quantifier
+        assert_eq!(
+            syntax_line("(?:<pattern>)?").text,
+            r#"(?:<em class="syntax-placeholder">pattern</em>)?"#
+        );
+        assert_eq!(
+            syntax_line("<scope>: <what changed>").text,
+            r#"<em class="syntax-placeholder">scope</em>: <em class="syntax-placeholder">what changed</em>"#
+        );
         assert_eq!(
             syntax_line("{ <case>+ }").text,
             r#"{ <em class="syntax-placeholder">case</em><sup class="syntax-count">+</sup> }"#
@@ -789,6 +797,11 @@ mod tests {
         );
         let html = code_block("console", "$ echo hi\nhi");
         assert_eq!(html.matches("class=\"l-line").count(), 4, "{html}");
+        assert_eq!(html.matches("class=\"console-prompt\"").count(), 2, "{html}");
+        assert_eq!(
+            key_of("console", "$ sed -i x\nhi", "sed"),
+            "BASH.EXTERNAL_COMMAND"
+        );
     }
 
     #[test]

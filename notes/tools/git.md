@@ -4,19 +4,19 @@
 
 - Initialize an existing directory as a Git repository
 
-```bash
-git init
+```console
+$ git init
 ```
 
 - Clone a specified remote repository
 
-```bash
+```syntax
 git clone <remote repository url>
 ```
 
 - Specifies the remote repository for your local repository.
 
-```bash
+```syntax
 git remote add origin <remote repository url>
 ```
 
@@ -24,19 +24,19 @@ git remote add origin <remote repository url>
 
 - Show modified files in working directory, and files staged for your next commit
 
-```bash
-git status
+```console
+$ git status
 ```
 
 - Add a file as it looks now to your next commit
 
-```bash
+```syntax
 git add <file 1> ... <file N>
 ```
 
 - Unstage a file while retaining the changes in working directory
 
-```bash
+```syntax
 git restore --staged <file 1> <...> <file N>
 ```
 
@@ -44,29 +44,32 @@ git restore --staged <file 1> <...> <file N>
 
 - Commit the staged content as a new commit snapshot
 
-```bash
-git commit 
+```console
+$ git commit 
 ```
 
 > [!TIP]
 > Scoped commit message style:
-> ```text
+> ```syntax
 > <scope>: <what changed>
 > 
-> <why the change was made or extra context>
+> <why the change was made or extra context>?
 > 
-> <Key: value>
+> <trailers>?
+> 
+> <trailers>:
+>     <key>: <value>
 > ```
 
 - Modify the previous commit's message
 
-```bash
+```syntax
 git commit --amend -m "<new commit message>"
 ```
 
 - Squashing commits
 
-```bash
+```syntax
 git rebase -i <remote>/<branch>
 ```
 
@@ -98,49 +101,49 @@ Then, another text editor window will open which will let you combine the commit
 
 - Display local branches
 
-```bash
-git branch
+```console
+$ git branch
 ```
 
 - Display remote branches
 
-```bash
-git branch -r 
+```console
+$ git branch -r 
 ```
 
 - Create a branch 
 
-```bash
+```syntax
 git branch <branch>
 ```
 
 - Rename a branch
 
-```bash
+```syntax
 git branch -m <branch to rename> <new branch name>
 ```
 
 - Switch to a branch
 
-```bash
+```syntax
 git switch <branch>
 ```
 
 - Delete a branch
 
-```bash
+```syntax
 git branch -d <branch>
 ```
 
 - Delete a branch with unmerged changes
 
-```bash
+```syntax
 git branch -D <branch>
 ```
 
 - Delete a remote branch
 
-```bash
+```syntax
 git push origin --delete <remote branch>
 ```
 
@@ -148,49 +151,49 @@ git push origin --delete <remote branch>
 
 - Show the commit history for the current branch
 
-```bash
-git log
+```console
+$ git log
 ```
 
 - Show a condensed commit history as a graph, including all branches
 
-```bash
-git log --oneline --graph --all
+```console
+$ git log --oneline --graph --all
 ```
 
 - Show unstaged changes in the working directory
 
-```bash
-git diff
+```console
+$ git diff
 ```
 
 - Show staged changes (what will go into the next commit)
 
-```bash
-git diff --staged
+```console
+$ git diff --staged
 ```
 
 - Show the difference between two branches or commits
 
-```bash
+```syntax
 git diff <branch or commit A> <branch or commit B>
 ```
 
 - Show who last modified each line of a file, and in which commit
 
-```bash
+```syntax
 git blame <file>
 ```
 
 - Show the details and changes of a specific commit
 
-```bash
+```syntax
 git show <commit>
 ```
 
 - Move the `HEAD` pointer to a commit
 
-```bash
+```syntax
 git switch --detach <commit> or HEAD<relative reference>
 ```
 
@@ -201,13 +204,13 @@ git switch --detach <commit> or HEAD<relative reference>
 
 - Merge a branch into the current branch
 
-```bash
+```syntax
 git merge <from branch>
 ```
 
 - Replay the current branch's commits on top of a target branch
 
-```bash
+```syntax
 git rebase <from branch>
 ```
 
@@ -216,9 +219,9 @@ git rebase <from branch>
 
 - Abort a merge or rebase that has conflicts and return to the previous state
 
-```bash
-git merge --abort
-git rebase --abort
+```console
+$ git merge --abort
+$ git rebase --abort
 ```
 
 > [!TIP]
@@ -230,51 +233,51 @@ git rebase --abort
 
 - Save all staged and unstaged changes
 
-```bash
-git stash
+```console
+$ git stash
 ```
 
 - List stack-order of stashed file changes
 
-```bash
-git stash list
+```console
+$ git stash list
 ```
 
 - Show a summary of the files changed in the most recent stash 
 
-```bash
+```syntax
 git stash show stash@{<index>}
 ```
 
 - Write the most recent stash back to working copy and removes it from the top of the stash stack
 
-```bash
-git stash pop
+```console
+$ git stash pop
 ```
 
 - Write the most recent stash back to working copy and does _not_ remove it from the top of the stash stack
 
-```bash
-git stash apply
+```console
+$ git stash apply
 ```
 
 - Discard the changes from top of stash stack
 
-```bash
-git stash drop
+```console
+$ git stash drop
 ```
 
 ## Undoing Things
 
 - Move the current branch back to a commit, keeping changes staged (`--soft`), unstaged (`--mixed`, the default), or discarding them entirely (`--hard`)
 
-```bash
+```syntax
 git reset [--soft | --mixed | --hard] <commit>
 ```
 
 - Create a new commit that reverses the changes of a previous commit
 
-```bash
+```syntax
 git revert <commit>
 ```
 
@@ -282,26 +285,26 @@ git revert <commit>
 
 - Download commits and branches from the remote without changing your working directory
 
-```bash
+```syntax
 git fetch <remote>
 ```
 
 - Fetch from the remote and rebase the current branch's local commits on top of the remote branch, instead of merging
 
-```bash
-git pull --rebase
+```console
+$ git pull --rebase
 ```
 
 ## Pushing
 
 - Push a branch to the remote 
 
-```bash
+```syntax
 git push <remote> <branch>
 ```
 
 - Push a branch that you've never pushed before to the remote
 
-```bash
+```syntax
 git push -u origin <branch>
 ```

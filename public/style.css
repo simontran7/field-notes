@@ -425,9 +425,8 @@ body {
   opacity: 1;
 }
 
-/* bash blocks: a dim "$ " before each command line (not selectable, not copied) */
-.code-block[data-lang="bash"] .l-line:not(.l-empty)::before {
-  content: "$ ";
+/* console blocks: the "$ " before each command is dim and not selectable */
+.console-prompt {
   color: var(--code-prompt);
   -webkit-user-select: none;
   user-select: none;
@@ -583,31 +582,6 @@ body {
   display: block;
   max-width: 100%;
   overflow-x: auto;
-}
-
-/* ─── Diagrams: Mermaid, drawn at build time in both themes ─ */
-.diagram {
-  margin: 1.25em 0;
-  overflow-x: auto;
-}
-
-.diagram > div {
-  display: flex;
-  justify-content: center;
-}
-
-.diagram svg {
-  max-width: 100%;
-  height: auto;
-}
-
-.diagram .diagram-dark,
-[data-theme="dark"] .diagram .diagram-light {
-  display: none;
-}
-
-[data-theme="dark"] .diagram .diagram-dark {
-  display: flex;
 }
 
 @media (max-width: 600px) {

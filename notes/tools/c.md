@@ -77,7 +77,7 @@ long d;
 ```
 
 > [!TIP]
-> Since the size of `int`s, and the signness of `char`s depends on the target platform (architecture + OS + compiler/ABI), make sure to use the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator) to check. Or, just use [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint) for fixed-width types.
+> The size of `int` and whether plain `char` is signed both depend on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator), and `char`'s signedness with `CHAR_MIN` from [`<limits.h>`](https://beej.us/guide/bgclr/html/#limits), which is `0` when `char` is unsigned. Or sidestep both by using [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint) for fixed-width integers, and `signed char` or `unsigned char` when the sign of a `char` matters.
 
 > [!WARNING]
 > C treats a nonzero value as `true`, and a zero value as `false`.
@@ -305,7 +305,7 @@ int y = ++j; // y is 6, j is 6
 > int h = 10 - 4 - 3;  // 3, (10 - 4) - 3
 > ```
 
-> [!NOTE] Theory on Division and Modulo
+> [!NOTE]
 > Division and modulo always come as a pair that satisfies the identity:
 >
 > $$x = q \cdot n + r$$
@@ -320,7 +320,7 @@ int y = ++j; // y is 6, j is 6
 > We can define division in five ways. The first four pick a rounding rule for $q$, and the range of $r$ follows from the identity. The fifth, **Euclidean**, starts from the range of $r$ instead, and $q$ is whatever the identity then forces.
 >
 > | Rule | $q$ | $r$ |
-> |---|---|---|
+> | :---: | :---: | :---: |
 > | Ceil | round up | $r \in \begin{cases} (-n, \, 0] & n > 0 \\ [0, \, \lvert n \rvert) & n < 0 \end{cases}$ |
 > | Floor | round down | $r \in \begin{cases} [0, \, n) & n > 0 \\ (n, \, 0] & n < 0 \end{cases}$ |
 > | Round | round to nearest | $r \in [-\lvert n \rvert/2, \, \lvert n \rvert/2]$ |
@@ -677,8 +677,6 @@ The definition of a two-dimensional array takes the form:
     {<value>+,}
 ```
 
-The brace lists are covered in [Initializing Arrays](#initializing-arrays) and [2D Arrays](#2d-arrays).
-
 ### Initializing Arrays
 
 You can fill an array in its declaration with a **brace list**, or leave out the initializer and write the elements later.
@@ -740,7 +738,7 @@ Array-to-Pointer decay doesn't happen in three places:
 
 C has no array methods. Instead, the standard library has functions that take a pointer to the first element and a length, so the usual practice is:
 
-- Compute the element count with `sizeof a / sizeof a[0]` where `a` is still an array, and pass it along as a `size_t` with the pointer.
+- Compute the element count with `sizeof a / sizeof a[0]` where `a` is still an array, and pass it along as a `size_t` with the pointer, or bundle the two into a [fat pointer](#fat-pointers).
 - Pass sizes in **bytes** to the `mem*` functions in `<string.h>`, and use `sizeof` to get them, e.g. `n * sizeof a[0]`, so they stay right if the element type changes.
 - Prefer these functions to hand-written loops when they fit, since they are tested and usually optimized for the platform.
 
@@ -889,12 +887,13 @@ int *p = &x; // p holds the address of x
 *p = 2;      // x is now 2
 ```
 
-> [!TIP]
-> [Zig type system illustrated using ascii diagrams](https://gist.github.com/lobre/4fbf32961513784dde2a9ef4e6a4a1d9) draws pointers, arrays and slices as memory diagrams. It uses Zig syntax, but its pointers and arrays are laid out in memory the same way as in C. C has no slices, but a slice is just a pointer and a length, which is what C functions take as two parameters.
+https://gist.github.com/lobre/4fbf32961513784dde2a9ef4e6a4a1d9
 
 ### Pointer Arithmetic
 
-Adding an integer to a pointer moves it by whole elements, so `p + i` points `i * sizeof(T)` bytes past `p`. Subtracting two pointers into the same array gives the number of elements between them, as a `ptrdiff_t`.
+Adding an integer to a pointer moves it by whole elements, so `p + i` points `i * sizeof(T)` bytes past `p`. 
+
+Subtracting two pointers into the same array gives the number of elements between them, as a `ptrdiff_t`.
 
 ```c
 int a[] = {10, 20, 30};
@@ -913,16 +912,14 @@ A pointer may point one past the last element of an array, which is handy as an 
 
 ### Indexing
 
-The index operator `[]` is a pointer operator, and C has no separate indexing operator for arrays. The standard defines `x[i]` as `*(x + i)`, so indexing is pointer arithmetic followed by a dereference.
-
-Indexing a pointer needs no conversion, because `[]` is defined for pointers in the first place.
+The index operator `[]` is a pointer operator. The standard defines `x[i]` as `*(x + i)`.
 
 ```c
 int *p = ...;
 p[2]; // *(p + 2): move 2 ints forward, read the int there
 ```
 
-Indexing or doing arithmetic on an array only works because the array [decays](#array-to-pointer-decay) first. The array itself isn't a pointer, so the compiler converts it to a pointer to its first element and then applies the pointer operator.
+Indexing or doing pointer arithmetic on an array only works because the array [decays](#array-to-pointer-decay) first. The array itself isn't a pointer, so the compiler converts it to a pointer to its first element and then applies the pointer operator.
 
 ```c
 int a[3] = {10, 20, 30};
@@ -955,8 +952,6 @@ An array and a pointer are different objects, even though decay lets you use an 
 | `sizeof` | `n * sizeof(T)` | `sizeof(T *)` |
 | Assignable | no | yes |
 | `&` gives | `T (*)[n]`, a pointer to the whole array | `T **`, the address of the pointer variable |
-
-Two things make them easy to mix up. Decay turns an array into a pointer in almost every expression, so `a[i]`, `a + 1` and passing `a` to a function all behave as if `a` were a pointer. And a function parameter declared as an array really is a pointer.
 
 ### Pointers To Arrays
 
@@ -1006,12 +1001,11 @@ if (p == nullptr) {
 }
 ```
 
-> [!TIP]
-> In C23, prefer `nullptr` over `NULL`, since it is always a pointer.
-
 ### Pointers To `const`
 
-A `const T *p` can read the object but not write to it through `p`, which lets the compiler reject accidental writes. It is common for parameters that a function only reads, and library functions like [`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) declare them this way.
+A `const T *p` can read the object but not write to it through `p`, which lets the compiler reject accidental writes. 
+
+It is common for parameters that a function only reads, and library functions like [`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) declare them this way.
 
 ```c
 size_t count_spaces(const char *s) {
@@ -1042,7 +1036,9 @@ int *p = v;   // and back again
 
 ## Dynamic Memory Allocation
 
-[`malloc(n)`](https://beej.us/guide/bgclr/html/#man-malloc) gives you `n` bytes on the **heap**, and returns a pointer to the first one (or a null pointer if it fails). The bytes last until you pass that pointer to [`free()`](https://beej.us/guide/bgclr/html/#man-free), so heap memory can outlive the function that allocated it, and its size can be decided at run time.
+[`malloc(n)`](https://beej.us/guide/bgclr/html/#man-malloc) gives you `n` bytes on the **heap**, and returns a pointer to the first one (or a null pointer if it fails). 
+
+The bytes last until you pass that pointer to [`free()`](https://beej.us/guide/bgclr/html/#man-free), so heap memory can outlive the function that allocated it, and its size can be decided at run time.
 
 The bytes are an [object](#variables) with no name, so you reach it only through the pointer. It has no type of its own either, and holds whatever you store in it: one value, a struct, or several values used as an array.
 
@@ -1214,7 +1210,7 @@ int main(void) {
   
 > [!TIP]
 > Since `strlen` is $O(l)$, call it once and keep the result instead of calling
-> it in a for loop condition.
+> it in a for loop condition, or keep it with the string in a [string view](#fat-pointers).
 
 > [!WARNING]
 > `strlen` keeps reading until it finds a `\0`, so calling it on a byte buffer
@@ -1243,6 +1239,53 @@ struct <tag> { <member>+ };
 <member>:
     <type> <name>;
 ```
+
+### Fat Pointers
+
+A C pointer is a **thin pointer**, since it only holds an address. Nothing in it records how many elements follow, which is why an array loses its length when it [decays](#array-to-pointer-decay), and why [`strlen`](#string-length) has to walk the string to find the `\0`.
+
+A **fat pointer** stores extra data next to the address. The usual extra is a length, and a pointer plus a length is called a **slice**. C has no fat pointer type, so you define a record holding both and pass it by value, which costs two words, usually 16 bytes.
+
+```c
+#include <stddef.h> // size_t
+#include <stdio.h>  // printf()
+
+struct int_slice {
+    int *ptr;
+    size_t len;
+};
+
+int sum(struct int_slice s) {
+    int total = 0;
+    for (size_t i = 0; i < s.len; i++) {
+        total += s.ptr[i];
+    }
+    return total;
+}
+
+int main(void) {
+    int a[] = {1, 2, 3, 4};
+    struct int_slice s = {a, sizeof a / sizeof a[0]};
+    struct int_slice tail = {s.ptr + 1, s.len - 1}; // {2, 3, 4}, shares a
+
+    printf("%d\n", sum(s));    // 10
+    printf("%d\n", sum(tail)); // 9
+}
+```
+
+Taking a sub-slice moves the pointer and shrinks the length, so it shares the original memory instead of copying it.
+
+A slice of `const char` is often called a **string view**. Its length is $O(1)$ to read, and it can point into the middle of a string where there is no `\0`, so print it with `printf("%.*s", (int)v.len, v.ptr)` instead of `%s`.
+
+> [!WARNING]
+> A slice doesn't own the memory it points to, so it dangles once that memory
+> is freed or goes out of scope. C also doesn't check `s.ptr[i]` against
+> `s.len`, the length only lets you check it yourself.
+
+> [!TIP]
+> Rust's `&[T]` and `&str`, Go's slices and Zig's `[]T` are fat pointers built into
+> the language. The extra data isn't always a length, e.g. Rust's `&dyn Trait`
+> stores a pointer to a vtable instead.
 
 ## Enumerated Types
 
@@ -1385,14 +1428,14 @@ An include takes either form:
 
 [https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
 
-> [!NOTE] ISO C, POSIX, and platform-specific APIs
+> [!NOTE]
 > - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
 > - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open`, `read`, `write`), processes (`fork`, `exec`, `wait`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
 > - **Platform-specific functions**: everything outside both standards, tied to one OS or one library, e.g. Linux's `epoll` and `inotify`, or macOS/BSD's `kqueue`. Use them when you need them, knowing you give up portability.
 >
 > One C library implementation usually covers all three. `glibc`, for example, implements ISO C, POSIX, and Linux/GNU extensions.
 
-> [!NOTE] Library functions vs. syscall wrappers
+> [!NOTE]
 > Every function in a C library is one of two kinds:
 > - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
 > - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
@@ -1719,7 +1762,7 @@ $ ./cleanup missing.txt; echo $?
 1
 ```
 
-> [!WARNING] `goto` pitfalls
+> [!WARNING]
 > - `goto` can't jump forward past a variable-length array, because its memory is allocated only when execution reaches the declaration.
 > - Variable initializations skipped by a `goto` never run, so reading those variables is undefined behavior. In the example above, `goto out` skips the initialization of `buf`, which is safe only because nothing after `out` reads `buf`.
 
