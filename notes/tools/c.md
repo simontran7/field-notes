@@ -35,15 +35,15 @@ Comments are used to write anything that is to be ignored by the compiler.
 
 | Type | Minimum width |
 | :---: | :---: |
-| `bool`  | 8 bits (1 byte), holds only `0` or `1` |
-| `char` | 8 bits (1 byte) |
-| `signed char` | 8 bits (1 byte) |
-| `unsigned char` | 8 bits (1 byte) |
-| `signed short int` | 16 bits (2 bytes) |
-| `unsigned short int` | 16 bits (2 bytes) |
-| `signed int` | 16 bits (2 bytes) |
-| `unsigned int` | 16 bits (2 bytes) |
-| `signed long int` | 32 bits (4 bytes) |
+| `bool`  | 8 bits, holds only `0` or `1` |
+| `char` | 8 bits |
+| `signed char` | 8 bits |
+| `unsigned char` | 8 bits |
+| `signed short int` | 16 bits |
+| `unsigned short int` | 16 bits |
+| `signed int` | 16 bits |
+| `unsigned int` | 16 bits |
+| `signed long int` | 32 bits |
 | `unsigned long int` | 32 bits (4 bytes) |
 | `signed long long int` | 64 bits (8 bytes) |
 | `unsigned long long int` | 64 bits (8 bytes) |
@@ -77,7 +77,10 @@ long d;
 ```
 
 > [!TIP]
-> The size of `int` and whether plain `char` is signed both depend on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator), and `char`'s signedness with `CHAR_MIN` from [`<limits.h>`](https://beej.us/guide/bgclr/html/#limits), which is `0` when `char` is unsigned. Or sidestep both by using [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint) for fixed-width integers, and `signed char` or `unsigned char` when the sign of a `char` matters.
+> The minimum data width of certain integers depend on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator). Alternatively, use fixed-width integers where possible, by including [`<inttypes.h>`](https://beej.us/guide/bgclr/html/#inttypes). It includes [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint), which defines the types, and adds the macros to print them (e.g., `PRId32` for `int32_t`).
+
+> [!TIP]
+> The signness of a plain `char` depend on on the target platform (architecture, OS, and compiler/ABI). As such, check a `char`'s signedness with `CHAR_MIN` from [`<limits.h>`](https://beej.us/guide/bgclr/html/#limits), which is `0` when `char` is unsigned. Alternatively, explicitly write `signed char` or `unsigned char`.
 
 > [!WARNING]
 > C treats a nonzero value as `true`, and a zero value as `false`.
@@ -109,7 +112,7 @@ A variable takes the form:
 A declaration introduces a variable's name and type.
 
 ```c
-int count;
+int32_t count;
 ```
 
 A declaration that also creates the variable's storage is a **definition**. For variables, this is almost always the case.
@@ -119,17 +122,17 @@ A declaration that also creates the variable's storage is a **definition**. For 
 A declaration with an initialization gives the variable its first value in the same statement.
 
 ```c
-int total = 0;
+int32_t total = 0;
 ```
 
 Variables declared inside a function without an initialization hold garbage until you assign them. Global variables and `static` variables are initialized to zero (see [Storage Duration](#storage-duration)).
 
 ```c
-int global;             // 0
+int32_t global;             // 0
 
 int main(void) {
-    int local;          // garbage
-    static int counter; // 0
+    int32_t local;          // garbage
+    static int32_t counter; // 0
 }
 ```
 
@@ -146,7 +149,7 @@ char a = 'x', b;
 Variables can be assigned later, but `const` variable can't later be assigned.
 
 ```c
-signed int foo;
+int32_t foo;
 const double pi = 3.14159;
 
 foo = 5; // works
@@ -158,9 +161,9 @@ pi = 3.0; // error
 `const` makes a variable read-only after its initialization. `constexpr` (C23) goes further and makes it a compile-time constant, so its initializer must be a constant expression and it can be used where C requires one, such as an array size.
 
 ```c
-const int n = get_count(); // fixed at run time
-constexpr int size = 16;   // fixed at compile time
-int buf[size];             // works, size is a constant
+const int32_t n = get_count(); // fixed at run time
+constexpr size_t size = 16; // fixed at compile time
+int32_t buf[size];          // works, size is a constant
 ```
 
 ### Scope
@@ -168,12 +171,12 @@ int buf[size];             // works, size is a constant
 A variable's **scope** is the part of the code where its name is visible. A variable declared inside `{ }` has **block scope** and is visible until the closing brace. A variable declared outside any function has **file scope** (often called a _global_ variable) and is visible from there to the end of the file.
 
 ```c
-int total; // file scope
+int32_t total; // file scope
 
 void f(void) {
-    int x = 1; // block scope
+    int32_t x = 1; // block scope
     if (x) {
-        int y = 2; // visible only inside this if
+        int32_t y = 2; // visible only inside this if
     }
     // y = 3; // error, y is out of scope
 }
@@ -182,12 +185,12 @@ void f(void) {
 An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
 
 ```c
-int x = 1;
+int32_t x = 1;
 {
-    int x = 2; // shadows the outer x
-    printf("%d\n", x); // 2
+    int32_t x = 2; // shadows the outer x
+    printf("%" PRId32 "\n", x); // 2
 }
-printf("%d\n", x); // 1
+printf("%" PRId32 "\n", x); // 1
 ```
 
 ### Storage Duration
@@ -206,9 +209,9 @@ A local variable declared `static` has static [storage duration](#storage-durati
 
 ```c
 void tick(void) {
-    static int count; // starts at 0, initialized only once
+    static int32_t count; // starts at 0, initialized only once
     count += 1;
-    printf("%d\n", count);
+    printf("%" PRId32 "\n", count);
 }
 
 tick(); // 1
@@ -220,8 +223,8 @@ tick(); // 2
 A variable at file scope can be used from other files too, through [`extern`](#external-variables). Declaring it `static` keeps it private to the file it is declared in.
 
 ```c
-int shared;           // other .c files can use it
-static int file_only; // invisible to other .c files
+int32_t shared;           // other .c files can use it
+static int32_t file_only; // invisible to other .c files
 ```
 
 ### External Variables
@@ -230,10 +233,10 @@ An `extern` declaration refers to a variable that is defined in another file, wi
 
 ```c
 // counter.c
-int counter = 0; // definition
+int32_t counter = 0; // definition
 
 // main.c
-extern int counter; // declaration, the storage is in counter.c
+extern int32_t counter; // declaration, the storage is in counter.c
 ```
 
 > [!WARNING]
@@ -263,19 +266,19 @@ An **expression** is anything that produces a value, such as `x + 1`, `a < b` or
 | `--x` | Pre-decrement: subtracts 1 from `x`, and gives the new value |
 
 ```c
-int a = 7 + 2; // 9, addition
-int b = 7 - 2; // 5, subtraction
-int c = 7 * 2; // 14, multiplication
-int d = 7 / 2; // 3, division
-int e = 7 % 2; // 1, remainder
+int32_t a = 7 + 2; // 9, addition
+int32_t b = 7 - 2; // 5, subtraction
+int32_t c = 7 * 2; // 14, multiplication
+int32_t d = 7 / 2; // 3, division
+int32_t e = 7 % 2; // 1, remainder
 ```
 
 ```c
-int i = 5;
-int x = i++; // x is 5, i is 6
+int32_t i = 5;
+int32_t x = i++; // x is 5, i is 6
 
-int j = 5;
-int y = ++j; // y is 6, j is 6
+int32_t j = 5;
+int32_t y = ++j; // y is 6, j is 6
 ```
 
 ```c
@@ -300,9 +303,9 @@ int y = ++j; // y is 6, j is 6
 > | 4 | `+`, `-` | left to right |
 >
 > ```c
-> int f = 7 + 2 * 3;   // 13
-> int g = (7 + 2) * 3; // 27
-> int h = 10 - 4 - 3;  // 3, (10 - 4) - 3
+> int32_t f = 7 + 2 * 3;   // 13
+> int32_t g = (7 + 2) * 3; // 27
+> int32_t h = 10 - 4 - 3;  // 3, (10 - 4) - 3
 > ```
 
 > [!NOTE]
@@ -335,16 +338,16 @@ int y = ++j; // y is 6, j is 6
 > To get floored division and floored modulo, assuming `n > 0`:
 >
 > ```c
-> int div_floor(int x, int n) {
->     int q = x / n;
+> int32_t div_floor(int32_t x, int32_t n) {
+>     int32_t q = x / n;
 >     if (x % n < 0) {
 >         q -= 1;
 >     }
 >     return q;
 > }
 >
-> int mod_floor(int x, int n) {
->     int r = x % n;
+> int32_t mod_floor(int32_t x, int32_t n) {
+>     int32_t r = x % n;
 >     if (r < 0) {
 >         r += n;
 >     }
@@ -372,8 +375,8 @@ Relational operators compare two values, and logical operators combine condition
 | `!` | Logical NOT: true if the operand is false |
 
 ```c
-int in_range = x >= 0 && x < 10;
-int not_zero = !(x == 0);
+bool in_range = x >= 0 && x < 10;
+bool not_zero = !(x == 0);
 ```
 
 `&&` and `||` short-circuit, so the right side only runs when the left side doesn't already decide the result.
@@ -432,7 +435,7 @@ Bitwise operators work on the individual bits of integers. See [Bitwise Operator
 | `>>` | Right shift |
 
 ```c
-unsigned flags = 0b0101;
+uint32_t flags = 0b0101;
 flags & 0b0001; // 1, the lowest bit is set
 flags | 0b0010; // 0b0111, set a bit
 flags << 1;     // 0b1010, each shift left doubles the value
@@ -453,7 +456,7 @@ flags << 1;     // 0b1010, each shift left doubles the value
 `=` stores a value in a variable. Every arithmetic and bitwise operator also has a compound form that applies the operator to the variable itself.
 
 ```c
-int x = 10;
+int32_t x = 10;
 x += 5;  // same as x = x + 5
 x <<= 1; // same as x = x << 1
 ```
@@ -477,7 +480,7 @@ A type cast takes the form:
 A cast converts a value to another type, for example to get a fractional result from integer division.
 
 ```c
-int a = 7, b = 2;
+int32_t a = 7, b = 2;
 double d = (double) a / b; // 3.5, not 3.0
 ```
 
@@ -492,7 +495,7 @@ A ternary operator takes the form:
 It picks one of two values, like a short if-else that gives a result.
 
 ```c
-int max = a > b ? a : b;
+int32_t max = a > b ? a : b;
 ```
 
 ## If Statements
@@ -620,7 +623,7 @@ A function header that receives an array's address takes either form:
 Like a [file-scoped variable](#file-scoped-variables), a function declared `static` can only be called from its own file. This is how helper functions stay private to the file that uses them.
 
 ```c
-static int clamp(int x, int lo, int hi) { // only this file can call clamp
+static int32_t clamp(int32_t x, int32_t lo, int32_t hi) { // only this file can call clamp
     return x < lo ? lo : x > hi ? hi : x;
 }
 ```
@@ -631,12 +634,12 @@ Functions are `extern` by default, so any file can call a function defined in an
 
 ```c
 // add.c
-int add(int a, int b) { // definition
+int32_t add(int32_t a, int32_t b) { // definition
     return a + b;
 }
 
 // add.h
-int add(int a, int b); // declaration, same as extern int add(int a, int b);
+int32_t add(int32_t a, int32_t b); // declaration, same as extern int32_t add(int32_t a, int32_t b);
 
 // main.c
 #include "add.h" // add()
@@ -692,10 +695,10 @@ You can fill an array in its declaration with a **brace list**, or leave out the
 | $n < k$ | too many values, a compiler warning or error ("excess elements in array initializer") |
 
 ```c
-int a[] = {1, 2, 3}; // sizeof a == 3 * sizeof(int)
-int b[5] = {1, 2};   // {1, 2, 0, 0, 0}
-int c[100] = {0};    // all zeros
-int d[4];            // inside a function: garbage until written
+int32_t a[] = {1, 2, 3}; // sizeof a == 3 * sizeof(int32_t)
+int32_t b[5] = {1, 2};   // {1, 2, 0, 0, 0}
+int32_t c[100] = {0};    // all zeros
+int32_t d[4];            // inside a function: garbage until written
 // d = b;            // error, arrays can't be assigned
 ```
 
@@ -708,17 +711,18 @@ In almost every expression, an array `a` is converted to a pointer to its _first
 Passing an array to a function also decays it, so the function only receives a pointer. A parameter declared as an array is adjusted to a pointer, and any size written in its brackets is ignored.
 
 ```c
-#include <stdio.h> // printf()
+#include <stdio.h>    // printf()
+#include <inttypes.h> // int32_t
 
-void print_size(int a[10]) {
-    printf("%zu\n", sizeof a); // sizeof(int *), usually 8
+void print_size(int32_t a[10]) {
+    printf("%zu\n", sizeof a); // sizeof(int32_t *), usually 8
 }
 
 int main(void) {
-    int a[10];
-    int *p = a; // a decays to &a[0], so p[i] == *(&a[0] + i) == a[i]
-    printf("%zu\n", sizeof a); // 10 * sizeof(int), usually 40
-    printf("%zu\n", sizeof p); // sizeof(int *), usually 8
+    int32_t a[10];
+    int32_t *p = a; // a decays to &a[0], so p[i] == *(&a[0] + i) == a[i]
+    printf("%zu\n", sizeof a); // 10 * sizeof(int32_t), 40
+    printf("%zu\n", sizeof p); // sizeof(int32_t *), usually 8
     print_size(a);
 }
 ```
@@ -752,24 +756,25 @@ C has no array methods. Instead, the standard library has functions that take a 
 | Search a sorted array | [`bsearch(&key, a, n, size, cmp)`](https://beej.us/guide/bgclr/html/#man-bsearch) | in `<stdlib.h>`, same comparison as `qsort` |
 
 ```c
-#include <stdlib.h> // qsort()
-#include <string.h> // memcpy(), memmove(), memset()
+#include <stdlib.h>   // qsort()
+#include <string.h>   // memcpy(), memmove(), memset()
+#include <inttypes.h> // int32_t
 
 int cmp_int(const void *x, const void *y) {
-    int a = *(const int *)x;
-    int b = *(const int *)y;
+    int32_t a = *(const int32_t *)x;
+    int32_t b = *(const int32_t *)y;
     return (a > b) - (a < b); // not a - b, which can overflow
 }
 
 int main(void) {
-    int a[] = {3, 1, 2};
+    int32_t a[] = {3, 1, 2};
     size_t n = sizeof a / sizeof a[0];
-    int b[3];
+    int32_t b[3];
 
     memcpy(b, a, sizeof a);                 // b is {3, 1, 2}
     memmove(&a[1], &a[0], 2 * sizeof a[0]); // a is {3, 3, 1}, ranges overlap
     memset(b, 0, sizeof b);                 // b is {0, 0, 0}
-    // memset(b, 1, sizeof b);              // each int is 0x01010101, not 1
+    // memset(b, 1, sizeof b);              // each int32_t is 0x01010101, not 1
     qsort(a, n, sizeof a[0], cmp_int);      // a is {1, 3, 3}
 }
 ```
@@ -783,12 +788,12 @@ int main(void) {
 A **2D array** `T m[r][c]` is an array of `r` rows, where each row is itself an array of `c` elements of type `T`. The rows are stored back to back with no gaps ([row-major order](#row-major-and-column-major-order)), so element `m[i][j]` sits `i * c + j` elements after `m[0][0]`. You initialize it with one brace list per row, and the usual zero-filling applies to anything you leave out.
 
 ```c
-int m[2][3] = {
+int32_t m[2][3] = {
     {1, 2, 3},
     {4, 5, 6},
 };
 // in memory: 1 2 3 4 5 6
-// sizeof m == 2 * 3 * sizeof(int), sizeof m[0] == 3 * sizeof(int)
+// sizeof m == 2 * 3 * sizeof(int32_t), sizeof m[0] == 3 * sizeof(int32_t)
 ```
 
 #### Row-Major And Column-Major Order
@@ -835,28 +840,29 @@ Since `m` is an array of rows, it decays like any other array, to a pointer to i
 When you pass a 2D array to a function, the parameter gets the decayed type, so every size except the first has to be part of it. A parameter written as `int m[][3]` is adjusted to `int (*m)[3]`. If the column count is only known at run time, pass it before the array and use it in the parameter type.
 
 ```c
-#include <stddef.h> // size_t
-#include <stdio.h>  // printf()
+#include <stddef.h>   // size_t
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
 
-void print_matrix(size_t rows, size_t cols, int m[rows][cols]) {
+void print_matrix(size_t rows, size_t cols, int32_t m[rows][cols]) {
     for (size_t i = 0; i < rows; i += 1) {
         for (size_t j = 0; j < cols; j += 1) {
-            printf("%d ", m[i][j]);
+            printf("%" PRId32 " ", m[i][j]);
         }
         printf("\n");
     }
 }
 
 int main(void) {
-    int m[2][3] = {{1, 2, 3}, {4, 5, 6}};
-    print_matrix(2, 3, m); // m decays to int (*)[3]
+    int32_t m[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    print_matrix(2, 3, m); // m decays to int32_t (*)[3]
 }
 ```
 
 To put a 2D array on the heap in one block, allocate it through a pointer to a row. Indexing works the same as for a declared 2D array, and a single `free` releases all of it.
 
 ```c
-int (*m)[cols] = malloc(rows * sizeof *m); // sizeof *m is one row
+int32_t (*m)[cols] = malloc(rows * sizeof *m); // sizeof *m is one row
 m[i][j] = 0;
 free(m);
 ```
@@ -882,8 +888,8 @@ A pointer declaration takes the form:
 ```
 
 ```c
-int x = 1;
-int *p = &x; // p holds the address of x
+int32_t x = 1;
+int32_t *p = &x; // p holds the address of x
 *p = 2;      // x is now 2
 ```
 
@@ -896,11 +902,11 @@ Adding an integer to a pointer moves it by whole elements, so `p + i` points `i 
 Subtracting two pointers into the same array gives the number of elements between them, as a `ptrdiff_t`.
 
 ```c
-int a[] = {10, 20, 30};
-int *p = a;             // decays to &a[0]
-int *q = p + 2;         // &a[2]
-printf("%d\n", *q);     // 30
-printf("%td\n", q - p); // 2
+int32_t a[] = {10, 20, 30};
+int32_t *p = a;         // decays to &a[0]
+int32_t *q = p + 2;     // &a[2]
+printf("%" PRId32 "\n", *q); // 30
+printf("%td\n", q - p);   // 2
 ```
 
 A pointer may point one past the last element of an array, which is handy as an end marker in loops.
@@ -915,14 +921,14 @@ A pointer may point one past the last element of an array, which is handy as an 
 The index operator `[]` is a pointer operator. The standard defines `x[i]` as `*(x + i)`.
 
 ```c
-int *p = ...;
-p[2]; // *(p + 2): move 2 ints forward, read the int there
+int32_t *p = ...;
+p[2]; // *(p + 2): move 2 elements forward, read the one there
 ```
 
 Indexing or doing pointer arithmetic on an array only works because the array [decays](#array-to-pointer-decay) first. The array itself isn't a pointer, so the compiler converts it to a pointer to its first element and then applies the pointer operator.
 
 ```c
-int a[3] = {10, 20, 30};
+int32_t a[3] = {10, 20, 30};
 a + 1; // a decays to &a[0], then &a[0] + 1 == &a[1]
 a[2];  // a decays to &a[0], then *(&a[0] + 2) == 30
 ```
@@ -930,7 +936,7 @@ a[2];  // a decays to &a[0], then *(&a[0] + 2) == 30
 Decay produces a temporary address value and leaves `a` an array, so operations that would change `a` itself still fail.
 
 ```c
-int *p = a;
+int32_t *p = a;
 p += 1;    // OK, p is a variable holding an address
 // a += 1; // error, a is the array, with no stored address to change
 // a = p;  // error, same reason
@@ -958,11 +964,11 @@ An array and a pointer are different objects, even though decay lets you use an 
 A **pointer to an array** `T (*pa)[n]` points to a whole array of `n` elements as one object. You get one from `&a`, or from a 2D array decaying to a pointer to its first row. It holds the same address as a pointer to the array's first element, but its type is different, and the type decides what arithmetic and dereferencing do.
 
 ```c
-int a[10];
-int *p = a;         // pointer to the first int
-int (*pa)[10] = &a; // pointer to the whole array, same address as p
+int32_t a[10];
+int32_t *p = a;         // pointer to the first element
+int32_t (*pa)[10] = &a; // pointer to the whole array, same address as p
 
-// p + 1 moves sizeof(int) bytes, to a[1]
+// p + 1 moves sizeof(int32_t) bytes, to a[1]
 // pa + 1 moves sizeof a bytes, to just past the end of a
 // *pa is the array a itself, so (*pa)[3] is a[3]
 ```
@@ -977,10 +983,10 @@ Operators on pointers work on the addresses they hold.
 - `p = q` copies the address, so `p` then points to the same object as `q`, and writing through one changes what the other sees.
 
 ```c
-int a[] = {1, 2, 3};
-int b[] = {1, 2, 3};
-int *p = a;
-int *q = b;
+int32_t a[] = {1, 2, 3};
+int32_t b[] = {1, 2, 3};
+int32_t *p = a;
+int32_t *q = b;
 // p == q is false: different arrays, even with the same contents
 q = p;    // q now points to a too
 q[0] = 9; // a[0] is now 9, so p[0] is 9 as well
@@ -995,7 +1001,7 @@ To compare or copy the objects themselves, use functions such as [`memcmp()`](ht
 C23 adds the keyword `nullptr`, which is a null pointer constant of its own type, `nullptr_t`, and converts to any pointer type. `NULL` is a macro that an implementation may define as `0` or `((void *)0)`, so it can end up as an `int`. That matters when the type isn't fixed by context, such as an argument to a variadic function like `printf` or the controlling expression of `_Generic`.
 
 ```c
-int *p = nullptr;
+int32_t *p = nullptr;
 if (p == nullptr) {
     // ...
 }
@@ -1027,11 +1033,11 @@ A **void pointer** `void *p` holds an address without saying what type of object
 Library functions that work on raw memory, like [`memcpy()`](https://beej.us/guide/bgclr/html/#man-memcpy) and `malloc`, take or return `void *` so they work with any type.
 
 ```c
-int x = 1;
-void *v = &x; // int * converts to void * implicitly
-int *p = v;   // and back again
-// *v = 2;    // error, the compiler doesn't know the type at v
-*p = 2;       // OK, x is now 2
+int32_t x = 1;
+void *v = &x;   // int32_t * converts to void * implicitly
+int32_t *p = v; // and back again
+// *v = 2;      // error, the compiler doesn't know the type at v
+*p = 2;         // OK, x is now 2
 ```
 
 ## Dynamic Memory Allocation
@@ -1052,15 +1058,16 @@ The bytes are an [object](#variables) with no name, so you reach it only through
 Since `malloc` takes no initializer, the bytes start out as garbage, and you fill them at run time. [`calloc(count, size)`](https://beej.us/guide/bgclr/html/#man-malloc) allocates `count * size` bytes that start zero-filled, and it checks the multiplication for overflow.
 
 ```c
-#include <stdlib.h> // malloc(), free()
+#include <stdlib.h>   // malloc(), free()
+#include <inttypes.h> // int32_t
 
-int *make_range(size_t n) {
-    int *a = malloc(n * sizeof *a); // n ints, garbage until written
+int32_t *make_range(size_t n) {
+    int32_t *a = malloc(n * sizeof *a); // n elements, garbage until written
     if (a == nullptr) {
         return nullptr;
     }
     for (size_t i = 0; i < n; i += 1) {
-        a[i] = (int)i;
+        a[i] = (int32_t)i;
     }
     return a; // OK, the heap memory lives until free
 }
@@ -1143,14 +1150,14 @@ Arrays at file scope or declared `static` live for the whole program (in `.data`
 ```c
 static char name[32]; // zero-filled, so it starts as ""
 
-void example(int count) {
+void example(int32_t count) {
     char a[] = "hello";  // sizeof a == 6, includes '\0'
     char b[8] = "hello"; // b[5] holds '\0', but so do b[6] and b[7]
     char c[5] = "hello"; // no room for '\0', so not a string!
     // char f[3] = "hello"; // too many characters, warning or error
     char d[] = {'h', 'i', '\0'};
     char e[32]; // garbage until written
-    snprintf(e, sizeof e, "%d items", count); // writes the '\0' too
+    snprintf(e, sizeof e, "%" PRId32 " items", count); // writes the '\0' too
 
     a[0] = 'j';         // OK, a is your own array
     // a = "world";     // error, arrays can't be assigned
@@ -1247,16 +1254,17 @@ A C pointer is a **thin pointer**, since it only holds an address. Nothing in it
 A **fat pointer** stores extra data next to the address. The usual extra is a length, and a pointer plus a length is called a **slice**. C has no fat pointer type, so you define a record holding both and pass it by value, which costs two words, usually 16 bytes.
 
 ```c
-#include <stddef.h> // size_t
-#include <stdio.h>  // printf()
+#include <stddef.h>   // size_t
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
 
 struct int_slice {
-    int *ptr;
+    int32_t *ptr;
     size_t len;
 };
 
-int sum(struct int_slice s) {
-    int total = 0;
+int32_t sum(struct int_slice s) {
+    int32_t total = 0;
     for (size_t i = 0; i < s.len; i++) {
         total += s.ptr[i];
     }
@@ -1264,12 +1272,12 @@ int sum(struct int_slice s) {
 }
 
 int main(void) {
-    int a[] = {1, 2, 3, 4};
+    int32_t a[] = {1, 2, 3, 4};
     struct int_slice s = {a, sizeof a / sizeof a[0]};
     struct int_slice tail = {s.ptr + 1, s.len - 1}; // {2, 3, 4}, shares a
 
-    printf("%d\n", sum(s));    // 10
-    printf("%d\n", sum(tail)); // 9
+    printf("%" PRId32 "\n", sum(s));    // 10
+    printf("%" PRId32 "\n", sum(tail)); // 9
 }
 ```
 
@@ -1306,7 +1314,8 @@ A union stores one of several types in the same memory, but it has no way of rec
 This example builds a `value` that holds an `int`, a `double`, or a string. The tag lists the possible kinds.
 
 ```c
-#include <stdio.h> // printf()
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
 
 enum value_kind {
     VALUE_INT,
@@ -1321,7 +1330,7 @@ The struct keeps the tag next to an anonymous union. Since C11, the members of a
 struct value {
     enum value_kind kind;
     union {
-        int i;
+        int32_t i;
         double d;
         const char *s;
     };
@@ -1331,7 +1340,7 @@ struct value {
 Each constructor sets the tag and the matching member in one compound literal, so a value with a mismatched tag can't be created through them.
 
 ```c
-static struct value value_int(int i) {
+static struct value value_int(int32_t i) {
     return (struct value){ .kind = VALUE_INT, .i = i };
 }
 
@@ -1350,7 +1359,7 @@ Reading a value means switching on the tag and touching only the member that cas
 static void value_print(struct value v) {
     switch (v.kind) {
     case VALUE_INT:
-        printf("int     %d\n", v.i);
+        printf("int     %" PRId32 "\n", v.i);
         break;
     case VALUE_DOUBLE:
         printf("double  %g\n", v.d);
@@ -1455,14 +1464,15 @@ The header is the public interface. `struct stack;` tells callers that the type 
 #ifndef STACK_H
 #define STACK_H
 
-#include <stddef.h> // size_t
+#include <stddef.h>   // size_t
+#include <inttypes.h> // int32_t
 
 struct stack;
 
 [[nodiscard]] struct stack *stack_new(size_t capacity);
 void stack_free(struct stack *s);
-[[nodiscard]] bool stack_push(struct stack *s, int value);
-[[nodiscard]] bool stack_pop(struct stack *s, int *out);
+[[nodiscard]] bool stack_push(struct stack *s, int32_t value);
+[[nodiscard]] bool stack_pop(struct stack *s, int32_t *out);
 [[nodiscard]] size_t stack_count(const struct stack *s);
 
 #endif
@@ -1480,12 +1490,12 @@ The full definition lives _only_ in `stack.c`, so this is the one file that can 
 struct stack {
     size_t count;
     size_t capacity;
-    int *data;
+    int32_t *data;
 };
 
 struct stack *stack_new(size_t capacity) {
     size_t items_size;
-    if (ckd_mul(&items_size, capacity, sizeof(int))) {
+    if (ckd_mul(&items_size, capacity, sizeof(int32_t))) {
         goto out;
     }
 
@@ -1517,7 +1527,7 @@ void stack_free(struct stack *s) {
     free(s);
 }
 
-bool stack_push(struct stack *s, int value) {
+bool stack_push(struct stack *s, int32_t value) {
     if (s->count == s->capacity) {
         return false;
     }
@@ -1528,7 +1538,7 @@ bool stack_push(struct stack *s, int value) {
     return true;
 }
 
-bool stack_pop(struct stack *s, int *out) {
+bool stack_pop(struct stack *s, int32_t *out) {
     if (s->count == 0) {
         return false;
     }
@@ -1548,7 +1558,8 @@ size_t stack_count(const struct stack *s) {
 
 ```c
 // main.c
-#include <stdio.h> // printf()
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
 
 #include "stack.h" // stack_new(), stack_push(), stack_pop(), stack_count(), stack_free()
 
@@ -1559,16 +1570,16 @@ int main(void) {
         return 1;
     }
 
-    for (int v = 10; v <= 30; v += 10) {
+    for (int32_t v = 10; v <= 30; v += 10) {
         if (!stack_push(s, v)) {
-            printf("push %d: stack is full\n", v);
+            printf("push %" PRId32 ": stack is full\n", v);
         }
     }
     printf("size: %zu\n", stack_count(s));
 
-    int value;
+    int32_t value;
     while (stack_pop(s, &value)) {
-        printf("popped %d\n", value);
+        printf("popped %" PRId32 "\n", value);
     }
 
     stack_free(s);
@@ -1664,9 +1675,9 @@ You put the parent struct as the first member. The C standard guarantees that a 
 
 c
 struct animal { const struct animal_ops *ops; const char *name; };
-struct dog    { struct animal base; int good_boy; };
+struct dog    { struct animal base; bool good_boy; };
 
-struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = 1 };
+struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = true };
 struct animal *a = (struct animal *)&d;     // upcast
 struct dog *back = (struct dog *)a;         // downcast, unchecked
 
@@ -1704,8 +1715,8 @@ constexpr size_t buf_size = 4096;
 `result` starts as the failure value and becomes `0` only when every step succeeds, so each early exit returns an error without any extra code.
 
 ```c
-static int process(const char *path) {
-    int result = -1;
+static int32_t process(const char *path) {
+    int32_t result = -1;
 ```
 
 When a step fails, jump to the label that releases everything acquired _before_ it. A failed `fopen` has nothing to release yet, so it jumps straight to `out`.
@@ -1779,8 +1790,9 @@ The examples below build up to both, one program at a time.
 `offsetof(type, member)`, from `<stddef.h>`, gives the byte distance from the start of a struct to one of its members.
 
 ```c
-#include <stdio.h>  // printf()
-#include <stddef.h> // offsetof()
+#include <stdio.h>    // printf()
+#include <stddef.h>   // offsetof()
+#include <inttypes.h> // int32_t
 ```
 
 `tag` is a single `char`, and `x` needs 4-byte alignment, so the compiler inserts 3 bytes of padding after `tag`. Because of padding, a member's offset can be larger than the sum of the sizes of the members before it (see [Padding](../computer-systems/computer-organization/data-representation.md#padding)).
@@ -1788,8 +1800,8 @@ The examples below build up to both, one program at a time.
 ```c
 struct point {
     char tag;
-    int x;
-    int y;
+    int32_t x;
+    int32_t y;
 };
 ```
 
@@ -1822,8 +1834,9 @@ y:   8
 Given a pointer to a member, subtracting that member's offset recovers the address of the whole struct.
 
 ```c
-#include <stdio.h>  // printf()
-#include <stddef.h> // offsetof()
+#include <stdio.h>    // printf()
+#include <stddef.h>   // offsetof()
+#include <inttypes.h> // int32_t
 ```
 
 The cast to `char *` makes the subtraction count in bytes. Subtracting from an `int *` would move in steps of `sizeof(int)`.
@@ -1839,8 +1852,8 @@ The `1 ? (ptr) : &((type *)0)->member` part is a type check. The conditional ope
 ```c
 struct point {
     char tag;
-    int x;
-    int y;
+    int32_t x;
+    int32_t y;
 };
 ```
 
@@ -1849,7 +1862,7 @@ Starting from a pointer to `y`, the calculation written out by hand and the macr
 ```c
 int main(void) {
     struct point p = { 'A', 10, 20 };
-    int *py = &p.y;
+    int32_t *py = &p.y;
 
     struct point *by_hand =
         (struct point *)((char *)py - offsetof(struct point, y));
@@ -1874,8 +1887,9 @@ tag:      A
 In an intrusive list, the list node lives inside your data. The list code works only with nodes, so it never needs to know your type, and adding an object to a list needs no `void *` and no extra allocation.
 
 ```c
-#include <stdio.h>  // printf()
-#include <stddef.h> // offsetof()
+#include <stdio.h>    // printf()
+#include <stddef.h>   // offsetof()
+#include <inttypes.h> // PRId32, int32_t
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - \
@@ -1916,7 +1930,7 @@ An `employee` embeds two hooks, so the same object can sit in two lists at once:
 ```c
 struct employee {
     const char *name;
-    int salary;
+    int32_t salary;
     struct list_node all_staff;
     struct list_node team;
 };
@@ -1954,7 +1968,7 @@ Walking a list means following `next` until you arrive back at the head. `contai
     printf("staff:\n");
     for (struct list_node *p = staff.next; p != &staff; p = p->next) {
         struct employee *e = container_of(p, struct employee, all_staff);
-        printf("  %s earns %d\n", e->name, e->salary);
+        printf("  %s earns %" PRId32 "\n", e->name, e->salary);
     }
 
     printf("team:\n");
