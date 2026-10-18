@@ -112,6 +112,8 @@ A variable takes the form:
 A declaration introduces a variable's name and type.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t count;
 ```
 
@@ -122,12 +124,16 @@ A declaration that also creates the variable's storage is a **definition**. For 
 A declaration with an initialization gives the variable its first value in the same statement.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t total = 0;
 ```
 
 Variables declared inside a function without an initialization hold garbage until you assign them. Global variables and `static` variables are initialized to zero (see [Storage Duration](#storage-duration)).
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t global;             // 0
 
 int main(void) {
@@ -149,6 +155,8 @@ char a = 'x', b;
 Variables can be assigned later, but `const` variable can't later be assigned.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t foo;
 const double pi = 3.14159;
 
@@ -161,6 +169,9 @@ pi = 3.0; // error
 `const` makes a variable read-only after its initialization. `constexpr` (C23) goes further and makes it a compile-time constant, so its initializer must be a constant expression and it can be used where C requires one, such as an array size.
 
 ```c
+#include <stddef.h>   // size_t
+#include <inttypes.h> // int32_t
+
 const int32_t n = get_count(); // fixed at run time
 constexpr size_t size = 16; // fixed at compile time
 int32_t buf[size];          // works, size is a constant
@@ -171,6 +182,8 @@ int32_t buf[size];          // works, size is a constant
 A variable's **scope** is the part of the code where its name is visible. A variable declared inside `{ }` has **block scope** and is visible until the closing brace. A variable declared outside any function has **file scope** (often called a _global_ variable) and is visible from there to the end of the file.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t total; // file scope
 
 void f(void) {
@@ -185,12 +198,17 @@ void f(void) {
 An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
 
 ```c
-int32_t x = 1;
-{
-    int32_t x = 2; // shadows the outer x
-    printf("%" PRId32 "\n", x); // 2
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+int main(void) {
+    int32_t x = 1;
+    {
+        int32_t x = 2; // shadows the outer x
+        printf("%" PRId32 "\n", x); // 2
+    }
+    printf("%" PRId32 "\n", x); // 1
 }
-printf("%" PRId32 "\n", x); // 1
 ```
 
 ### Storage Duration
@@ -208,14 +226,19 @@ An object's **storage duration** is how long its memory exists.
 A local variable declared `static` has static [storage duration](#storage-duration), so it keeps its value between calls. Its initialization happens only once, before the program starts.
 
 ```c
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
 void tick(void) {
     static int32_t count; // starts at 0, initialized only once
     count += 1;
     printf("%" PRId32 "\n", count);
 }
 
-tick(); // 1
-tick(); // 2
+int main(void) {
+    tick(); // 1
+    tick(); // 2
+}
 ```
 
 ### File-Scoped Variables
@@ -223,6 +246,8 @@ tick(); // 2
 A variable at file scope can be used from other files too, through [`extern`](#external-variables). Declaring it `static` keeps it private to the file it is declared in.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t shared;           // other .c files can use it
 static int32_t file_only; // invisible to other .c files
 ```
@@ -232,6 +257,8 @@ static int32_t file_only; // invisible to other .c files
 An `extern` declaration refers to a variable that is defined in another file, without creating it. Exactly one file defines it, and every other file that uses it declares it with `extern`, usually through a header.
 
 ```c
+#include <inttypes.h> // int32_t
+
 // counter.c
 int32_t counter = 0; // definition
 
@@ -266,6 +293,8 @@ An **expression** is anything that produces a value, such as `x + 1`, `a < b` or
 | `--x` | Pre-decrement: subtracts 1 from `x`, and gives the new value |
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t a = 7 + 2; // 9, addition
 int32_t b = 7 - 2; // 5, subtraction
 int32_t c = 7 * 2; // 14, multiplication
@@ -274,6 +303,8 @@ int32_t e = 7 % 2; // 1, remainder
 ```
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t i = 5;
 int32_t x = i++; // x is 5, i is 6
 
@@ -303,6 +334,8 @@ int32_t y = ++j; // y is 6, j is 6
 > | 4 | `+`, `-` | left to right |
 >
 > ```c
+> #include <inttypes.h> // int32_t
+>
 > int32_t f = 7 + 2 * 3;   // 13
 > int32_t g = (7 + 2) * 3; // 27
 > int32_t h = 10 - 4 - 3;  // 3, (10 - 4) - 3
@@ -338,6 +371,8 @@ int32_t y = ++j; // y is 6, j is 6
 > To get floored division and floored modulo, assuming `n > 0`:
 >
 > ```c
+> #include <inttypes.h> // int32_t
+>
 > int32_t div_floor(int32_t x, int32_t n) {
 >     int32_t q = x / n;
 >     if (x % n < 0) {
@@ -418,9 +453,6 @@ if (p != nullptr && *p > 0) { ... } // *p is never read when p is null
 >
 > Step 2 doesn't hold for floating-point values that may be NaN (e.g., from `0.0 / 0.0`). NaN isn't less than, equal to or greater than anything, so `<`, `<=`, `>`, `>=` and `==` with NaN are all false (and `!=` is true). If `x` is NaN, `!(x < y)` is true but `x >= y` is false.
 
-> [!WARNING]
-> `=` assigns and `==` compares. `if (x = 0)` sets `x` to `0` and is always false.
-
 ### Bitwise
 
 Bitwise operators work on the individual bits of integers. See [Bitwise Operators](../computer-systems/computer-organization/data-representation.md#bitwise-operations) for truth tables, bit masks and common operations.
@@ -435,6 +467,8 @@ Bitwise operators work on the individual bits of integers. See [Bitwise Operator
 | `>>` | Right shift |
 
 ```c
+#include <inttypes.h> // int32_t
+
 uint32_t flags = 0b0101;
 flags & 0b0001; // 1, the lowest bit is set
 flags | 0b0010; // 0b0111, set a bit
@@ -449,21 +483,41 @@ flags << 1;     // 0b1010, each shift left doubles the value
 > - The shift amount is negative, or at least the width of the left operand (e.g., `1u << 32` for a 32-bit `unsigned`).
 > - A signed value is shifted left into or past the sign bit, or a negative value is shifted left (e.g., `1 << 31` for a 32-bit `int`).
 >
-> Right-shifting a negative value is also implementation-defined (usually an arithmetic shift). To avoid all of these, shift unsigned fixed-width types that are wide enough (e.g., `(uint32_t) x << k` or `1u << k`), and keep `k` within the width.
+> Additionally, right-shifting a negative value is also implementation-defined (usually an arithmetic shift). 
+> 
+> To avoid all of these, shift unsigned fixed-width types that are wide enough (e.g., `(uint32_t) x << k` or `1u << k`), and keep `k` within the width.
 
 ### Assignment
 
 `=` stores a value in a variable. Every arithmetic and bitwise operator also has a compound form that applies the operator to the variable itself.
 
+| Operator | Same as |
+| :---: | :---: |
+| `x = y` | assigns `y` to `x` |
+| `x += y` | `x = x + y` |
+| `x -= y` | `x = x - y` |
+| `x *= y` | `x = x * y` |
+| `x /= y` | `x = x / y` |
+| `x %= y` | `x = x % y` |
+| `x &= y` | `x = x & y` |
+| `x \|= y` | `x = x \| y` |
+| `x ^= y` | `x = x ^ y` |
+| `x <<= y` | `x = x << y` |
+| `x >>= y` | `x = x >> y` |
+
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t x = 10;
 x += 5;  // same as x = x + 5
 x <<= 1; // same as x = x << 1
 ```
 
-An assignment is itself an expression that gives the assigned value, so it can be used inside other expressions.
+Since an assignment is itself an expression that gives the assigned value, it can be used inside other expressions.
 
 ```c
+#include <stdio.h> // getchar(), EOF
+
 a = b = 0;                     // (b = 0) gives 0, which is then assigned to a
 while ((c = getchar()) != EOF) // assign, then compare the assigned value
 if (x = 0)                     // compiles: assigns 0, then tests 0, so it is always false
@@ -477,10 +531,13 @@ A type cast takes the form:
 (<type>) <expression>
 ```
 
-A cast converts a value to another type, for example to get a fractional result from integer division.
+A cast converts a value to another type
 
 ```c
-int32_t a = 7, b = 2;
+#include <inttypes.h> // int32_t
+
+int32_t a = 7;
+int32_t b = 2;
 double d = (double) a / b; // 3.5, not 3.0
 ```
 
@@ -495,6 +552,8 @@ A ternary operator takes the form:
 It picks one of two values, like a short if-else that gives a result.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t max = a > b ? a : b;
 ```
 
@@ -527,46 +586,63 @@ The expression must be an integer (including a `char` or an enum), and each `cas
 `default` runs when no case matches. It is optional, and without it a switch with no matching case does nothing. It is usually written last, but it can go anywhere, and it falls through like any other case.
 
 ```c
-switch (day) {
-case 0:
-    printf("Sunday\n");
-    break;
-case 6:
-    printf("Saturday\n");
-    break;
-default:
-    printf("Weekday\n");
+#include <stdio.h>    // printf()
+#include <inttypes.h> // int32_t
+
+int main(void) {
+    int32_t day = 6;
+    switch (day) {
+    case 0:
+        printf("Sunday\n");
+        break;
+    case 6:
+        printf("Saturday\n");
+        break;
+    default:
+        printf("Weekday\n");
+    }
 }
 ```
 
 Without a `break`, execution **falls through** into the next case and keeps going until a `break` or the end of the switch. This lets several cases share the same code.
 
 ```c
-switch (c) {
-case 'a':
-case 'e':
-case 'i':
-case 'o':
-case 'u':
-    printf("vowel\n");
-    break;
-default:
-    printf("consonant\n");
+#include <stdio.h> // printf()
+
+int main(void) {
+    char c = 'e';
+    switch (c) {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+        printf("vowel\n");
+        break;
+    default:
+        printf("consonant\n");
+    }
 }
 ```
 
 To fall through on purpose after a case that has code, mark it with `[[fallthrough]];` (C23). This tells readers it isn't a missing `break`, and silences the compiler's `-Wimplicit-fallthrough` warning.
 
 ```c
-switch (level) {
-case 2:
-    printf("debug\n");
-    [[fallthrough]]; // also print everything below
-case 1:
-    printf("info\n");
-    break;
-default:
-    printf("quiet\n");
+#include <stdio.h>    // printf()
+#include <inttypes.h> // int32_t
+
+int main(void) {
+    int32_t level = 2;
+    switch (level) {
+    case 2:
+        printf("debug\n");
+        [[fallthrough]]; // also print everything below
+    case 1:
+        printf("info\n");
+        break;
+    default:
+        printf("quiet\n");
+    }
 }
 ```
 
@@ -623,6 +699,8 @@ A function header that receives an array's address takes either form:
 Like a [file-scoped variable](#file-scoped-variables), a function declared `static` can only be called from its own file. This is how helper functions stay private to the file that uses them.
 
 ```c
+#include <inttypes.h> // int32_t
+
 static int32_t clamp(int32_t x, int32_t lo, int32_t hi) { // only this file can call clamp
     return x < lo ? lo : x > hi ? hi : x;
 }
@@ -634,15 +712,24 @@ Functions are `extern` by default, so any file can call a function defined in an
 
 ```c
 // add.c
+#include <inttypes.h> // int32_t
+
 int32_t add(int32_t a, int32_t b) { // definition
     return a + b;
 }
+```
 
+```c
 // add.h
-int32_t add(int32_t a, int32_t b); // declaration, same as extern int32_t add(int32_t a, int32_t b);
+#include <inttypes.h> // int32_t
 
+int32_t add(int32_t a, int32_t b); // declaration, same as extern int32_t add(int32_t a, int32_t b);
+```
+
+```c
 // main.c
 #include "add.h" // add()
+
 int main(void) {
     return add(1, 2);
 }
@@ -656,28 +743,168 @@ A function pointer declaration takes the form:
 <return type> (*<identifier>)(<parameters>)
 ```
 
+### Closures
+
+A **closure** is a function bundled with variables it captured from where it was created. C has no anonymous functions or closures, and a function pointer carries no data, so C code pairs it with the data explicitly. There are two common ways to do it.
+
+#### Context Pointers
+
+The function takes an extra `void *` parameter, and the caller passes the captured state through it. Most C APIs that take a callback use this form, e.g. `pthread_create(..., fn, arg)`, POSIX's `qsort_r` and GLib's `user_data`.
+
+```c
+#include <stdio.h>    // printf()
+#include <stddef.h>   // size_t
+#include <inttypes.h> // PRId32, int32_t
+
+// the "lambda", with its captured state passed through ctx
+static void add_offset(int32_t *x, void *ctx) {
+    *x += *(int32_t *)ctx;
+}
+
+static void for_each(int32_t *a, size_t n, void (*f)(int32_t *, void *), void *ctx) {
+    for (size_t i = 0; i < n; i += 1) {
+        f(&a[i], ctx);
+    }
+}
+
+int main(void) {
+    int32_t a[] = {1, 2, 3};
+    int32_t offset = 10; // the "captured" variable
+    for_each(a, sizeof a / sizeof a[0], add_offset, &offset);
+    printf("%" PRId32 "\n", a[0]); // 11
+}
+```
+
+#### Closure Structs
+
+A struct holds the function pointer, and a larger struct embeds it as its first member next to the captured variables. The function receives the struct itself, so it reaches its own data without a `void *` cast. This is an object with a single method, much like what a C++ lambda compiles to.
+
+```c
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+struct int_fn {
+    int32_t (*call)(struct int_fn *self, int32_t x);
+};
+
+struct adder {
+    struct int_fn base; // the closure's interface
+    int32_t offset;     // its captured variable
+};
+
+static int32_t adder_call(struct int_fn *self, int32_t x) {
+    struct adder *a = (struct adder *)self; // base is the first member
+    return x + a->offset;
+}
+
+static int32_t apply_twice(struct int_fn *f, int32_t x) {
+    return f->call(f, f->call(f, x));
+}
+
+int main(void) {
+    struct adder add10 = { .base = { adder_call }, .offset = 10 };
+    printf("%" PRId32 "\n", apply_twice(&add10.base, 1)); // 21
+}
+```
+
+Prefer a context pointer when calling an existing API, and a closure struct when closures are stored and passed around, since it keeps the types checked.
+
+> [!WARNING]
+> Neither form owns the captured data. If it lives on the stack, the closure
+> dangles once that function returns, the same as a [slice](#fat-pointers).
+
+### Optional And Named Arguments
+
+C has no default or named arguments, but a function can take a single struct instead, and a macro can build that struct from [designated initializers](#designated-initializers). The caller then names only the arguments it cares about, in any order, and every member it leaves out is zero.
+
+```c
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+struct draw_opts {
+    int32_t x;
+    int32_t y;
+    int32_t width;     // 0 means the default, 1
+    const char *color; // nullptr means the default, "black"
+};
+
+static void draw_impl(struct draw_opts o) {
+    if (o.width == 0) {
+        o.width = 1;
+    }
+    if (o.color == nullptr) {
+        o.color = "black";
+    }
+    printf("(%" PRId32 ", %" PRId32 ") width %" PRId32 " %s\n", o.x, o.y, o.width, o.color);
+}
+
+#define draw(...) draw_impl((struct draw_opts){ __VA_ARGS__ })
+
+int main(void) {
+    draw(.x = 1, .y = 2);                 // (1, 2) width 1 black
+    draw(.color = "red", .x = 3, .y = 4); // (3, 4) width 1 red
+    draw();                               // (0, 0) width 1 black
+}
+```
+
+`draw(...)` expands to a compound literal, so `draw(.x = 1, .y = 2)` becomes `draw_impl((struct draw_opts){ .x = 1, .y = 2 })`.
+
+> [!WARNING]
+> Since a missing member is zero, zero has to mean "use the default". That
+> works only when zero is never a value a caller would pass on purpose.
+
 ## Arrays
 
-An **array** `T a[n]` is $n$ elements of type `T` stored back to back in memory, so `a[i]` sits `i * sizeof(T)` bytes after `a[0]`. The size $n$ is fixed when the array is created.
+An **array** `T a[n]` is $n$ elements of type `T` stored back to back in memory.
+
+Every element $i$ `a[i]` sits `i * sizeof(T)` bytes after `a[0]`. 
+
+The capacity $n$ is fixed when the array is created.
+
+### Definition
 
 The definition of an array takes the form:
 
 ```syntax
-<type> <identifier>[<capacity>] <initializer>?;
+<type> <identifier>[<capacity>?] <initializer>?;
 
 <initializer>:
-    = {<value>+,}
+    = {<element>+,}
+<element>:
+    <value>
+    [<index>] = <value>
+```
+
+The capacity can be left out only when an initializer is present, in which case the compiler uses the highest index the list reaches plus one (without [designators](#designated-initializers), that is just the number of values).
+
+```c
+#include <inttypes.h> // int32_t
+
+int32_t a[3];             // capacity 3, no initializer
+int32_t b[3] = {1, 2, 3}; // capacity 3, given explicitly
+int32_t c[] = {1, 2, 3};  // capacity 3, counted from the list
+// int32_t d[];           // error inside a function, no capacity and nothing to count
 ```
 
 The definition of a two-dimensional array takes the form:
 
 ```syntax
-<type> <identifier>[<row count>][<column count>] <initializer>?;
+<type> <identifier>[<row count>?][<column count>] <initializer>?;
 
 <initializer>:
     = {<row>+,}
 <row>:
     {<value>+,}
+```
+
+Likewise, the row count can be left out when an initializer is present, but the column count is always required, since it is part of the element type.
+
+```c
+#include <inttypes.h> // int32_t
+
+int32_t m[2][3] = {{1, 2, 3}, {4, 5, 6}}; // 2 rows, given explicitly
+int32_t n[][3] = {{1, 2, 3}, {4, 5, 6}};  // 2 rows, counted from the list
+// int32_t p[2][] = {{1, 2}, {3, 4}};     // error, column count missing
 ```
 
 ### Initializing Arrays
@@ -695,14 +922,55 @@ You can fill an array in its declaration with a **brace list**, or leave out the
 | $n < k$ | too many values, a compiler warning or error ("excess elements in array initializer") |
 
 ```c
-int32_t a[] = {1, 2, 3}; // sizeof a == 3 * sizeof(int32_t)
-int32_t b[5] = {1, 2};   // {1, 2, 0, 0, 0}
-int32_t c[100] = {0};    // all zeros
-int32_t d[4];            // inside a function: garbage until written
-// d = b;            // error, arrays can't be assigned
+#include <inttypes.h> // int32_t
+
+int main(void) {
+    int32_t a[] = {1, 2, 3}; // sizeof a == 3 * sizeof(int32_t)
+    int32_t b[5] = {1, 2};   // {1, 2, 0, 0, 0}
+    int32_t c[100] = {0};    // all zeros
+    int32_t d[4];            // inside a function: garbage until written
+    // d = b;                // error, arrays can't be assigned
+}
 ```
 
 An array can't be assigned as a whole after its declaration, so you copy elements one at a time, or copy with [`memcpy()`](https://beej.us/guide/bgclr/html/#man-memcpy).
+
+Arrays and plain variables of the same element type can share one [multi-declaration](#multi-declaration-and-multi-initialization).
+
+```c
+#include <inttypes.h> // int32_t
+
+int32_t i = 5, a[6] = {1, 2, 3, 4, 5, 6}, k; // a scalar, an array, and a scalar
+float sum = 0.0f, f[100] = {1.0f, 5.0f, 20.0f};
+```
+
+### Designated Initializers
+
+A **designator** `[i] = v` in a brace list sets element `i` directly, instead of the next one in order.
+
+- The values after a designator continue from `i + 1`.
+- Designators can appear in any order, and can jump backwards.
+- If two entries set the same element, the later one wins.
+- Every element the list doesn't reach is zero-filled, as usual.
+
+```c
+#include <inttypes.h> // int32_t
+
+int32_t numbers[100] = {1, 2, 3, [10] = 10, 11, 12, [60] = 50, [42] = 420};
+// numbers[0..2]   = 1, 2, 3
+// numbers[10..12] = 10, 11, 12, continuing after [10]
+// numbers[42]     = 420, set after [60], out of order
+// numbers[60]     = 50
+// every other element is 0
+
+int32_t sparse[] = {[4] = 1};    // capacity 5: {0, 0, 0, 0, 1}
+int32_t twice[3] = {1, [0] = 9}; // {9, 0, 0}, the later entry wins (-Wextra warns)
+```
+
+> [!TIP]
+> Designators are handy for lookup tables indexed by an enum, since each entry
+> stays next to its index even if the enum's order changes, e.g.
+> `const char *names[] = {[RED] = "red", [GREEN] = "green"};`.
 
 ### Array-To-Pointer Decay
 
@@ -788,6 +1056,8 @@ int main(void) {
 A **2D array** `T m[r][c]` is an array of `r` rows, where each row is itself an array of `c` elements of type `T`. The rows are stored back to back with no gaps ([row-major order](#row-major-and-column-major-order)), so element `m[i][j]` sits `i * c + j` elements after `m[0][0]`. You initialize it with one brace list per row, and the usual zero-filling applies to anything you leave out.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t m[2][3] = {
     {1, 2, 3},
     {4, 5, 6},
@@ -810,6 +1080,8 @@ For the 2 by 3 grid above, the two orders give:
 In C, stepping `j` (the last index) moves to the next element in memory, while stepping `i` jumps a whole row ahead. A loop that keeps `j` in the inner loop reads memory in order, so each cache line it loads is fully used. Swapping the loops makes every access jump `c` elements, which on a large array misses the cache on almost every access.
 
 ```c
+#include <stddef.h> // size_t
+
 // fast: the inner loop walks along a row, through contiguous memory
 for (size_t i = 0; i < rows; i += 1) {
     for (size_t j = 0; j < cols; j += 1) {
@@ -862,6 +1134,9 @@ int main(void) {
 To put a 2D array on the heap in one block, allocate it through a pointer to a row. Indexing works the same as for a declared 2D array, and a single `free` releases all of it.
 
 ```c
+#include <stdlib.h>   // malloc(), free()
+#include <inttypes.h> // int32_t
+
 int32_t (*m)[cols] = malloc(rows * sizeof *m); // sizeof *m is one row
 m[i][j] = 0;
 free(m);
@@ -888,6 +1163,8 @@ A pointer declaration takes the form:
 ```
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t x = 1;
 int32_t *p = &x; // p holds the address of x
 *p = 2;      // x is now 2
@@ -902,11 +1179,16 @@ Adding an integer to a pointer moves it by whole elements, so `p + i` points `i 
 Subtracting two pointers into the same array gives the number of elements between them, as a `ptrdiff_t`.
 
 ```c
-int32_t a[] = {10, 20, 30};
-int32_t *p = a;         // decays to &a[0]
-int32_t *q = p + 2;     // &a[2]
-printf("%" PRId32 "\n", *q); // 30
-printf("%td\n", q - p);   // 2
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+int main(void) {
+    int32_t a[] = {10, 20, 30};
+    int32_t *p = a;              // decays to &a[0]
+    int32_t *q = p + 2;          // &a[2]
+    printf("%" PRId32 "\n", *q); // 30
+    printf("%td\n", q - p);      // 2
+}
 ```
 
 A pointer may point one past the last element of an array, which is handy as an end marker in loops.
@@ -921,6 +1203,8 @@ A pointer may point one past the last element of an array, which is handy as an 
 The index operator `[]` is a pointer operator. The standard defines `x[i]` as `*(x + i)`.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t *p = ...;
 p[2]; // *(p + 2): move 2 elements forward, read the one there
 ```
@@ -928,6 +1212,8 @@ p[2]; // *(p + 2): move 2 elements forward, read the one there
 Indexing or doing pointer arithmetic on an array only works because the array [decays](#array-to-pointer-decay) first. The array itself isn't a pointer, so the compiler converts it to a pointer to its first element and then applies the pointer operator.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t a[3] = {10, 20, 30};
 a + 1; // a decays to &a[0], then &a[0] + 1 == &a[1]
 a[2];  // a decays to &a[0], then *(&a[0] + 2) == 30
@@ -936,6 +1222,8 @@ a[2];  // a decays to &a[0], then *(&a[0] + 2) == 30
 Decay produces a temporary address value and leaves `a` an array, so operations that would change `a` itself still fail.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t *p = a;
 p += 1;    // OK, p is a variable holding an address
 // a += 1; // error, a is the array, with no stored address to change
@@ -964,6 +1252,8 @@ An array and a pointer are different objects, even though decay lets you use an 
 A **pointer to an array** `T (*pa)[n]` points to a whole array of `n` elements as one object. You get one from `&a`, or from a 2D array decaying to a pointer to its first row. It holds the same address as a pointer to the array's first element, but its type is different, and the type decides what arithmetic and dereferencing do.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t a[10];
 int32_t *p = a;         // pointer to the first element
 int32_t (*pa)[10] = &a; // pointer to the whole array, same address as p
@@ -983,6 +1273,8 @@ Operators on pointers work on the addresses they hold.
 - `p = q` copies the address, so `p` then points to the same object as `q`, and writing through one changes what the other sees.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t a[] = {1, 2, 3};
 int32_t b[] = {1, 2, 3};
 int32_t *p = a;
@@ -1001,6 +1293,8 @@ To compare or copy the objects themselves, use functions such as [`memcmp()`](ht
 C23 adds the keyword `nullptr`, which is a null pointer constant of its own type, `nullptr_t`, and converts to any pointer type. `NULL` is a macro that an implementation may define as `0` or `((void *)0)`, so it can end up as an `int`. That matters when the type isn't fixed by context, such as an argument to a variadic function like `printf` or the controlling expression of `_Generic`.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t *p = nullptr;
 if (p == nullptr) {
     // ...
@@ -1014,6 +1308,8 @@ A `const T *p` can read the object but not write to it through `p`, which lets t
 It is common for parameters that a function only reads, and library functions like [`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) declare them this way.
 
 ```c
+#include <stddef.h> // size_t
+
 size_t count_spaces(const char *s) {
     size_t n = 0;
     for (; *s != '\0'; s += 1) {
@@ -1033,6 +1329,8 @@ A **void pointer** `void *p` holds an address without saying what type of object
 Library functions that work on raw memory, like [`memcpy()`](https://beej.us/guide/bgclr/html/#man-memcpy) and `malloc`, take or return `void *` so they work with any type.
 
 ```c
+#include <inttypes.h> // int32_t
+
 int32_t x = 1;
 void *v = &x;   // int32_t * converts to void * implicitly
 int32_t *p = v; // and back again
@@ -1125,9 +1423,7 @@ const char *greeting(void) {
 
 ### Character Arrays
 
-A character array `char s[n]` holds its own copy of the characters, so you can change them. 
-
-Arrays at file scope or declared `static` live for the whole program (in `.data` or `.bss`), and arrays declared inside a function live until the block ends (stack). Both are filled in the same three ways.
+A character array holds its own copy of the characters, which means you can change them. 
 
 - **String literal**: a literal of $\ell$ characters is the same as a brace list
   of those characters plus the `\0`, so `"foo"` is `{'f', 'o', 'o', '\0'}` and
@@ -1148,6 +1444,10 @@ Arrays at file scope or declared `static` live for the whole program (in `.data`
   garbage, so it holds no string until you write a `\0`.
 
 ```c
+#include <stdio.h>    // snprintf()
+#include <string.h>   // strcpy()
+#include <inttypes.h> // PRId32, int32_t
+
 static char name[32]; // zero-filled, so it starts as ""
 
 void example(int32_t count) {
@@ -1295,6 +1595,48 @@ A slice of `const char` is often called a **string view**. Its length is $O(1)$ 
 > the language. The extra data isn't always a length, e.g. Rust's `&dyn Trait`
 > stores a pointer to a vtable instead.
 
+### Variable-Size Structs
+
+A **flexible array member** is an array with no size as the _last_ member of a struct. It adds nothing to `sizeof` the struct, and you allocate the struct together with as many elements as you need, so the header and its data share one allocation, one `free`, and one cache-friendly block of memory.
+
+```c
+#include <stdio.h>  // printf()
+#include <stdlib.h> // malloc(), free()
+#include <string.h> // memcpy(), strlen()
+
+struct message {
+    size_t len;
+    char text[]; // flexible array member, must be last
+};
+
+static struct message *message_new(const char *s) {
+    size_t len = strlen(s);
+    struct message *m = malloc(sizeof *m + len + 1); // header, text, and '\0'
+    if (m == nullptr) {
+        return nullptr;
+    }
+    m->len = len;
+    memcpy(m->text, s, len + 1);
+    return m;
+}
+
+int main(void) {
+    struct message *m = message_new("hello");
+    if (m == nullptr) {
+        return 1;
+    }
+    printf("%zu %s\n", m->len, m->text); // 5 hello
+    free(m);
+}
+```
+
+For elements bigger than a byte, allocate `sizeof *m + n * sizeof m->data[0]`, and check the multiplication for overflow with `ckd_mul` as in the [stack example](#encapsulation).
+
+> [!WARNING]
+> A struct with a flexible array member can't be an array element or a member of
+> another struct, and declaring one on the stack gives it no room for the
+> array. Assigning one struct to another copies only the header.
+
 ## Enumerated Types
 
 An enumerated type definition takes the form:
@@ -1418,6 +1760,37 @@ A macro definition takes the form:
 #define <NAME> <replacement>
 ```
 
+### Multi-Statement Macros
+
+A macro whose replacement is several statements should wrap them in `do { ... } while (0)`. The loop runs exactly once, and it makes the whole macro a single statement that needs the caller's `;`, so it behaves like a function call anywhere a statement can go.
+
+```c
+#include <stdio.h>    // fprintf(), stderr
+#include <inttypes.h> // int32_t
+
+static int32_t error_count = 0;
+
+#define LOG_ERROR(msg)                       \
+    do {                                     \
+        fprintf(stderr, "error: %s\n", msg); \
+        error_count += 1;                    \
+    } while (0)
+
+int main(void) {
+    bool failed = true;
+    if (failed)
+        LOG_ERROR("disk full"); // one statement, so the else still pairs with the if
+    else
+        fprintf(stderr, "ok\n");
+    return error_count;
+}
+```
+
+The two obvious alternatives both break in that `if`:
+
+- **No wrapper**: only the first statement is controlled by the `if`, so `error_count += 1;` always runs, and the `else` no longer has an `if` to pair with.
+- **Plain braces** `{ ... }`: the caller's `;` after the `}` is an empty statement that ends the `if`, so the `else` is again a compile error.
+
 ## Imports
 
 An include takes either form:
@@ -1448,6 +1821,144 @@ An include takes either form:
 > Every function in a C library is one of two kinds:
 > - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
 > - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
+
+## Generics
+
+C has no templates or generic types, so code that works for many types uses one of three idioms.
+
+### Void Pointers And Sizes
+
+A function takes `void *` pointers and the size of each element, and works on raw bytes. It runs once for every type, the way [`qsort` and `memcpy`](#array-functions) do, but the compiler can't check that the pointers and the size agree.
+
+```c
+#include <stdio.h>    // printf()
+#include <stddef.h>   // size_t
+#include <inttypes.h> // PRId32, int32_t
+
+static void swap(void *a, void *b, size_t size) {
+    unsigned char *p = a; // character types may access the bytes of any object
+    unsigned char *q = b;
+    for (size_t i = 0; i < size; i += 1) {
+        unsigned char tmp = p[i];
+        p[i] = q[i];
+        q[i] = tmp;
+    }
+}
+
+int main(void) {
+    int32_t x = 1, y = 2;
+    double d = 1.5, e = 2.5;
+    swap(&x, &y, sizeof x);
+    swap(&d, &e, sizeof d);
+    printf("%" PRId32 " %" PRId32 " %g %g\n", x, y, d, e); // 2 1 2.5 1.5
+    // swap(&x, &d, sizeof d); // compiles, and corrupts the memory after x
+}
+```
+
+### `_Generic`
+
+`_Generic` picks an expression by the type of its controlling expression, at compile time. Wrapped in a macro, it gives several type-specific functions one name, like overloading.
+
+```c
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+static void print_i32(int32_t x) {
+    printf("%" PRId32 "\n", x);
+}
+
+static void print_double(double x) {
+    printf("%g\n", x);
+}
+
+static void print_str(const char *s) {
+    printf("%s\n", s);
+}
+
+#define print(x) _Generic((x),   \
+    int32_t: print_i32,          \
+    double: print_double,        \
+    char *: print_str,           \
+    const char *: print_str)(x)
+
+int main(void) {
+    int32_t n = 42;
+    print(n);       // 42
+    print(3.5);     // 3.5
+    print("hello"); // hello
+}
+```
+
+A type with no matching branch, and no `default:` branch, is a compile error. Arrays decay before the match, so `"hello"` matches `char *`.
+
+### Macro-Generated Code
+
+A macro that takes a type can stamp out a separate copy of a function for each type, which is close to what C++ templates do. Each copy is fully type-checked, at the cost of one function per type.
+
+```c
+#include <stdio.h>    // printf()
+#include <inttypes.h> // PRId32, int32_t
+
+#define DEFINE_MAX(T, name)   \
+    static T name(T a, T b) { \
+        return a > b ? a : b; \
+    }
+
+DEFINE_MAX(int32_t, max_i32)
+DEFINE_MAX(double, max_double)
+
+int main(void) {
+    printf("%" PRId32 "\n", max_i32(3, 7)); // 7
+    printf("%g\n", max_double(2.5, 1.5));   // 2.5
+}
+```
+
+Combining the two idioms gives one name for every generated type, e.g. `#define max(a, b) _Generic((a), int32_t: max_i32, double: max_double)(a, b)`.
+
+## Iterators
+
+An **iterator** walks a container one element at a time without showing the caller how the container is laid out. In C it is a struct that holds the current position, plus a `next` function that returns `false` once there is nothing left and otherwise writes the next element through an out-parameter.
+
+This one splits a string into words lazily. It allocates nothing, and each word is a [string view](#fat-pointers) into the original string.
+
+```c
+#include <stdio.h>  // printf()
+#include <stddef.h> // size_t
+
+struct str_view {
+    const char *ptr;
+    size_t len;
+};
+
+struct word_iter {
+    const char *p; // where the search for the next word starts
+};
+
+static bool word_next(struct word_iter *it, struct str_view *out) {
+    while (*it->p == ' ') {
+        it->p += 1;
+    }
+    if (*it->p == '\0') {
+        return false;
+    }
+    const char *start = it->p;
+    while (*it->p != ' ' && *it->p != '\0') {
+        it->p += 1;
+    }
+    *out = (struct str_view){ start, (size_t)(it->p - start) };
+    return true;
+}
+
+int main(void) {
+    struct word_iter it = { "  the quick  brown fox " };
+    struct str_view w;
+    while (word_next(&it, &w)) {
+        printf("[%.*s]\n", (int)w.len, w.ptr); // [the], [quick], [brown], [fox], one per line
+    }
+}
+```
+
+When the container's layout is public anyway, a `for_each` macro that expands to a `for` loop is the lighter option, like `list_for_each` in [Step 5](#step-5-putting-it-together-a-list-of-polymorphic-shapes).
 
 ## OOP
 
@@ -1699,6 +2210,75 @@ https://youtu.be/3IAlJSIjvH0?t=541
 
 https://web.archive.org/web/20250124083637/https://pabloariasal.github.io/2017/06/10/understanding-virtual-tables/
 
+## Error Handling
+
+C has no exceptions, so a function reports failure through its return value. When it also has a result to give back, the usual idiom is to return a status and write the result through an **out-parameter**, which the caller reads only on success. Marking the function `[[nodiscard]]` makes the compiler warn when a caller ignores the status.
+
+Library functions that fail usually also set [`errno`](https://beej.us/guide/bgclr/html/#errno) from `<errno.h>` to a code saying why. `errno` is only meaningful right after a call that reported failure, since a successful call may leave any value in it. Some functions, like `strtol`, have no return value that always means failure, so you set `errno` to `0` before the call and check it after.
+
+This parser returns an enum status, and stores the number through `out`.
+
+```c
+#include <stdio.h>    // printf()
+#include <stdlib.h>   // strtol()
+#include <errno.h>    // errno, ERANGE
+#include <inttypes.h> // PRId32, int32_t, INT32_MIN, INT32_MAX
+
+enum parse_error {
+    PARSE_OK,
+    PARSE_EMPTY,
+    PARSE_TRAILING,
+    PARSE_RANGE,
+};
+
+static const char *const parse_error_names[] = {
+    [PARSE_OK] = "ok",
+    [PARSE_EMPTY] = "no digits",
+    [PARSE_TRAILING] = "trailing characters",
+    [PARSE_RANGE] = "out of range",
+};
+
+[[nodiscard]] static enum parse_error parse_i32(const char *s, int32_t *out) {
+    char *end;
+    errno = 0;
+    long v = strtol(s, &end, 10); // strtol's interface fixes the type to long
+    if (end == s) {
+        return PARSE_EMPTY;
+    }
+    if (*end != '\0') {
+        return PARSE_TRAILING;
+    }
+    if (errno == ERANGE || v < INT32_MIN || v > INT32_MAX) {
+        return PARSE_RANGE;
+    }
+    *out = (int32_t)v;
+    return PARSE_OK;
+}
+
+int main(void) {
+    const char *inputs[] = {"42", "", "12abc", "99999999999"};
+    for (size_t i = 0; i < sizeof inputs / sizeof inputs[0]; i += 1) {
+        int32_t v;
+        enum parse_error err = parse_i32(inputs[i], &v);
+        if (err == PARSE_OK) {
+            printf("\"%s\": %" PRId32 "\n", inputs[i], v);
+        } else {
+            printf("\"%s\": %s\n", inputs[i], parse_error_names[err]);
+        }
+    }
+}
+```
+
+```console
+$ gcc -std=c23 -Wall -Wextra -o parse parse.c && ./parse
+"42": 42
+"": no digits
+"12abc": trailing characters
+"99999999999": out of range
+```
+
+When a function that sets `errno` fails, [`perror()`](https://beej.us/guide/bgclr/html/#man-perror) prints a message for it, e.g. `perror(path)` after a failed `fopen(path, "r")` prints `missing.txt: No such file or directory`.
+
 ## Deferred Cleanup
 
 C has no `defer` statement, so a function that acquires several resources needs another way to release them on every exit path. The common idiom uses `goto` to jump forward to a chain of cleanup labels at the end of the function.
@@ -1706,8 +2286,9 @@ C has no `defer` statement, so a function that acquires several resources needs 
 This example opens a file, allocates a buffer, and reads into it. Each of those steps can fail. The buffer size is a `constexpr` constant, so `malloc` and `fread` always agree on it.
 
 ```c
-#include <stdio.h>  // printf(), fprintf(), fopen(), fread(), fclose()
-#include <stdlib.h> // malloc(), free()
+#include <stdio.h>    // printf(), fprintf(), fopen(), fread(), ferror(), fclose()
+#include <stdlib.h>   // malloc(), free()
+#include <inttypes.h> // int32_t
 
 constexpr size_t buf_size = 4096;
 ```
