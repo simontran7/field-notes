@@ -15,7 +15,7 @@ const THEME_TOGGLE_SVG: &str = r#"<button class="theme-toggle" onclick="window._
   </svg>
 </button>"#;
 
-const SITE_NAME: &str = "CS Handbook";
+const SITE_NAME: &str = "Field Notes";
 
 pub fn set_dev_mode(enabled: bool) {
     DEV_MODE.store(enabled, Ordering::Relaxed);
@@ -25,7 +25,7 @@ pub fn base_path() -> &'static str {
     if DEV_MODE.load(Ordering::Relaxed) {
         ""
     } else {
-        "/cs-handbook"
+        "/field-notes"
     }
 }
 

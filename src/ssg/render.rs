@@ -355,7 +355,7 @@ mod tests {
             &mut broken,
         );
         assert!(
-            html.contains(r#"href="/cs-handbook/tools/c/#generics""#)
+            html.contains(r#"href="/field-notes/tools/c/#generics""#)
                 || html.contains(r#"href="/tools/c/#generics""#),
             "{html}"
         );

@@ -1,9 +1,9 @@
 {
-  "name": "CS Handbook",
-  "short_name": "CS Handbook",
+  "name": "Field Notes",
+  "short_name": "Field Notes",
   "icons": [
     {
-      "src": "/cs-handbook/favicon.svg",
+      "src": "/field-notes/favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any"
     }
