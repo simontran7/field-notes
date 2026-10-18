@@ -43,9 +43,8 @@ whatis <command>
 | :---: | :---: |
 | `↑` / `↓` | Scroll through previously run commands |
 | `Ctrl+R` | Search command history (press again to cycle through matches) |
-| `Alt+.` | Insert the last argument of the previous command (press again to go further back) |
-| `!!` | Rerun the previous command (e.g., `sudo !!` reruns it with `sudo`) |
-| `!$` | The last argument of the previous command, typed as text |
+| `!!` | Rerun the previous command |
+| `!$` | Insert the last argument of the previous command and rerun |
 
 ### Control
 
@@ -53,10 +52,10 @@ whatis <command>
 | :---: | :---: |
 | `Tab` | Autocomplete a command, file, or directory name (press twice to list options) |
 | `Ctrl+C` | Stop the running command |
-| `Ctrl+Z` | Pause the running command and send it to the background (see [Job Control](#job-control)) |
+| `Ctrl+Z` | Pause the running command and send it to the background |
 | `Ctrl+D` | Exit the current shell (same as `exit`) |
 | `Ctrl+L` | Clear the screen (same as `clear`) |
-| `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy / paste in most terminal emulators |
+| `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy / paste |
 
 ## Navigation & Filesystem
 
@@ -493,7 +492,7 @@ tail -f <file>
 - Search for a pattern recursively
 
 ```syntax
-grep -rnEI --color=auto --exclude-dir={.git,target} '<pattern>' .
+grep -rnPI --color=auto --exclude-dir={.git,target} '<pattern>' .
 ```
 
 - Count lines, words, and characters in a file
@@ -520,17 +519,16 @@ grep -rIEl '<old text>' . | xargs sed -i 's/<old text>/<new text>/g'
 ## Permissions & Ownership
 
 ```
-..........
-│└┬┘└┬┘└┬┘
-│ │  │  └── others (o) permissions
-│ │  └───── group (g) permissions
-│ └──────── owner (u) permissions
-└────────── file type
+file type     owner (u)    group (g)   others (o)
+    │        ┌────┴────┐  ┌────┴────┐  ┌────┴────┐
+    .         .   .   .    .   .   .    .   .   .
+              │   │   │
+              │   │   └── execute bit
+              │   └────── write bit
+              └────────── read bit
 ```
 
-The first character is the file type:
-
-| Type | Meaning |
+| File Type | Meaning |
 | :---: | :---: |
 | `-` | Regular file |
 | `d` | Directory |
@@ -540,23 +538,11 @@ The first character is the file type:
 | `p` | Named pipe (FIFO) |
 | `s` | Socket |
 
-The other nine characters are three sets of permissions, for the owner, group, and others, and each set has the same three read, write, and execute bits:
-
-```
-...
-│││
-││└── execute (x)
-│└─── write (w)
-└──── read (r)
-```
-
-| Bit | On a file | On a directory |
-| :---: | :---: | :---: |
-| `r` | Read its contents | List the names inside it |
-| `w` | Change its contents | Create, delete, and rename entries inside it |
-| `x` | Run it as a program | Enter it (`cd`) and access the entries inside it |
-
-A bit is on when it shows its letter, and `-` when it's off.
+| Bit | On | Off | On a file | On a directory |
+| :---: | :---: | :---: | :---: | :---: |
+| Read | `r` | `-` | Read its contents | List the names inside it |
+| Write | `w` | `-` | Change its contents | Create, delete, and rename entries inside it |
+| Execute | `x` | `-` | Run it as a program | Enter it (`cd`) and access the entries inside it |
 
 ### Viewing Permissions
 
@@ -565,6 +551,8 @@ ls -l <file>
 ```
 
 ### Changing Permissions
+
+#### Bit Mode
 
 ```syntax
 chmod <who><operator><permissions> <file>
@@ -575,7 +563,7 @@ chmod <who><operator><permissions> <file>
 | `u` | Owner |
 | `g` | Group |
 | `o` | Others |
-| `a` | owner, group, and others |
+| `a` | Owner, group, and others |
 
 | Operator | Meaning |
 | :---: | :---: |
@@ -585,20 +573,44 @@ chmod <who><operator><permissions> <file>
 
 | Permission | Meaning |
 | :---: | :---: |
-| `r` | [Read](#permission-types) |
-| `w` | [Write](#permission-types) |
-| `x` | [Execute](#permission-types) |
+| `r` | Read |
+| `w` | Write |
+| `x` | Execute |
 | `s` | [setuid](#special-bits) with `u`, [setgid](#special-bits) with `g` |
 | `t` | [Sticky bit](#special-bits) |
 
 > [!NOTE]
-> Combine letters to change several groups and permissions at once.
+> Combine letters to change several groups and permissions at once: `chmod ug+rw file`.
+> Separate different changes with commas: `chmod u+x,go-w script.sh`.
+
+#### Octal Mode
+
+```syntax
+chmod <special><owner><group><others> <file>
+```
+
+| Digit | Permission |
+| :---: | :---: |
+| `4` | Read |
+| `2` | Write |
+| `1` | Execute |
+
+> [!NOTE]
+> Add the digits for each group: `7` = `rwx`, `6` = `rw-`, `5` = `r-x`, `4` = `r--`, `0` = `---`.
+> e.g. `chmod 755 script.sh` → `rwxr-xr-x`
+> The `<special>` digit is optional. See [Special Bits](#special-bits).
 
 ### Changing Ownership
 
 ```syntax
-sudo chown <user>:<group> <file>
+chown <owner>:<group> <file>
 ```
+
+> [!NOTE]
+> Add `-R` to apply to a directory and everything inside it.
+
+> [!NOTE]
+> Omit either side to change only one (but the group must retain the colon).
 
 ### Running as Another User
 
@@ -642,7 +654,7 @@ $ ps -ef # or `ps aux`
 | UID | The user who owns the process |
 | PID | The process ID, a unique identifier assigned to each process |
 | PPID | The parent process ID, the process that spawned the current process |
-| C | This field is obsolete |
+| C |  Average CPU usage over the process's lifetime, as a percentage |
 | STIME | The start time for the current process |
 | TTY | The controlling terminal for the current process |
 | TIME | The amount of CPU time accumulated by the current process |
@@ -692,10 +704,6 @@ pkill <name>
 <command> &
 ```
 
-- Suspend the foreground command
-
-`Ctrl+Z`
-
 - List background and suspended jobs
 
 ```console
@@ -715,32 +723,6 @@ bg %<job number>
 ```
 
 ## Scheduling Tasks 
-
-- Edit your scheduled tasks (opens your crontab in an editor)
-
-```console
-$ crontab -e
-```
-
-> [!NOTE]
-> The first time you run `crontab -e`, it asks which editor to use.
-
-- List your scheduled tasks
-
-```console
-$ crontab -l
-```
-
-- Delete _all_ your scheduled tasks
-
-```console
-$ crontab -r
-```
-
-> [!WARNING]
-> `crontab -r` deletes everything immediately, with no confirmation. The `r` key sits right next to `e`, so it's easy to hit by accident. Back up first with `crontab -l > crontab-backup.txt`.
-
-### Crontab Syntax
 
 Each line in the crontab is one task: five time fields followed by the command to run.
 
@@ -769,10 +751,22 @@ Each line in the crontab is one task: five time fields followed by the command t
 | `@daily` | Same as `0 0 * * *` |
 | `@weekly` | Same as `0 0 * * 0` |
 
-- Example: run a backup script every day at 2:00 AM, saving its output to a log
+- Edit your scheduled tasks (opens your crontab in an editor)
 
+```console
+$ crontab -e
 ```
-0 2 * * * /home/<user>/scripts/backup.sh >> /home/<user>/backup.log 2>&1
+
+- List your scheduled tasks
+
+```console
+$ crontab -l
+```
+
+- Delete _all_ your scheduled tasks (without confirmation)
+
+```console
+$ crontab -r
 ```
 
 > [!WARNING]
@@ -852,8 +846,9 @@ export PATH="<directory>:$PATH"
 
 ### Startup Files
 
+There are two bash startup files:
 - `~/.bashrc`: runs every time you open a new terminal. Put aliases, variables, and prompt settings here.
-- `~/.profile` (or `~/.bash_profile`): runs once when you log in. On Debian and Ubuntu it also loads `~/.bashrc`.
+- `~/.bash_profile`: runs once when you log in. On Debian and Ubuntu it also loads `~/.bashrc`.
 
 - Reload `~/.bashrc` after editing it, without opening a new terminal
 
@@ -917,7 +912,7 @@ exit <code>
 
 The first line of a script, starting with `#!`, tells the kernel which interpreter should run the file. Running `./hello.sh` with `#!/bin/bash` at the top is equivalent to running `/bin/bash ./hello.sh`.
 
-- Run a script with an interpreter found on your `PATH` (e.g., Bash, Python, Node)
+- Make a script runnable from the console using an interpreter found on your `PATH` (e.g., Bash, Python, Node)
 
 ```syntax
 #!/usr/bin/env <interpreter>
@@ -925,16 +920,6 @@ The first line of a script, starting with `#!`, tells the kernel which interpret
 
 > [!TIP]
 > Prefer `#!/usr/bin/env <interpreter>` over a hardcoded path like `#!/usr/bin/python3`. `env` searches your `PATH` for the interpreter, so the script works even when it's installed in a different location on another machine.
-
-- Make a script executable, then run it
-
-```syntax
-chmod +x <script>
-./<script>
-```
-
-> [!NOTE]
-> The `./` is required. The shell only searches `PATH` for commands, not the current directory, so `<script>` alone gives "command not found."
 
 > [!TIP]
 > Use long form flags in scripts ([source](https://matklad.github.io/2025/03/21/use-long-options-in-scripts.html)).
@@ -1211,9 +1196,6 @@ sudo usermod -aG <group> <user>
 
 > [!NOTE]
 > Group changes take effect the next time the user logs in.
-
-> [!NOTE]
-> `/etc/passwd` lists every user account and is readable by everyone. Despite its name, it doesn't hold passwords. The password hashes live in `/etc/shadow`, which only root can read.
 
 ## System Info & Power
 

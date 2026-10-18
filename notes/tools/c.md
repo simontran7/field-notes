@@ -2,11 +2,11 @@
 
 ## Entry Point
 
-Every C program must define a function named `main`, which is the program's **entry point**: the first of your code to run.
+Every C program must define a function named `main()`, which is the program's **entry point**: the first of your code to run.
 
-When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main`. The program ends cleanly in three ways: when `main` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main`, which is treated as `return 0;`. The integer value returned by `main` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main()`. The program ends cleanly in three ways: when `main()` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main()`, which is treated as `return 0;`. The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
 
-`main` must be declared as either:
+`main()` must be declared as either:
 - `int main(void)`
 - `int main(int argc, char **argv)`, where `argv` represents an array of string command-line arguments, and `argc` the number of arguments in `argv`.
 
@@ -65,16 +65,17 @@ Integer types follow the general form:
     long long
 ```
 
-- `signed` is the default for every integer type except `char`, so it can be omitted.
-- `int` can be omitted when `signed`, `unsigned`, `short`, `long`, `long long`, is present.
-
-```c
-// all four declarations name the same type
-signed long int a; 
-signed long b;
-long int c;
-long d; 
-```
+> [!TIP]
+> - `signed` is the default for every integer type except `char`, so it can be omitted.
+> - `int` can be omitted when `signed`, `unsigned`, `short`, `long`, `long long`, is present.
+>
+> ```c
+> // all four declarations name the same type
+> signed long int a; 
+> signed long b;
+> long int c;
+> long d; 
+> ```
 
 > [!TIP]
 > The minimum data width of certain integers depend on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator). Alternatively, use fixed-width integers where possible, by including [`<inttypes.h>`](https://beej.us/guide/bgclr/html/#inttypes). It includes [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint), which defines the types, and adds the macros to print them (e.g., `PRId32` for `int32_t`).
@@ -164,20 +165,7 @@ foo = 5; // works
 pi = 3.0; // error
 ```
 
-### Constants
-
-`const` makes a variable read-only after its initialization. `constexpr` (C23) goes further and makes it a compile-time constant, so its initializer must be a constant expression and it can be used where C requires one, such as an array size.
-
-```c
-#include <stddef.h>   // size_t
-#include <inttypes.h> // int32_t
-
-const int32_t n = get_count(); // fixed at run time
-constexpr size_t size = 16; // fixed at compile time
-int32_t buf[size];          // works, size is a constant
-```
-
-### Scope
+### Scope and Storage Duration
 
 A variable's **scope** is the part of the code where its name is visible. A variable declared inside `{ }` has **block scope** and is visible until the closing brace. A variable declared outside any function has **file scope** (often called a _global_ variable) and is visible from there to the end of the file.
 
@@ -211,19 +199,21 @@ int main(void) {
 }
 ```
 
-### Storage Duration
-
 An object's **storage duration** is how long its memory exists.
 
 | Storage duration | Variables | Created | Destroyed | Starts as |
 | :---: | :---: | :---: | :---: | :---: |
 | Automatic | locals | when the block starts (stack) | when the block ends | garbage |
-| Static | file scope and `static` locals | when the program starts (`.data` or `.bss`) | when the program ends | zero |
-| Allocated | [`malloc`](#dynamic-memory-allocation) memory | at `malloc` | at `free` | garbage |
+| Static | globals and `static` locals | when the program starts (`.data` or `.bss`) | when the program ends | zero |
+| Allocated | [`malloc()`](#dynamic-memory-allocation) memory | at `malloc()` | at `free()` | garbage |
 
-### Static Local Variables
+### Local Variables
 
-A local variable declared `static` has static [storage duration](#storage-duration), so it keeps its value between calls. Its initialization happens only once, before the program starts.
+A **local variable** is declared inside a block. It has block scope and automatic storage duration, so it is created each time the block runs, starts as garbage until you assign it, and is destroyed when the block ends. Nothing outside the block can refer to it.
+
+#### `static`
+
+A local variable declared `static` has static storage duration, so it keeps its value between calls. Its initialization happens only once, before the program starts, and without an initializer it starts at zero. Its scope doesn't change, so it is still visible only inside its block.
 
 ```c
 #include <stdio.h>    // printf()
@@ -241,9 +231,65 @@ int main(void) {
 }
 ```
 
-### File-Scoped Variables
+#### `extern`
 
-A variable at file scope can be used from other files too, through [`extern`](#external-variables). Declaring it `static` keeps it private to the file it is declared in.
+An `extern` declaration inside a block doesn't create a local variable. It makes a [global variable](#global-variables) visible by name, but only inside that block. It can't have an initializer, since the variable is defined elsewhere.
+
+```c
+#include <inttypes.h> // int32_t
+
+void f(void) {
+    extern int32_t counter; // the global counter, visible only inside f
+    counter += 1;
+}
+```
+
+#### `const`
+
+A local variable declared `const` is read-only after its initialization. Its initializer can be any expression, including one only known at run time.
+
+```c
+#include <inttypes.h> // int32_t
+
+void f(void) {
+    const int32_t n = get_count(); // fixed at run time
+    // n = 5; // error, n is const
+}
+```
+
+> [!WARNING]
+> `const` is only checked by the compiler. A cast to a non-`const` [pointer](#pointers)
+> compiles and lets you write to the variable, but writing to an object defined as
+> `const` is undefined behavior. It may crash, since the object can live in read-only
+> memory, or reads elsewhere may still see the old value.
+>
+> ```c
+> const int32_t x = 1;
+> int32_t *p = (int32_t *)&x; // compiles, the cast drops const
+> *p = 2;                     // undefined behavior
+> ```
+
+#### `constexpr`
+
+A local variable declared `constexpr` (C23) is a **compile-time constant**. Its initializer must be a constant expression, and in return it can be used where C requires one, such as an array size. It is implicitly `const`, has automatic storage duration unless you also declare it `static`, and can't be declared `extern`.
+
+```c
+#include <stddef.h>   // size_t
+#include <inttypes.h> // int32_t
+
+void f(void) {
+    constexpr size_t size = 16; // fixed at compile time
+    int32_t buf[size];          // works, size is a constant expression
+}
+```
+
+### Global Variables
+
+A **global variable** is declared outside any function. It has file scope and static storage duration, so it exists for the whole program and starts at zero without an initializer. By default, other files can use it through an [`extern`](#external-variables) declaration.
+
+#### `static`
+
+Declaring a global variable `static` keeps it private to the file it is declared in. It still lives for the whole program, so here `static` changes who can see the variable, not how long it lives.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -252,9 +298,9 @@ int32_t shared;           // other .c files can use it
 static int32_t file_only; // invisible to other .c files
 ```
 
-### External Variables
+#### `extern`
 
-An `extern` declaration refers to a variable that is defined in another file, without creating it. Exactly one file defines it, and every other file that uses it declares it with `extern`, usually through a header.
+An `extern` declaration refers to a global variable that is defined in another file, without creating it. Exactly one file defines it, and every other file that uses it declares it with `extern`, usually through a header.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -264,6 +310,31 @@ int32_t counter = 0; // definition
 
 // main.c
 extern int32_t counter; // declaration, the storage is in counter.c
+```
+
+#### `const`
+
+A global variable declared [`const`](#const-local-variables) is still visible to other files, unlike a `constexpr` one. Defining it in a header gives every file that includes it its own definition of the same name, so linking fails with a duplicate definition. Either declare it `static const` so each file gets a private copy, or define it in one `.c` file and declare it `extern const` in the header.
+
+```c
+#include <inttypes.h> // int32_t
+
+// users.h
+extern const int32_t max_users; // declaration only
+
+// users.c
+const int32_t max_users = 100;  // the one definition
+```
+
+#### `constexpr`
+
+A global variable declared [`constexpr`](#constexpr-local-variables) is private to its file, as if it were also declared `static`. This makes it safe to define in a header: every file that includes it gets its own copy, with no duplicate definition at link time. It can't be declared `extern`, since its value must be visible wherever it is used.
+
+```c
+#include <inttypes.h> // int32_t
+
+// config.h
+constexpr int32_t max_items = 64; // each including file gets its own copy
 ```
 
 > [!WARNING]
@@ -414,11 +485,12 @@ bool in_range = x >= 0 && x < 10;
 bool not_zero = !(x == 0);
 ```
 
-`&&` and `||` short-circuit, so the right side only runs when the left side doesn't already decide the result.
-
-```c
-if (p != nullptr && *p > 0) { ... } // *p is never read when p is null
-```
+> [!NOTE]
+> `&&` and `||` short-circuit, so the right side only runs when the left side doesn't already decide the result.
+>
+> ```c
+> if (p != nullptr && *p > 0) { ... } // *p is never read when p is null
+> ```
 
 > [!TIP]
 > To negate a combined condition, apply two separate rules in order:
@@ -476,7 +548,7 @@ flags << 1;     // 0b1010, each shift left doubles the value
 ```
 
 > [!WARNING]
-> Bitwise operators have low precedence, so parenthesize them whenever they're mixed with other operators. `&`, `|` and `^` bind looser than `==` and `!=`, so `x & 1 == 0` means `x & (1 == 0)`, which is always `0`. Write `(x & 1) == 0`. Shifts also bind looser than `+` and `-`, so `1 << n + 1` means `1 << (n + 1)`.
+> Bitwise operators have low precedence, so parenthesize them whenever they're mixed with other operators.
 
 > [!WARNING]
 > A shift happens in the type of its _left_ operand, after promotion: types narrower than `int` (e.g., `char`, `uint8_t`) are promoted to signed `int` first. This leads to undefined behaviour in two cases:
@@ -696,7 +768,7 @@ A function header that receives an array's address takes either form:
 
 ### File-Scoped Functions
 
-Like a [file-scoped variable](#file-scoped-variables), a function declared `static` can only be called from its own file. This is how helper functions stay private to the file that uses them.
+Like a [static global variable](#static-global-variables), a function declared `static` can only be called from its own file. This is how helper functions stay private to the file that uses them.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -749,7 +821,7 @@ A **closure** is a function bundled with variables it captured from where it was
 
 #### Context Pointers
 
-The function takes an extra `void *` parameter, and the caller passes the captured state through it. Most C APIs that take a callback use this form, e.g. `pthread_create(..., fn, arg)`, POSIX's `qsort_r` and GLib's `user_data`.
+The function takes an extra `void *` parameter, and the caller passes the captured state through it. Most C APIs that take a callback use this form, e.g. `pthread_create(..., fn, arg)`, POSIX's `qsort_r()` and GLib's `user_data`.
 
 ```c
 #include <stdio.h>    // printf()
@@ -1021,7 +1093,7 @@ C has no array methods. Instead, the standard library has functions that take a 
 | Fill | [`memset(a, byte, bytes)`](https://beej.us/guide/bgclr/html/#man-memset) | sets every _byte_, so only `0` is safe for non-`char` types |
 | Compare | [`memcmp(a, b, bytes)`](https://beej.us/guide/bgclr/html/#man-strcmp) | compares bytes, not values |
 | Sort | [`qsort(a, n, size, cmp)`](https://beej.us/guide/bgclr/html/#man-qsort) | in `<stdlib.h>`, you supply the comparison |
-| Search a sorted array | [`bsearch(&key, a, n, size, cmp)`](https://beej.us/guide/bgclr/html/#man-bsearch) | in `<stdlib.h>`, same comparison as `qsort` |
+| Search a sorted array | [`bsearch(&key, a, n, size, cmp)`](https://beej.us/guide/bgclr/html/#man-bsearch) | in `<stdlib.h>`, same comparison as `qsort()` |
 
 ```c
 #include <stdlib.h>   // qsort()
@@ -1048,7 +1120,7 @@ int main(void) {
 ```
 
 > [!WARNING]
-> To fill an array with any value other than zero, write a loop since `memset` copies
+> To fill an array with any value other than zero, write a loop since `memset()` copies
 > one byte into every byte, so it can't set an `int` to `1`..
 
 ### 2D Arrays
@@ -1131,7 +1203,7 @@ int main(void) {
 }
 ```
 
-To put a 2D array on the heap in one block, allocate it through a pointer to a row. Indexing works the same as for a declared 2D array, and a single `free` releases all of it.
+To put a 2D array on the heap in one block, allocate it through a pointer to a row. Indexing works the same as for a declared 2D array, and a single `free()` releases all of it.
 
 ```c
 #include <stdlib.h>   // malloc(), free()
@@ -1290,7 +1362,7 @@ To compare or copy the objects themselves, use functions such as [`memcmp()`](ht
 
 `NULL` is a pointer that points to no object. Functions such as [`malloc()`](https://beej.us/guide/bgclr/html/#man-malloc) return it to signal failure, and dereferencing it is undefined behaviour (usually a crash).
 
-C23 adds the keyword `nullptr`, which is a null pointer constant of its own type, `nullptr_t`, and converts to any pointer type. `NULL` is a macro that an implementation may define as `0` or `((void *)0)`, so it can end up as an `int`. That matters when the type isn't fixed by context, such as an argument to a variadic function like `printf` or the controlling expression of `_Generic`.
+C23 adds the keyword `nullptr`, which is a null pointer constant of its own type, `nullptr_t`, and converts to any pointer type. `NULL` is a macro that an implementation may define as `0` or `((void *)0)`, so it can end up as an `int`. That matters when the type isn't fixed by context, such as an argument to a variadic function like `printf()` or the controlling expression of `_Generic`.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -1326,7 +1398,7 @@ size_t count_spaces(const char *s) {
 
 A **void pointer** `void *p` holds an address without saying what type of object is there. Since the compiler doesn't know the type, you can't dereference a `void *` or do arithmetic on it, so you convert it to a typed pointer first. In C, that conversion happens implicitly in both directions, so any object pointer can be assigned to a `void *` and back without a cast.
 
-Library functions that work on raw memory, like [`memcpy()`](https://beej.us/guide/bgclr/html/#man-memcpy) and `malloc`, take or return `void *` so they work with any type.
+Library functions that work on raw memory, like [`memcpy()`](https://beej.us/guide/bgclr/html/#man-memcpy) and `malloc()`, take or return `void *` so they work with any type.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -1346,14 +1418,14 @@ The bytes last until you pass that pointer to [`free()`](https://beej.us/guide/b
 
 The bytes are an [object](#variables) with no name, so you reach it only through the pointer. It has no type of its own either, and holds whatever you store in it: one value, a struct, or several values used as an array.
 
-`malloc` returns a [`void *`](#void-pointers), which converts implicitly to whatever pointer type you assign it to, so you don't need to cast it.
+`malloc()` returns a [`void *`](#void-pointers), which converts implicitly to whatever pointer type you assign it to, so you don't need to cast it.
 
 > [!TIP]
 > Write `int *a = malloc(...)` over `int *a = (int *)malloc(...)`. The cast
 > repeats the type, so it is one more thing to update if the type changes. C++
 > doesn't convert `void *` implicitly, which is why C++ code needs the cast.
 
-Since `malloc` takes no initializer, the bytes start out as garbage, and you fill them at run time. [`calloc(count, size)`](https://beej.us/guide/bgclr/html/#man-malloc) allocates `count * size` bytes that start zero-filled, and it checks the multiplication for overflow.
+Since `malloc()` takes no initializer, the bytes start out as garbage, and you fill them at run time. [`calloc(count, size)`](https://beej.us/guide/bgclr/html/#man-malloc) allocates `count * size` bytes that start zero-filled, and it checks the multiplication for overflow.
 
 ```c
 #include <stdlib.h>   // malloc(), free()
@@ -1376,8 +1448,8 @@ int32_t *make_range(size_t n) {
 > right if the type of `a` changes.
 
 > [!WARNING]
-> Every `malloc` needs exactly one matching `free`. Forgetting it leaks the memory,
-> using the pointer after `free` (use-after-free) or calling `free` twice on it
+> Every `malloc()` needs exactly one matching `free()`. Forgetting it leaks the memory,
+> using the pointer after `free()` (use-after-free) or calling `free()` twice on it
 > (double free) is undefined behaviour.
 
 ## Strings
@@ -1472,8 +1544,8 @@ void example(int32_t count) {
 ### Pointers To Heap Memory
 
 `malloc(n)` gives you `n` bytes on the heap, which last until you pass the
-pointer to `free`. You reach them through the pointer [`malloc()`](https://beej.us/guide/bgclr/html/#man-malloc) returns. Since
-`malloc` takes no initializer, the bytes start out as garbage, and you fill them
+pointer to `free()`. You reach them through the pointer [`malloc()`](https://beej.us/guide/bgclr/html/#man-malloc) returns. Since
+`malloc()` takes no initializer, the bytes start out as garbage, and you fill them
 by writing, the same way as a character array filled at run time. You also
 write the `\0` yourself, so a string of length `len` needs `len + 1` bytes.
 
@@ -1496,7 +1568,7 @@ char *copy_string(const char *src) {
 
 The **length** of a string is the number of characters before its `\0`, which is always less than the capacity of the array holding it.
 
-[`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen` works by walking the string from the first character until it reaches the `\0`, worst-case $O(l)$ time, where $l$ is the length of the string.
+[`strlen()`](https://beej.us/guide/bgclr/html/#man-strlen) returns it as a `size_t`. C strings don't store their length anywhere, so `strlen()` works by walking the string from the first character until it reaches the `\0`, worst-case $O(l)$ time, where $l$ is the length of the string.
 
 `sizeof` measures something different. On a `char` array, it gives the array's capacity, which counts the `\0` and any unused space after it. On a pointer, it gives the size of the pointer itself, whatever string it points to.
 
@@ -1516,11 +1588,11 @@ int main(void) {
 ```
   
 > [!TIP]
-> Since `strlen` is $O(l)$, call it once and keep the result instead of calling
+> Since `strlen()` is $O(l)$, call it once and keep the result instead of calling
 > it in a for loop condition, or keep it with the string in a [string view](#fat-pointers).
 
 > [!WARNING]
-> `strlen` keeps reading until it finds a `\0`, so calling it on a byte buffer
+> `strlen()` keeps reading until it finds a `\0`, so calling it on a byte buffer
 > with no `\0` reads past the end, which is undefined behaviour.
 
 ### String Equality
@@ -1529,7 +1601,7 @@ int main(void) {
 
 ### String Copying
 
-`str1 = str2` [copies the pointer](#comparing-and-assigning-pointers), so both then point to the same characters. To copy the characters, make sure the destination's capacity is at least `strlen(src) + 1`, for the characters and the `\0`, then use [`strcpy()`](https://beej.us/guide/bgclr/html/#man-strcpy), or `memcpy()` with `strlen(src) + 1` bytes as in `copy_string` above.
+`str1 = str2` [copies the pointer](#comparing-and-assigning-pointers), so both then point to the same characters. To copy the characters, make sure the destination's capacity is at least `strlen(src) + 1`, for the characters and the `\0`, then use [`strcpy()`](https://beej.us/guide/bgclr/html/#man-strcpy), or `memcpy()` with `strlen(src) + 1` bytes as in `copy_string()` above.
 
 > [!WARNING]
 > `strncpy(dst, src, n)` writes no `\0` when `src` has `n` or more characters,
@@ -1549,7 +1621,7 @@ struct <tag> { <member>+ };
 
 ### Fat Pointers
 
-A C pointer is a **thin pointer**, since it only holds an address. Nothing in it records how many elements follow, which is why an array loses its length when it [decays](#array-to-pointer-decay), and why [`strlen`](#string-length) has to walk the string to find the `\0`.
+A C pointer is a **thin pointer**, since it only holds an address. Nothing in it records how many elements follow, which is why an array loses its length when it [decays](#array-to-pointer-decay), and why [`strlen()`](#string-length) has to walk the string to find the `\0`.
 
 A **fat pointer** stores extra data next to the address. The usual extra is a length, and a pointer plus a length is called a **slice**. C has no fat pointer type, so you define a record holding both and pass it by value, which costs two words, usually 16 bytes.
 
@@ -1597,7 +1669,7 @@ A slice of `const char` is often called a **string view**. Its length is $O(1)$ 
 
 ### Variable-Size Structs
 
-A **flexible array member** is an array with no size as the _last_ member of a struct. It adds nothing to `sizeof` the struct, and you allocate the struct together with as many elements as you need, so the header and its data share one allocation, one `free`, and one cache-friendly block of memory.
+A **flexible array member** is an array with no size as the _last_ member of a struct. It adds nothing to `sizeof` the struct, and you allocate the struct together with as many elements as you need, so the header and its data share one allocation, one `free()`, and one cache-friendly block of memory.
 
 ```c
 #include <stdio.h>  // printf()
@@ -1630,7 +1702,7 @@ int main(void) {
 }
 ```
 
-For elements bigger than a byte, allocate `sizeof *m + n * sizeof m->data[0]`, and check the multiplication for overflow with `ckd_mul` as in the [stack example](#encapsulation).
+For elements bigger than a byte, allocate `sizeof *m + n * sizeof m->data[0]`, and check the multiplication for overflow with `ckd_mul()` as in the [stack example](#encapsulation).
 
 > [!WARNING]
 > A struct with a flexible array member can't be an array element or a member of
@@ -1800,27 +1872,21 @@ An include takes either form:
 #include "<header>"
 ```
 
-```c
-#include <name.h> // Systems libraries where the compiler searches in the systems directories 
-
-#include "name.h" // Local libraries where the compiler searches in the relative path
-```
-
 ## ISO C Standard Library
 
 [https://beej.us/guide/bgclr/html/](https://beej.us/guide/bgclr/html/)
 
 > [!NOTE]
 > - **ISO C standard library**: defined by the C standard itself (`<stdio.h>`, `<stdlib.h>`, `<string.h>`, ...). Available on every hosted C implementation, Windows included.
-> - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open`, `read`, `write`), processes (`fork`, `exec`, `wait`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
+> - **POSIX**: a standard for Unix-like OSes that adds OS services on top of ISO C: file descriptors (`open()`, `read()`, `write()`), processes (`fork()`, `exec()`, `wait()`), threads (`pthread_*`), signals, pipes, and sockets. Available on Linux, macOS, and the BSDs, but not natively on Windows.
 > - **Platform-specific functions**: everything outside both standards, tied to one OS or one library, e.g. Linux's `epoll` and `inotify`, or macOS/BSD's `kqueue`. Use them when you need them, knowing you give up portability.
 >
 > One C library implementation usually covers all three. `glibc`, for example, implements ISO C, POSIX, and Linux/GNU extensions.
 
 > [!NOTE]
 > Every function in a C library is one of two kinds:
-> - **Library function**: does its work in user space, e.g. `strlen`, `memcpy`, `qsort`. Some call syscalls internally: `printf` formats into a buffer, then calls `write`; `malloc` gets memory from `brk` or `mmap`.
-> - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read`, `write`, `open`, `fork`.
+> - **Library function**: does its work in user space, e.g. `strlen()`, `memcpy()`, `qsort()`. Some call syscalls internally: `printf()` formats into a buffer, then calls `write()`; `malloc()` gets memory from `brk()` or `mmap()`.
+> - **Syscall wrapper**: a thin function that passes its arguments to the kernel through a system call and sets `errno` on failure, e.g. `read()`, `write()`, `open()`, `fork()`.
 
 ## Generics
 
@@ -1828,7 +1894,7 @@ C has no templates or generic types, so code that works for many types uses one 
 
 ### Void Pointers And Sizes
 
-A function takes `void *` pointers and the size of each element, and works on raw bytes. It runs once for every type, the way [`qsort` and `memcpy`](#array-functions) do, but the compiler can't check that the pointers and the size agree.
+A function takes `void *` pointers and the size of each element, and works on raw bytes. It runs once for every type, but the compiler can't check that the pointers and the size agree.
 
 ```c
 #include <stdio.h>    // printf()
@@ -2192,7 +2258,7 @@ struct dog d = { .base = { &dog_ops, "Rex" }, .good_boy = true };
 struct animal *a = (struct animal *)&d;     // upcast
 struct dog *back = (struct dog *)a;         // downcast, unchecked
 
-When the parent isn’t the first member, or an object embeds several “bases” (like implementing multiple interfaces), you use container_of, the Linux kernel’s macro that subtracts offsetof to get from a member pointer back to its enclosing struct:
+When the parent isn’t the first member, or an object embeds several “bases” (like implementing multiple interfaces), you use `container_of()`, the Linux kernel’s macro that subtracts `offsetof()` to get from a member pointer back to its enclosing struct:
 
 c
 #define container_of(ptr, type, member) \
@@ -2214,7 +2280,7 @@ https://web.archive.org/web/20250124083637/https://pabloariasal.github.io/2017/0
 
 C has no exceptions, so a function reports failure through its return value. When it also has a result to give back, the usual idiom is to return a status and write the result through an **out-parameter**, which the caller reads only on success. Marking the function `[[nodiscard]]` makes the compiler warn when a caller ignores the status.
 
-Library functions that fail usually also set [`errno`](https://beej.us/guide/bgclr/html/#errno) from `<errno.h>` to a code saying why. `errno` is only meaningful right after a call that reported failure, since a successful call may leave any value in it. Some functions, like `strtol`, have no return value that always means failure, so you set `errno` to `0` before the call and check it after.
+Library functions that fail usually also set [`errno`](https://beej.us/guide/bgclr/html/#errno) from `<errno.h>` to a code saying why. `errno` is only meaningful right after a call that reported failure, since a successful call may leave any value in it. Some functions, like `strtol()`, have no return value that always means failure, so you set `errno` to `0` before the call and check it after.
 
 This parser returns an enum status, and stores the number through `out`.
 
@@ -2283,7 +2349,7 @@ When a function that sets `errno` fails, [`perror()`](https://beej.us/guide/bgcl
 
 C has no `defer` statement, so a function that acquires several resources needs another way to release them on every exit path. The common idiom uses `goto` to jump forward to a chain of cleanup labels at the end of the function.
 
-This example opens a file, allocates a buffer, and reads into it. Each of those steps can fail. The buffer size is a `constexpr` constant, so `malloc` and `fread` always agree on it.
+This example opens a file, allocates a buffer, and reads into it. Each of those steps can fail. The buffer size is a `constexpr` constant, so `malloc()` and `fread()` always agree on it.
 
 ```c
 #include <stdio.h>    // printf(), fprintf(), fopen(), fread(), ferror(), fclose()
@@ -2300,7 +2366,7 @@ static int32_t process(const char *path) {
     int32_t result = -1;
 ```
 
-When a step fails, jump to the label that releases everything acquired _before_ it. A failed `fopen` has nothing to release yet, so it jumps straight to `out`.
+When a step fails, jump to the label that releases everything acquired _before_ it. A failed `fopen()` has nothing to release yet, so it jumps straight to `out`.
 
 ```c
     FILE *f = fopen(path, "r");
@@ -2358,15 +2424,15 @@ $ ./cleanup missing.txt; echo $?
 > - `goto` can't jump forward past a variable-length array, because its memory is allocated only when execution reaches the declaration.
 > - Variable initializations skipped by a `goto` never run, so reading those variables is undefined behavior. In the example above, `goto out` skips the initialization of `buf`, which is safe only because nothing after `out` reads `buf`.
 
-## Inheritance and Intrusive Data Structures with `container_of`
+## Inheritance and Intrusive Data Structures with `container_of()`
 
-The `container_of` macro takes a pointer to a struct member and returns a pointer to the struct that contains it. The Linux kernel uses it everywhere, because it gives C two features the language lacks:
+The `container_of()` macro takes a pointer to a struct member and returns a pointer to the struct that contains it. The Linux kernel uses it everywhere, because it gives C two features the language lacks:
 - generic intrusive data structures
 - object-oriented inheritance
 
 The examples below build up to both, one program at a time.
 
-### Step 1: Understand `offsetof`
+### Step 1: Understand `offsetof()`
 
 `offsetof(type, member)`, from `<stddef.h>`, gives the byte distance from the start of a struct to one of its members.
 
@@ -2401,7 +2467,7 @@ int main(void) {
 }
 ```
 
-Adding a member's offset to the struct's address gives the member's address. `container_of` runs this calculation in reverse.
+Adding a member's offset to the struct's address gives the member's address. `container_of()` runs this calculation in reverse.
 
 ```console
 $ gcc -std=c23 -Wall -Wextra -o offsetof offsetof.c && ./offsetof
@@ -2506,7 +2572,7 @@ static void list_del(struct list_node *n) {
 }
 ```
 
-An `employee` embeds two hooks, so the same object can sit in two lists at once: one for the whole company and one for a team. The hooks can go anywhere in the struct, since `container_of` subtracts each hook's real offset.
+An `employee` embeds two hooks, so the same object can sit in two lists at once: one for the whole company and one for a team. The hooks can go anywhere in the struct, since `container_of()` subtracts each hook's real offset.
 
 ```c
 struct employee {
@@ -2543,7 +2609,7 @@ Bob then leaves the team. `list_del` only touches his `team` hook, so he stays o
     list_del(&b.team);
 ```
 
-Walking a list means following `next` until you arrive back at the head. `container_of` takes each node back to its `employee`, and the member name tells it which hook the node came from.
+Walking a list means following `next` until you arrive back at the head. `container_of()` takes each node back to its `employee`, and the member name tells it which hook the node came from.
 
 ```c
     printf("staff:\n");
@@ -2575,7 +2641,7 @@ team:
 
 ### Step 4: Polymorphism with a vtable
 
-A base type holds a pointer to a table of function pointers, called a **vtable**. Each derived type embeds the base, and its methods use `container_of` to get from the base back to the derived type.
+A base type holds a pointer to a table of function pointers, called a **vtable**. Each derived type embeds the base, and its methods use `container_of()` to get from the base back to the derived type.
 
 ```c
 #include <stdio.h>  // printf()
@@ -2599,7 +2665,7 @@ struct shape {
 };
 ```
 
-Each circle method receives a `struct shape *` and recovers its `struct circle` with `container_of`. `circle_name` doesn't use its parameter, so it leaves it unnamed, which C23 allows. All circles share one `static const` ops table, filled in with designated initializers, so each object stores only a single pointer to it. The Linux kernel's `struct file_operations` works the same way.
+Each circle method receives a `struct shape *` and recovers its `struct circle` with `container_of()`. `circle_name()` doesn't use its parameter, so it leaves it unnamed, which C23 allows. All circles share one `static const` ops table, filled in with designated initializers, so each object stores only a single pointer to it. The Linux kernel's `struct file_operations` works the same way.
 
 ```c
 constexpr double pi = 3.14159265358979;
@@ -2684,11 +2750,11 @@ rectangle with area 12.00
 ```
 
 > [!WARNING]
-> `container_of` is valid only when the pointer really points to that member inside a real object of the containing type. The macro checks that the pointer's type matches the member's type, and it has no way to check which object the pointer actually came from. For example, if `circle_area` receives the `struct shape` embedded in a rectangle, `container_of` computes the address of a circle that doesn't exist, and using that address is undefined behavior. The safest approach is to make this mistake impossible by design. Since only `circle_init` installs `circle_ops`, the only way to reach `circle_area` is through a real circle. Keeping each ops table `static` to its source file ensures that no other code can attach it to the wrong kind of object.
+> `container_of()` is valid only when the pointer really points to that member inside a real object of the containing type. The macro checks that the pointer's type matches the member's type, and it has no way to check which object the pointer actually came from. For example, if `circle_area()` receives the `struct shape` embedded in a rectangle, `container_of()` computes the address of a circle that doesn't exist, and using that address is undefined behavior. The safest approach is to make this mistake impossible by design. Since only `circle_init()` installs `circle_ops`, the only way to reach `circle_area()` is through a real circle. Keeping each ops table `static` to its source file ensures that no other code can attach it to the wrong kind of object.
 
 ### Step 5: Putting it together, a list of polymorphic shapes
 
-Give the base `struct shape` a list hook, and any shape can live in a generic list. Walking that list takes two `container_of` hops: from the list node to the `shape` in the loop, then from the `shape` to the `circle` or `rect` inside each method.
+Give the base `struct shape` a list hook, and any shape can live in a generic list. Walking that list takes two `container_of()` hops: from the list node to the `shape` in the loop, then from the `shape` to the `circle` or `rect` inside each method.
 
 ```c
 #include <stdio.h>  // printf()
@@ -2836,4 +2902,4 @@ circle        19.63
 total         34.78
 ```
 
-`offsetof` accepts nested members, so when you know the concrete type, you can jump straight from the list node to it with `container_of(p, struct circle, base.link)`.
+`offsetof()` accepts nested members, so when you know the concrete type, you can jump straight from the list node to it with `container_of(p, struct circle, base.link)`.
