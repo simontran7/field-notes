@@ -118,7 +118,7 @@ A declaration introduces a variable's name and type.
 int32_t count;
 ```
 
-A declaration that also creates the variable's storage is a **definition**. For variables, this is almost always the case.
+A **definition** is a declaration that also creates the variable's storage. For variables, this is almost always the case.
 
 ### Initialization
 
@@ -271,7 +271,7 @@ void f(void) {
 
 #### `constexpr`
 
-A local variable declared `constexpr` (C23) is a **compile-time constant**. Its initializer must be a constant expression, and in return it can be used where C requires one, such as an array size. It is implicitly `const`, has automatic storage duration unless you also declare it `static`, and can't be declared `extern`.
+A **compile-time constant** is a local variable declared `constexpr` (C23). Its initializer must be a constant expression, and in return it can be used where C requires one, such as an array size. It is implicitly `const`, has automatic storage duration unless you also declare it `static`, and can't be declared `extern`.
 
 ```c
 #include <stddef.h>   // size_t
@@ -1458,7 +1458,7 @@ A **string** is _any_ contiguous run of `char`s ending at (and including) the fi
 
 Since a string is just `char`s in memory, you create one the same way as any other data: as a `char` [array](#arrays), or as a [pointer](#pointers) to `char`s stored somewhere else, such as on the [heap](#dynamic-memory-allocation). All the usual rules for those apply, and the one addition is that you have to make sure a `\0` ends up after the last character. The only syntax specific to strings is the string literal, which gives you a shorter way to create both.
 
-Any text in double quotes in your source code is a **string literal**. What the compiler does with it depends on where you write it:
+A **string literal** is any text in double quotes in your source code. What the compiler does with it depends on where you write it:
 
 - When it initializes a character array, the literal is just a convenient way to write the initial characters, and they are copied into your array.
 - Everywhere else, the compiler stores the characters plus a `\0` in a _hidden_ array and the literal evaluates to a pointer to its first character. The hidden array has static storage duration and usually sits in read-only memory (`.rodata`).
@@ -1621,7 +1621,7 @@ struct <tag> { <member>+ };
 
 ### Fat Pointers
 
-A C pointer is a **thin pointer**, since it only holds an address. Nothing in it records how many elements follow, which is why an array loses its length when it [decays](#array-to-pointer-decay), and why [`strlen()`](#string-length) has to walk the string to find the `\0`.
+A **thin pointer** is a pointer that only holds an address, which is what every C pointer is. Nothing in it records how many elements follow, which is why an array loses its length when it [decays](#array-to-pointer-decay), and why [`strlen()`](#string-length) has to walk the string to find the `\0`.
 
 A **fat pointer** stores extra data next to the address. The usual extra is a length, and a pointer plus a length is called a **slice**. C has no fat pointer type, so you define a record holding both and pass it by value, which costs two words, usually 16 bytes.
 

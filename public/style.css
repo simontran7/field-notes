@@ -405,10 +405,10 @@ body {
   border-radius: 4px;
 }
 
-/* Copy button, bottom-right; the icon turns into a checkmark after copying (site.js) */
+/* Copy button, top-right; the icon turns into a checkmark after copying (site.js) */
 .copy-btn {
   position: absolute;
-  bottom: 0.3rem;
+  top: 0.3rem;
   right: 0.3rem;
   display: flex;
   padding: 0.5rem;

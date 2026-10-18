@@ -13,3 +13,5 @@
 - https://abseil.io/fast/hints.html
 
 - https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/
+
+- FxHasher + https://bd103.dev/blog/2025-11-10-rust-hashing-cheat-sheet/
