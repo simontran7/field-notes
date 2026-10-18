@@ -1,4 +1,4 @@
 # Field Notes
 
-computer science notes
+computer science field notes
 

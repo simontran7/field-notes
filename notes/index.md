@@ -44,12 +44,12 @@
 
 ## Computer Systems
 
-- Computer Organization
+<!-- - Computer Organization
     - [Data Representation](computer-systems/computer-organization/data-representation.md)
     - [Microarchitecture](computer-systems/computer-organization/microarchitecture.md)
     - [Physical Memory](computer-systems/computer-organization/physical-memory.md)
     - [Assembly](computer-systems/computer-organization/assembly.md)
-    - [Multiprocessor Systems](computer-systems/computer-organization/multiprocessor-systems.md)
+    - [Multiprocessor Systems](computer-systems/computer-organization/multiprocessor-systems.md) -->
 <!-- - Operating Systems
     - [Introduction to Operating Systems](computer-systems/operating-systems/introduction-to-operating-systems.md)
     - [Processes](computer-systems/operating-systems/processes.md)

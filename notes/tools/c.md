@@ -4,7 +4,13 @@
 
 Every C program must define a function named `main()`, which is the program's **entry point**: the first of your code to run.
 
-When the executable is loaded into memory, the operating system transfers control to the **C runtime’s startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. The program ends cleanly in three ways: when `main()` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main()`, which is treated as `return 0;`. The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+When the executable is loaded into memory, the operating system transfers control to the **C runtime’s startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. 
+
+The program ends cleanly in three ways: 
+- wWen `main()` returns an integer, when `exit()` is called
+- When control reaches the closing brace of `main()`, which is treated as `return 0;`. 
+
+The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
 
 `main()` must be declared as either:
 - `int main(void)`
@@ -31,7 +37,7 @@ Comments are used to write anything that is to be ignored by the compiler.
 // Single-line comments
 ```
 
-## Primitive Data Types
+## Arithmetic Types
 
 | Type | Minimum width |
 | :---: | :---: |
@@ -86,14 +92,85 @@ Integer types follow the general form:
 > [!WARNING]
 > C treats a nonzero value as `true`, and a zero value as `false`.
 
-## Variables
+## Objects
 
-An **object** is a region of memory that holds a value of some type. A **variable** is an object with a name.
+An **object** is a region of memory that holds a value of some type.
 
 > [!NOTE]
-> "Object" here is the C standard's term for storage, unrelated to objects in object-oriented programming.
+> This is unrelated to the term object in object-oriented programming.
 
-A variable takes the form:
+## Scope
+
+A identifier's **scope** is the part of the code where its name is visible. 
+
+### Scope Kinds
+
+- **File scope**: declared outside any block, visible to the end of the translation unit.
+- **Block scope**: declared inside `{ }` or as a function parameter, visible to the end of that block.
+- **Function prototype scope**: parameter names in a prototype without a body, visible only within that prototype.
+- **Function scope**: labels only. A label is visible throughout the whole function, even before it appears.
+
+```c
+#include <inttypes.h> // `int32_t`
+
+int32_t total; // `total has file scope
+
+void g(int32_t n); // `n` has function prototype scope: visible only within `g()`'s declaration
+
+void f(int32_t p) { // `p` has block scope: visible throughout `f()`'s body
+    if (p < 0) {
+        goto done; // `done` has function scope: usable anywhere in `f()`, even before it appears
+    }
+
+    int32_t x = 1; // `x` has block scope: visible from here to the end of `f`
+    if (x) {
+        int32_t y = 2; // `y` also has block scope: visible only inside this if statement
+    }
+
+done:
+    return;
+}
+```
+
+### Shadowing
+
+An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
+
+```c
+```c
+#include <inttypes.h> // `int32_t`
+
+int32_t x = 1; // file-scope `x`
+
+void f(void) {
+    int32_t x = 2; // shadows the file-scope `x`
+    if (x) {
+        int32_t x = 3; // shadows the function's `x`
+        x = 4;         // changes only the innermost `x`
+    }
+    // here `x` is 2 again; the innermost `x` is gone
+}
+// here `x` is 1; the file-scope `x` was never changed
+```
+
+## Storage Duration
+
+An object's **storage duration** is how long its memory exists.
+
+| Storage duration | Created | Destroyed | Starts as |
+| :---: | :---: | :---: | :---: |
+| Automatic | when the block starts (stack) | when the block ends | garbage |
+| Static | when the program starts (`.data`, `.bss`, or `.rodata`) | when the program ends | zero, unless initialized |
+| Thread | when the thread starts (`.tdata` or `.tbss`) | when the thread ends | zero, unless initialized |
+| Allocated | at `malloc()` | at `free()` | garbage |
+
+## Linkage
+
+TO WRITE
+
+## Variables
+
+A **variable** is a named object.
 
 ```syntax
 <storage class>? <qualifier>? <type> <identifier> <initializer>?;
@@ -108,116 +185,49 @@ A variable takes the form:
     = <value>
 ```
 
-### Declaration
-
-A declaration introduces a variable's name and type.
+Variables can be declared, declared and explicitly initialized, either on a seperate line, or on the same line.
 
 ```c
-#include <inttypes.h> // int32_t
+#include <inttypes.h> // `int32_t`
 
-int32_t count;
-```
+// declaration
+int32_t count; // initialized to garbage
 
-A **definition** is a declaration that also creates the variable's storage. For variables, this is almost always the case.
-
-### Initialization
-
-A declaration with an initialization gives the variable its first value in the same statement.
-
-```c
-#include <inttypes.h> // int32_t
-
+// initialization
 int32_t total = 0;
-```
 
-Variables declared inside a function without an initialization hold garbage until you assign them. Global variables and `static` variables are initialized to zero (see [Storage Duration](#storage-duration)).
-
-```c
-#include <inttypes.h> // int32_t
-
-int32_t global;             // 0
-
-int main(void) {
-    int32_t local;          // garbage
-    static int32_t counter; // 0
-}
-```
-
-### Multi-Declaration and Multi-Initialization
-
-You can declare multiple variables at once, and initialize any of them.
-
-```c
+// multi-declaration and multi-initialization
 char a = 'x', b;
 ```
 
-### Assignment
-
-Variables can be assigned later, but `const` variable can't later be assigned.
+Variables can be assigned.
 
 ```c
-#include <inttypes.h> // int32_t
+#include <inttypes.h> // `int32_t`
 
-int32_t foo;
-const double pi = 3.14159;
+// declared
+int32_t foo = 0;
 
-foo = 5; // works
-pi = 3.0; // error
+// assigned
+foo = 5; 
 ```
-
-### Scope and Storage Duration
-
-A variable's **scope** is the part of the code where its name is visible. A variable declared inside `{ }` has **block scope** and is visible until the closing brace. A variable declared outside any function has **file scope** (often called a _global_ variable) and is visible from there to the end of the file.
-
-```c
-#include <inttypes.h> // int32_t
-
-int32_t total; // file scope
-
-void f(void) {
-    int32_t x = 1; // block scope
-    if (x) {
-        int32_t y = 2; // visible only inside this if
-    }
-    // y = 3; // error, y is out of scope
-}
-```
-
-An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
-
-```c
-#include <stdio.h>    // printf()
-#include <inttypes.h> // PRId32, int32_t
-
-int main(void) {
-    int32_t x = 1;
-    {
-        int32_t x = 2; // shadows the outer x
-        printf("%" PRId32 "\n", x); // 2
-    }
-    printf("%" PRId32 "\n", x); // 1
-}
-```
-
-An object's **storage duration** is how long its memory exists.
-
-| Storage duration | Variables | Created | Destroyed | Starts as |
-| :---: | :---: | :---: | :---: | :---: |
-| Automatic | locals | when the block starts (stack) | when the block ends | garbage |
-| Static | globals and `static` locals | when the program starts (`.data` or `.bss`) | when the program ends | zero |
-| Allocated | [`malloc()`](#dynamic-memory-allocation) memory | at `malloc()` | at `free()` | garbage |
 
 ### Local Variables
 
-A **local variable** is declared inside a block. It has block scope and automatic storage duration, so it is created each time the block runs, starts as garbage until you assign it, and is destroyed when the block ends. Nothing outside the block can refer to it.
+A **local variable** is a variable with block scope, with automatic storage duration, and without any linkage.
 
 #### `static`
 
-A local variable declared `static` has static storage duration, so it keeps its value between calls. Its initialization happens only once, before the program starts, and without an initializer it starts at zero. Its scope doesn't change, so it is still visible only inside its block.
+A local variable declared `static` makes it have a static storage duration.
+
+Consequences of static storage sduration:
+- Keeps its value between calls. 
+- Its initialization happens only once, before the program starts
+- Without an initializer, it starts at the zero value of the designated type. 
 
 ```c
-#include <stdio.h>    // printf()
-#include <inttypes.h> // PRId32, int32_t
+#include <stdio.h>    // `printf()`
+#include <inttypes.h> // `PRId32`, `int32_t`
 
 void tick(void) {
     static int32_t count; // starts at 0, initialized only once
@@ -231,51 +241,45 @@ int main(void) {
 }
 ```
 
-#### `extern`
+<!-- #### `extern`
 
-An `extern` declaration inside a block doesn't create a local variable. It makes a [global variable](#global-variables) visible by name, but only inside that block. It can't have an initializer, since the variable is defined elsewhere.
+An `extern` declaration inside a block creates a declaration for a global variable visible by name, but only inside that block. 
+
+It's definition must be a global variable defined elsewhere.
 
 ```c
-#include <inttypes.h> // int32_t
+#include <inttypes.h> // `int32_t`
 
 void f(void) {
-    extern int32_t counter; // the global counter, visible only inside f
+    extern int32_t counter; // the global counter, visible only inside `f()`
     counter += 1;
 }
 ```
 
 #### `const`
 
-A local variable declared `const` is read-only after its initialization. Its initializer can be any expression, including one only known at run time.
+A local variable declared `const` is read-only after its initialization, which means it can't be re-assigned. 
+
+Its initializer can be any compile time or run time known expression.
 
 ```c
-#include <inttypes.h> // int32_t
+#include <inttypes.h> // `int32_t`
 
 void f(void) {
     const int32_t n = get_count(); // fixed at run time
-    // n = 5; // error, n is const
+    n = 5; // error, n is const
 }
 ```
 
-> [!WARNING]
-> `const` is only checked by the compiler. A cast to a non-`const` [pointer](#pointers)
-> compiles and lets you write to the variable, but writing to an object defined as
-> `const` is undefined behavior. It may crash, since the object can live in read-only
-> memory, or reads elsewhere may still see the old value.
->
-> ```c
-> const int32_t x = 1;
-> int32_t *p = (int32_t *)&x; // compiles, the cast drops const
-> *p = 2;                     // undefined behavior
-> ```
-
 #### `constexpr`
 
-A **compile-time constant** is a local variable declared `constexpr` (C23). Its initializer must be a constant expression, and in return it can be used where C requires one, such as an array size. It is implicitly `const`, has automatic storage duration unless you also declare it `static`, and can't be declared `extern`.
+Its initializer must be a constant expression, and in return it can be used where C requires one, such as an array size. 
+
+It is implicitly `const`, i.e., it can't be re-assigned.
 
 ```c
-#include <stddef.h>   // size_t
-#include <inttypes.h> // int32_t
+#include <stddef.h>   // `size_t`
+#include <inttypes.h> // `int32_t`
 
 void f(void) {
     constexpr size_t size = 16; // fixed at compile time
@@ -285,11 +289,14 @@ void f(void) {
 
 ### Global Variables
 
-A **global variable** is declared outside any function. It has file scope and static storage duration, so it exists for the whole program and starts at zero without an initializer. By default, other files can use it through an [`extern`](#external-variables) declaration.
+A **global variable** is a variable declared outside any function. 
+
+- Scope: file scope
+- Storage Duration: static
 
 #### `static`
 
-Declaring a global variable `static` keeps it private to the file it is declared in. It still lives for the whole program, so here `static` changes who can see the variable, not how long it lives.
+Declaring a global variable `static` keeps it private to the file it is declared in. 
 
 ```c
 #include <inttypes.h> // int32_t
@@ -312,9 +319,12 @@ int32_t counter = 0; // definition
 extern int32_t counter; // declaration, the storage is in counter.c
 ```
 
+> [!NOTE]
+> The usual practice of `extern` is to put an `extern` declaration in a header at file scope. Then, include that header, and define the object in exactly one `.c` file. 
+
 #### `const`
 
-A global variable declared [`const`](#const-local-variables) is still visible to other files, unlike a `constexpr` one. Defining it in a header gives every file that includes it its own definition of the same name, so linking fails with a duplicate definition. Either declare it `static const` so each file gets a private copy, or define it in one `.c` file and declare it `extern const` in the header.
+A global variable declared [`const`](#const-local-variables) is still visible to other files. Defining it in a header gives every file that includes it its own definition of the same name, so linking fails with a duplicate definition. Either declare it `static const` so each file gets a private copy, or define it in one `.c` file and declare it `extern const` in the header.
 
 ```c
 #include <inttypes.h> // int32_t
@@ -1471,7 +1481,7 @@ A **string literal** is any text in double quotes in your source code. What the 
 Every string is stored in one of four places, and you pick one by how you declare it.
 
 | Lives in | Declared as | Initialization | Example | No initializer | Lifetime |
-| :---: | :---: | :---: | :---: | :---: | :---: |
+| :---: | :---: | :---: | :---: | :---: |
 | `.rodata` | pointer | string literal | `const char *s = "foo";` | n/a | whole program |
 | `.data` / `.bss` | array | string literal, brace list, or at run time | `static char s[] = "foo";` | zero-filled (`""`), in `.bss` | whole program |
 | Stack | array | literal, brace list, or at run time | `char s[] = "foo";` | garbage | until the block ends |
@@ -2902,4 +2912,4 @@ circle        19.63
 total         34.78
 ```
 
-`offsetof()` accepts nested members, so when you know the concrete type, you can jump straight from the list node to it with `container_of(p, struct circle, base.link)`.
+`offsetof()` accepts nested members, so when you know the concrete type, you can jump straight from the list node to it with `container_of(p, struct circle, base.link)`. -->
