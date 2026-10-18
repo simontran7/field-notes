@@ -1,6 +1,6 @@
 # TODO
 
-- https://web.stanford.edu/class/archive/cs/cs107/cs107.1268/, https://courses.cs.washington.edu/courses/cse351/20sp/lectures/
+- https://web.stanford.edu/class/archive/cs/cs107/cs107.1268/, https://courses.cs.washington.edu/courses/cse351/20sp/lectures/, https://asm-editor.specy.app/learn/courses/assembly-basics/introduction/introduction
 
 - https://web.stanford.edu/class/cs111/, https://web.stanford.edu/class/cs110/
 
