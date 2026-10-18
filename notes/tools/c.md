@@ -4,7 +4,7 @@
 
 Every C program must define a function named `main()`, which is the program's **entry point**: the first of your code to run.
 
-When the executable is loaded into memory, the operating system transfers control to the C runtime’s startup code, which then calls `main()`. The program ends cleanly in three ways: when `main()` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main()`, which is treated as `return 0;`. The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+When the executable is loaded into memory, the operating system transfers control to the **C runtime’s startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. The program ends cleanly in three ways: when `main()` returns an integer, when `exit()` is called, or when control reaches the closing brace of `main()`, which is treated as `return 0;`. The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
 
 `main()` must be declared as either:
 - `int main(void)`
