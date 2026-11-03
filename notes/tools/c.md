@@ -4,7 +4,7 @@
 
 Every C program must define a function named `main()`, which is the program's **entry point**: the first of your code to run.
 
-When the executable is loaded into memory, the operating system transfers control to the **C runtime’s startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. 
+When the executable is loaded into memory, the operating system transfers control to the **C runtime's startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. 
 
 The program ends cleanly in three ways: 
 - wWen `main()` returns an integer, when `exit()` is called
@@ -137,7 +137,6 @@ done:
 An inner variable with the same name as an outer one **shadows** it, hiding the outer one until the inner block ends.
 
 ```c
-```c
 #include <inttypes.h> // `int32_t`
 
 int32_t x = 1; // file-scope `x`
@@ -220,7 +219,7 @@ A **local variable** is a variable with block scope, with automatic storage dura
 
 A local variable declared `static` makes it have a static storage duration.
 
-Consequences of static storage sduration:
+Consequences of static storage duration:
 - Keeps its value between calls. 
 - Its initialization happens only once, before the program starts
 - Without an initializer, it starts at the zero value of the designated type. 
@@ -238,6 +237,125 @@ void tick(void) {
 int main(void) {
     tick(); // 1
     tick(); // 2
+}
+```
+
+## Object-Oriented Programming
+
+### Abstraction 
+
+**Abstraction:** representing something by its essential behavior, so users can depend on *what* it does rather than *how* it does it.
+*In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does.*
+
+We use Abstraction to reduce complexity.
+
+### Encapsulation
+
+**Encapsulation:** keeping a thing's internal state under its own control, so nothing outside can put it into an invalid condition.
+*In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data.*
+
+We use encapsulation to protect state.
+
+### Inheritance & Composition
+
+**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an *is-a* relationship: a `Dog` *is an* `Animal`.
+*In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them.*
+
+**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a *has-a* relationship: a `Car` *has an* `Engine`.
+*In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods.*
+
+We use inheritance or composition to reuse by being or having. 
+
+### Polymorphism
+
+**Polymorphism:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
+*In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces).*
+
+Polymorphism lets one piece of code work with many types.
+
+```cpp
+#include <iostream>
+#include <memory>
+
+class B {
+public:
+    virtual ~B() = default;  // safe deletion through a B*
+
+    virtual void bar() const;
+    virtual void qux() const;
+};
+
+void B::bar() const {
+    std::cout << "This is B's implementation of bar\n";
+}
+
+void B::qux() const {
+    std::cout << "This is B's implementation of qux\n";
+}
+
+class C : public B {
+public:
+    void bar() const override;
+};
+
+void C::bar() const {
+    std::cout << "This is C's implementation of bar\n";
+}
+
+int main() {
+    // unique_ptr deletes the object automatically, so nothing leaks
+    std::unique_ptr<B> b = std::make_unique<C>();
+
+    // Follows the object's vptr to C's vtable: calls C::bar
+    b->bar();
+
+    // C doesn't override qux, so C's vtable points to B::qux
+    b->qux();
+}
+```
+
+If we use static dispatch as above, the call b->bar() would execute B::bar(), since (from the point of view of the compiler) b points to an object of type B.
+
+For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
+
+![alt text](image.png)
+
+Every time the compiler creates a vtable for a class, it adds an extra argument to it: a pointer to the corresponding virtual table, called the vpointer.
+
+![alt text](image-1.png)
+
+Note that the vpointer is just another class member added by the compiler and increases the size of every object that has a vtable by sizeof(vpointer).
+
+Dynamic function dispatch can be implemented using vtables. When a virtual function is called on an object, the object’s vpointer is used to find the vtable of its actual class. At compile time, the compiler has already assigned each virtual function a fixed slot in the vtable. The call then reads the function pointer stored in that slot, which points to the most specific override (the version of the function defined furthest down the inheritance chain, counting from the base class to the object’s actual type), and calls it.
+
+Always declare desctructors of base classes as virtual
+
+```cpp
+#include <iostream>
+
+class Base {
+public:
+    ~Base() {
+        std::cout << "Destroying base\n";
+    }
+};
+
+class Derived : public Base {
+public:
+    explicit Derived(int number) : some_resource_(new int(number)) {}
+
+    ~Derived() {
+        std::cout << "Destroying derived\n";
+        delete some_resource_;
+    }
+
+private:
+    int* some_resource_;
+};
+
+int main() {
+    Base* p = new Derived(5);
+    delete p;  // Base's destructor isn't virtual, so `~Derived()` never runs
 }
 ```
 
@@ -350,6 +468,140 @@ constexpr int32_t max_items = 64; // each including file gets its own copy
 > [!WARNING]
 > Identifiers are case sensitive. This means `foo` and `FOO` are two different identifiers.
 
+## OOP
+
+### Abstraction 
+
+**Abstraction:** representing something by its essential behavior, so users can depend on *what* it does rather than *how* it does it.
+*In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does.*
+
+We use Abstraction to reduce complexity.
+
+### Encapsulation
+
+**Encapsulation:** keeping a thing's internal state under its own control, so nothing outside can put it into an invalid condition.
+*In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data.*
+
+We use encapsulation to protect state.
+
+### Inheritance & Composition
+
+**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an *is-a* relationship: a `Dog` *is an* `Animal`.
+*In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them.*
+
+**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a *has-a* relationship: a `Car` *has an* `Engine`.
+*In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods.*
+
+We use inheritance or composition to reuse by being or having. 
+
+### Polymorphism
+
+**Polymorphism:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
+*In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces).*
+
+Polymorphism lets one piece of code work with many types.
+
+```cpp
+#include <iostream>
+#include <memory>
+
+class B {
+public:
+    virtual ~B() = default;  // safe deletion through a B*
+
+    virtual void bar() const;
+    virtual void qux() const;
+};
+
+void B::bar() const {
+    std::cout << "This is B's implementation of bar\n";
+}
+
+void B::qux() const {
+    std::cout << "This is B's implementation of qux\n";
+}
+
+class C : public B {
+public:
+    void bar() const override;
+};
+
+void C::bar() const {
+    std::cout << "This is C's implementation of bar\n";
+}
+
+int main() {
+    // unique_ptr deletes the object automatically, so nothing leaks
+    std::unique_ptr<B> b = std::make_unique<C>();
+
+    // Follows the object's vptr to C's vtable: calls C::bar
+    b->bar();
+
+    // C doesn't override qux, so C's vtable points to B::qux
+    b->qux();
+}
+```
+
+If we use static dispatch as above, the call b->bar() would execute B::bar(), since (from the point of view of the compiler) b points to an object of type B.
+
+For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
+
+![alt text](image.png)
+
+Every time the compiler creates a vtable for a class, it adds an extra argument to it: a pointer to the corresponding virtual table, called the vpointer.
+
+![alt text](image-1.png)
+
+Note that the vpointer is just another class member added by the compiler and increases the size of every object that has a vtable by sizeof(vpointer).
+
+Dynamic function dispatch can be implemented using vtables. When a virtual function is called on an object, the object’s vpointer is used to find the vtable of its actual class. At compile time, the compiler has already assigned each virtual function a fixed slot in the vtable. The call then reads the function pointer stored in that slot, which points to the most specific override (the version of the function defined furthest down the inheritance chain, counting from the base class to the object’s actual type), and calls it.
+
+Always declare desctructors of base classes as virtual
+
+```cpp
+#include <iostream>
+
+class Base
+{
+public:
+  ~Base()
+  {
+    std::cout << "Destroying base" << std::endl;
+  }
+};
+
+class Derived : public Base
+{
+public:
+  Derived(int number)
+  {
+    some_resource_ = new int(number);
+  }
+
+  ~Derived()
+  {
+    std::cout << "Destroying derived" << std::endl;
+    delete some_resource_;
+  }
+
+private:
+  int* some_resource_;
+};
+
+int main()
+{
+  Base* p = new Derived(5);
+  delete p;
+}
+
+This will output:
+
+> Destroying base
+```
+Making Base’s destructor virtual will result in the expected behavior:
+
+> Destroying derived
+> Destroying base
 ## Expressions
 
 An **expression** is anything that produces a value, such as `x + 1`, `a < b` or `f()`.
