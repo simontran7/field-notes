@@ -575,15 +575,8 @@ fn syntax_placeholders(text: &str) -> String {
         .into_owned()
 }
 
-/// One line of a `syntax` block: each `<placeholder>` is shown in italics without its brackets,
-/// `<placeholder>?` also gets a subscript "opt" to mark it optional, `<placeholder>+` a
-/// superscript "+" to mark one or more, and `<placeholder>+,` a superscript "+," to mark one or
-/// more separated by commas. A line that starts with
-/// `<placeholder>:` begins that placeholder's definition, and the colon and any note after it
-/// (such as "one or more") are notation. Everything else is literal.
 fn syntax_line(line: &str) -> Token {
     let escaped = html_escape(line);
-    // `<scope>: <summary>` is a template line, not a definition of `scope`
     let definition = DEFINITION_RE
         .captures(&escaped)
         .filter(|caps| !PLACEHOLDER_RE.is_match(&caps[2]));
@@ -707,7 +700,6 @@ mod tests {
             line.text,
             r#"<em class="syntax-placeholder">type</em> <em class="syntax-placeholder">identifier</em>[<em class="syntax-placeholder">capacity</em>] <em class="syntax-placeholder">initializer</em><sub class="syntax-count">opt</sub>;"#
         );
-        // Literal brackets around a placeholder stay, and a spaced ? is literal
         assert_eq!(
             syntax_line("#include <<header>>").text,
             r#"#include &lt;<em class="syntax-placeholder">header</em>&gt;"#
@@ -716,7 +708,6 @@ mod tests {
             syntax_line("<values>: comma-separated").text,
             r#"<em class="syntax-placeholder">values</em><span class="syntax-meta">: comma-separated</span>"#
         );
-        // A ? or + after a closing paren is literal, as in a regex quantifier
         assert_eq!(
             syntax_line("(?:<pattern>)?").text,
             r#"(?:<em class="syntax-placeholder">pattern</em>)?"#

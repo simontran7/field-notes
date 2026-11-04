@@ -128,6 +128,22 @@ fn strip_anchors(html: &str) -> String {
     ANCHOR_RE.replace_all(html, "").into_owned()
 }
 
+static HEADING_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?s)<(h[1-6]) id="([^"]+)">(.*?)</h[1-6]>"#).unwrap());
+
+const LINK_ICON: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>"#;
+
+fn add_heading_links(html: &str) -> String {
+    HEADING_RE
+        .replace_all(html, |caps: &regex::Captures| {
+            let (tag, id, content) = (&caps[1], &caps[2], &caps[3]);
+            format!(
+                r##"<{tag} id="{id}">{content}<a class="heading-anchor" href="#{id}" aria-label="Link to this section">{LINK_ICON}</a></{tag}>"##
+            )
+        })
+        .into_owned()
+}
+
 static HREF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"href="([^"]*)""#).unwrap());
 
 fn normalize(path: &str) -> String {
@@ -252,8 +268,8 @@ static TRAILING_ABBREVIATION_RE: LazyLock<Regex> =
 
 pub fn render_markdown(body: &str) -> String {
     let html = markdown_to_html(&prepare_callouts(body), &options());
-    super::math::render_all(&highlight_code_blocks(&strip_anchors(&process_callouts(
-        &html,
+    super::math::render_all(&highlight_code_blocks(&add_heading_links(&strip_anchors(
+        &process_callouts(&html),
     ))))
 }
 
@@ -366,5 +382,17 @@ mod tests {
     fn lowercase_github_callouts_work() {
         let html = render_markdown("> [!tip]\n> hi\n");
         assert!(html.contains("callout-tip"), "{html}");
+    }
+
+    #[test]
+    fn headings_get_a_link_to_their_fragment() {
+        let html = render_markdown("## Entry Point\n");
+        assert!(
+            html.starts_with(
+                r##"<h2 id="entry-point">Entry Point<a class="heading-anchor" href="#entry-point""##
+            ),
+            "{html}"
+        );
+        assert!(html.contains("<svg"), "{html}");
     }
 }

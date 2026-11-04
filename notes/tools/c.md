@@ -2,22 +2,23 @@
 
 ## Entry Point
 
-Every C program must define a function named `main()`, which is the program's **entry point**: the first of your code to run.
+Every C program must define a function named `main()`, which is the program's entry point.
 
-When the executable is loaded into memory, the operating system transfers control to the **C runtime's startup code** (`_start`, from the C library’s `crt1.o`, which the linker adds to every program), which sets up `argc`/`argv` and then calls `main()`. 
+When the executable is loaded into memory, the operating system transfers control to the **C runtime's startup code**, which sets up `argc`/`argv` and then calls `main()`. On Linux, this is `_start`, from the C library's `crt1.o`, which the linker adds to every program.
 
-The program ends cleanly in three ways: 
-- wWen `main()` returns an integer, when `exit()` is called
-- When control reaches the closing brace of `main()`, which is treated as `return 0;`. 
+The program ends cleanly in three ways:
+- When `main()` returns an integer
+- When `exit()` is called
+- When control reaches the closing brace of `main()`, which is treated as `return 0;` (since C99)
 
-The integer value returned by `main()` is passed back to the operating system as the program’s **exit status**, where `0` indicates success. 
+The integer value returned by `main()` is passed back to the operating system as the program's **exit status**, where `0` indicates success.
 
 `main()` must be declared as either:
 - `int main(void)`
 - `int main(int argc, char **argv)`, where `argv` represents an array of string command-line arguments, and `argc` the number of arguments in `argv`.
 
 ```c
-#include <stdio.h> // printf()
+#include <stdio.h> // `printf()`
 
 int main(void) {
     printf("Hello, World!\n");
@@ -31,7 +32,7 @@ Comments are used to write anything that is to be ignored by the compiler.
 
 ```c
 /*
- * Multi-line comments 
+ * Multi-line comments
  */
 
 // Single-line comments
@@ -55,7 +56,7 @@ Comments are used to write anything that is to be ignored by the compiler.
 | `unsigned long long int` | 64 bits (8 bytes) |
 | `float` | ~6 decimal digits of precision |
 | `double` | ~10 decimal digits of precision |
- 
+
 Integer types follow the general form:
 
 ```syntax
@@ -73,21 +74,21 @@ Integer types follow the general form:
 
 > [!TIP]
 > - `signed` is the default for every integer type except `char`, so it can be omitted.
-> - `int` can be omitted when `signed`, `unsigned`, `short`, `long`, `long long`, is present.
+> - `int` can be omitted when `signed`, `unsigned`, `short`, `long`, or `long long` is present.
 >
 > ```c
 > // all four declarations name the same type
-> signed long int a; 
+> signed long int a;
 > signed long b;
 > long int c;
-> long d; 
+> long d;
 > ```
 
 > [!TIP]
-> The minimum data width of certain integers depend on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator). Alternatively, use fixed-width integers where possible, by including [`<inttypes.h>`](https://beej.us/guide/bgclr/html/#inttypes). It includes [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint), which defines the types, and adds the macros to print them (e.g., `PRId32` for `int32_t`).
+> The standard only fixes the minimum widths; the actual width of each integer type depends on the target platform (architecture, OS, and compiler/ABI). Check a type's size with the [`sizeof` operator](https://beej.us/guide/bgc/html/#sizeof-operator). Alternatively, use fixed-width integers where possible, by including [`<inttypes.h>`](https://beej.us/guide/bgclr/html/#inttypes). It includes [`<stdint.h>`](https://beej.us/guide/bgclr/html/#stdint), which defines the types, and adds the macros to print them (e.g., `PRId32` for `int32_t`).
 
 > [!TIP]
-> The signness of a plain `char` depend on on the target platform (architecture, OS, and compiler/ABI). As such, check a `char`'s signedness with `CHAR_MIN` from [`<limits.h>`](https://beej.us/guide/bgclr/html/#limits), which is `0` when `char` is unsigned. Alternatively, explicitly write `signed char` or `unsigned char`.
+> The signedness of a plain `char` depends on the target platform (architecture, OS, and compiler/ABI). As such, check a `char`'s signedness with `CHAR_MIN` from [`<limits.h>`](https://beej.us/guide/bgclr/html/#limits), which is `0` when `char` is unsigned. Alternatively, explicitly write `signed char` or `unsigned char`.
 
 > [!WARNING]
 > C treats a nonzero value as `true`, and a zero value as `false`.
@@ -101,7 +102,7 @@ An **object** is a region of memory that holds a value of some type.
 
 ## Scope
 
-A identifier's **scope** is the part of the code where its name is visible. 
+An identifier's **scope** is the part of the code where its name is visible.
 
 ### Scope Kinds
 
@@ -113,7 +114,7 @@ A identifier's **scope** is the part of the code where its name is visible.
 ```c
 #include <inttypes.h> // `int32_t`
 
-int32_t total; // `total has file scope
+int32_t total; // `total` has file scope
 
 void g(int32_t n); // `n` has function prototype scope: visible only within `g()`'s declaration
 
@@ -122,7 +123,7 @@ void f(int32_t p) { // `p` has block scope: visible throughout `f()`'s body
         goto done; // `done` has function scope: usable anywhere in `f()`, even before it appears
     }
 
-    int32_t x = 1; // `x` has block scope: visible from here to the end of `f`
+    int32_t x = 1; // `x` has block scope: visible from here to the end of `f()`
     if (x) {
         int32_t y = 2; // `y` also has block scope: visible only inside this if statement
     }
@@ -165,7 +166,57 @@ An object's **storage duration** is how long its memory exists.
 
 ## Linkage
 
-TO WRITE
+An identifier's **linkage** determines whether declarations of the same name in different scopes or files refer to the same object or function.
+
+Scope decides where a name is visible within one file. Linkage decides whether that name connects to the same name in other places, including other files.
+
+> [!NOTE]
+> A **translation unit** is one `.c` file after the preprocessor has inserted its `#include`d headers. The compiler compiles each translation unit separately, and the linker joins them into one program.
+
+### Linkage Kinds
+
+| Linkage | Same name refers to the same thing across | Applies to |
+| :---: | :---: | :---: |
+| External | the whole program, every translation unit | file-scope variables and functions (default) |
+| Internal | one translation unit only | file-scope variables and functions declared `static` |
+| None | nothing; each declaration is its own object | block-scope variables, function parameters |
+
+```c
+// main.c
+#include <inttypes.h> // `int32_t`
+
+int32_t total = 0;        // external linkage: visible to other files
+static int32_t helper;    // internal linkage: private to main.c
+
+void add(int32_t n);      // external linkage: defined in another file
+
+int main(void) {
+    int32_t x = 5;        // no linkage: exists only inside `main()`
+    add(x);
+    return 0;
+}
+```
+
+```c
+// add.c
+#include <inttypes.h> // `int32_t`
+
+extern int32_t total;     // refers to `total` defined in main.c
+
+void add(int32_t n) {     // definition of `add()`
+    total += n;
+}
+```
+
+### Declarations and Definitions
+
+A **declaration** introduces a name and its type. 
+
+A **definition** is a declaration that also creates the object or provides the function's body.
+
+- An identifier with external linkage must have exactly one definition in the whole program, but can have any number of declarations.
+- A function prototype without a body is a declaration; with a body, it is a definition.
+- A file-scope variable is a definition unless it is marked `extern` and has no initializer.
 
 ## Variables
 
@@ -177,52 +228,184 @@ A **variable** is a named object.
 <storage class>:
     static
     extern
+    constexpr       (C23)
+    thread_local    (C23; `_Thread_local` in C11)
 <qualifier>:
     const
-    constexpr
+    volatile
 <initializer>:
     = <value>
 ```
 
-Variables can be declared, declared and explicitly initialized, either on a seperate line, or on the same line.
+Qualifiers and storage classes are covered in their own sections below. Without them, a variable is either a local or a global variable, depending on where it is declared.
+
+A variable can be declared with or without an initializer, and several variables of the same type can be declared on one line.
 
 ```c
 #include <inttypes.h> // `int32_t`
 
-// declaration
-int32_t count; // initialized to garbage
+int main(void) {
+    // declaration
+    int32_t count; // starts as garbage
 
-// initialization
-int32_t total = 0;
+    // declaration with initialization
+    int32_t total = 0;
 
-// multi-declaration and multi-initialization
-char a = 'x', b;
+    // multiple declarations on one line; only `a` is initialized
+    char a = 'x', b;
+}
 ```
 
-Variables can be assigned.
+A variable can also be assigned after it is declared.
 
 ```c
 #include <inttypes.h> // `int32_t`
 
-// declared
-int32_t foo = 0;
-
-// assigned
-foo = 5; 
+int main(void) {
+    int32_t foo = 0; // initialized
+    foo = 5;         // assigned
+}
 ```
+
+> [!NOTE]
+> Assignment is a statement, so it can only appear inside a function. At file scope, a variable can only get a value through its initializer.
 
 ### Local Variables
 
-A **local variable** is a variable with block scope, with automatic storage duration, and without any linkage.
+A **local variable** is a variable with the following properties:
+- **Scope**: block
+- **Storage duration**: automatic
+- **Linkage**: none
 
-#### `static`
+```c
+#include <stdio.h>    // `printf()`
+#include <inttypes.h> // `PRId32`, `int32_t`
 
-A local variable declared `static` makes it have a static storage duration.
+void tick(void) {
+    int32_t count = 0; // created and set to 0 on every call
+    count += 1;
+    printf("%" PRId32 "\n", count);
+} // `count` is destroyed here
 
-Consequences of static storage duration:
-- Keeps its value between calls. 
-- Its initialization happens only once, before the program starts
-- Without an initializer, it starts at the zero value of the designated type. 
+int main(void) {
+    tick(); // 1
+    tick(); // 1
+}
+```
+
+### Global Variables
+
+A **global variable** is a variable with the following properties:
+- **Scope**: file
+- **Storage duration**: static
+- **Linkage**: external
+
+```c
+#include <stdio.h>    // `printf()`
+#include <inttypes.h> // `PRId32`, `int32_t`
+
+int32_t count; // starts at 0, shared by every function in the program
+
+void tick(void) {
+    count += 1;
+}
+
+int main(void) {
+    tick();
+    tick();
+    printf("%" PRId32 "\n", count); // 2
+}
+```
+
+> [!NOTE]
+> Not every variable declaration inside a block is a local variable. A `static` or `thread_local` declaration has a different storage duration, and an `extern` declaration creates no object, but refers to a global instead.
+
+## Qualifiers
+
+A **qualifier** is part of a type, and changes how an object of that type can be accessed. Since it is part of the type, it can appear anywhere a type does: on variables, function parameters, pointer targets, and struct members.
+
+### `const`
+
+An object declared `const` is read-only: it can't be assigned after it is declared, so it gets its value from its initializer.
+
+```c
+#include <inttypes.h> // `int32_t`
+
+const int32_t max = 100; // const global
+
+void print(const char *text); // `print()` promises not to modify the string
+
+int main(void) {
+    const int32_t limit = 10; // const local
+    limit = 20;               // error: `limit` is read-only
+}
+```
+
+> [!WARNING]
+> A `const` variable is _not_ a constant expression, so it can't be used where the compiler needs a value at compile time:
+>
+> ```c
+> const int32_t size = 16;
+>
+> int32_t buffer[size]; // error at file scope; a variable-length array at block scope
+>
+> switch (x) {
+>     case size:        // error: not a constant expression
+>         break;
+> }
+> ```
+>
+> Use `constexpr` (C23), `enum`, or `#define` for true constants.
+
+> [!NOTE]
+> Unlike C++, `const` doesn't change linkage in C: a `const` global still has external linkage.
+
+Where `const` appears relative to `*` decides what is read-only.
+
+```c
+#include <inttypes.h> // `int32_t`
+
+int main(void) {
+    int32_t x = 1, y = 2;
+
+    const int32_t *p = &x;       // pointer to const: `*p = 5;` is an error, `p = &y;` is fine
+    int32_t *const q = &x;       // const pointer: `*q = 5;` is fine, `q = &y;` is an error
+    const int32_t *const r = &x; // both: `*r = 5;` and `r = &y;` are errors
+}
+```
+
+### `volatile`
+
+An object declared `volatile` may change outside the program's normal flow, such as in a signal handler or a hardware register. The compiler must perform every read and write as written, instead of optimizing them away.
+
+```c
+#include <signal.h> // `sig_atomic_t`
+
+volatile sig_atomic_t stop = 0; // may be set by a signal handler
+
+int main(void) {
+    while (!stop) {
+        // without `volatile`, the compiler could read `stop` once and loop forever
+    }
+}
+```
+
+> [!WARNING]
+> `volatile` does not make an object safe to share between threads. Use atomics (`<stdatomic.h>`) or locks for that.
+
+## Storage Classes
+
+A **storage class** sets properties of a declaration other than its type: its storage duration, its linkage, or whether it creates an object at all.
+
+### `static`
+
+What `static` changes depends on where it is declared.
+
+#### `static` local variables
+
+A local variable declared `static` has its storage duration changed to static.
+
+As a result, it keeps its value between calls:
 
 ```c
 #include <stdio.h>    // `printf()`
@@ -240,38 +423,190 @@ int main(void) {
 }
 ```
 
+> [!NOTE]
+> There is only one copy of a `static` local variable, shared by every call of its function, including recursive calls.
+
+#### `static` global variables
+
+A global variable declared `static` has its linkage changed to internal.
+
+As a result, it is private to its translation unit, and other files can reuse its name without clashing:
+
+```c
+// counter.c
+#include <inttypes.h> // `int32_t`
+
+static int32_t count; // visible only inside counter.c
+
+void tick(void) {
+    count += 1;
+}
+```
+
+```c
+// main.c
+#include <inttypes.h> // `int32_t`
+
+static int32_t count; // a different `count`, private to main.c
+
+void tick(void);
+
+int main(void) {
+    tick(); // changes counter.c's `count`, not this one
+}
+```
+
+### `extern`
+
+A variable declared `extern` is a declaration only, which means it creates no object, and refers to a global variable defined elsewhere, usually in another translation unit. 
+
+```c
+// counter.c
+#include <inttypes.h> // `int32_t`
+
+int32_t count = 0; // definition: creates the object
+```
+
+```c
+// main.c
+#include <stdio.h>    // `printf()`
+#include <inttypes.h> // `PRId32`, `int32_t`
+
+extern int32_t count; // declaration: refers to counter.c's `count`
+
+int main(void) {
+    count += 1;
+    printf("%" PRId32 "\n", count); // 1
+}
+```
+
+> [!NOTE]
+> `extern` can also appear inside a block. It still refers to a global, but the name is only visible until the end of that block. It can't have an initializer there.
+
+> [!WARNING]
+> At file scope, giving an `extern` declaration an initializer turns it into a definition. Since `#include` copies a header's contents into every file that includes it, a definition in a header becomes one definition per file, and linking fails with a multiple definition error.
+>
+> ```c
+> // counter.h
+> extern int32_t count = 0; // unintentionally a definition!
+> ```
+>
+> ```c
+> // main.c
+> #include "counter.h" // defines `count`
+> ```
+>
+> ```c
+> // counter.c
+> #include "counter.h" // defines `count` again (results in multiple definition linker error)
+> ```
+
+> [!TIP]
+> Put `extern` declarations in a header file and `#include` it wherever the variable is used, so every file agrees on its type.
+
+### `thread_local`
+
+A variable declared `thread_local` has thread storage duration: each thread gets its own copy, created when the thread starts and destroyed when it ends.
+
+```c
+#include <inttypes.h> // `int32_t`
+
+thread_local int32_t errors; // each thread has its own `errors`, starting at 0
+```
+
+> [!NOTE]
+> Before C23, write `_Thread_local`, or include `<threads.h>` to use the `thread_local` macro. Inside a block, `thread_local` must be combined with `static` or `extern`.
+
+### `constexpr`
+
+A variable declared `constexpr` (C23) is a **compile-time constant**.
+
+This means its initializer must be a constant expression, and it is implicitly `const`.
+
+Unlike `const`, it can be used where the compiler needs a value at compile time, such as array sizes and `case` labels.
+
+```c
+#include <inttypes.h> // `int32_t`
+
+constexpr int32_t size = 16; // global compile-time constant
+
+int32_t buffer[size]; // OK: `size` is a constant expression
+
+int main(void) {
+    constexpr int32_t limit = 4; // local compile-time constant
+
+    switch (buffer[0]) {
+        case limit: // OK: usable as a `case` label
+            break;
+    }
+
+    int32_t n = 3;
+    constexpr int32_t bad = n; // error: `n` is not a constant expression
+}
+```
+
+> [!NOTE]
+> `constexpr` only applies to variables: not to functions, parameters, or struct members.
+
+## Pointers
+
+> [!TIP]
+> Read pointer declarations right to left. For instance, `int32_t *const q` reading right to left can be read as "`q` is a const pointer to `int32_t`."
+
 ## Object-Oriented Programming
 
 ### Abstraction 
 
-**Abstraction:** representing something by its essential behavior, so users can depend on *what* it does rather than *how* it does it.
-*In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does.*
+**Abstraction** representing something by its essential behavior, so users can depend on _what_ it does rather than _how_ it does it.
+_In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does._
 
 We use Abstraction to reduce complexity.
 
 ### Encapsulation
 
 **Encapsulation:** keeping a thing's internal state under its own control, so nothing outside can put it into an invalid condition.
-*In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data.*
+_In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data._
 
 We use encapsulation to protect state.
 
 ### Inheritance & Composition
 
-**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an *is-a* relationship: a `Dog` *is an* `Animal`.
-*In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them.*
+**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an _is-a_ relationship: a `Dog` _is an_ `Animal`.
+_In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them._
 
-**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a *has-a* relationship: a `Car` *has an* `Engine`.
-*In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods.*
+**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a _has-a_ relationship: a `Car` _has an_ `Engine`.
+_In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods._
 
 We use inheritance or composition to reuse by being or having. 
 
 ### Polymorphism
 
-**Polymorphism:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
-*In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces).*
+**Definition:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
 
 Polymorphism lets one piece of code work with many types.
+
+This is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces).
+
+When working with inheritance hierarchies, you often need to convert between base and derived types. 
+
+**Upcasting** is converting a derived type to its base type, while **downcasting** is converting a base type to a derived type.
+
+Upcasting is implicit and always safe because a derived class is guaranteed to have everything the base class has:
+
+```java
+Dog myDog = new Dog();
+Animal animal = myDog;  
+```
+
+Downcasting requires an explicit cast and can fail at runtime if the object isn't actually the type you're casting to:
+
+```java
+Animal animal = new Dog();
+Dog dog = (Dog) animal;  // works because it's really a Dog
+
+Animal cat = new Cat();
+Dog wrong = (Dog) cat;   // Throws `InvalidCastException`
+```
 
 ```cpp
 #include <iostream>
@@ -318,11 +653,11 @@ If we use static dispatch as above, the call b->bar() would execute B::bar(), si
 
 For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
 
-![alt text](image.png)
+![](images/image.png)
 
 Every time the compiler creates a vtable for a class, it adds an extra argument to it: a pointer to the corresponding virtual table, called the vpointer.
 
-![alt text](image-1.png)
+![](images/image-1.png)
 
 Note that the vpointer is just another class member added by the compiler and increases the size of every object that has a vtable by sizeof(vpointer).
 
@@ -356,6 +691,152 @@ private:
 int main() {
     Base* p = new Derived(5);
     delete p;  // Base's destructor isn't virtual, so `~Derived()` never runs
+}
+```
+
+```c
+// Minimal vtable example in C23.
+// Build: gcc -std=c23 -Wall -Wextra -pedantic shapes.c -o shapes -lm
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+constexpr double PI = 3.14159265358979323846;
+
+typedef struct Shape Shape;
+
+// One table of function pointers per derived type.
+// Every entry takes the base type, so all types share one layout.
+typedef struct {
+    const char *name;
+    double (*area)(const Shape *self);
+    double (*perimeter)(const Shape *self);
+} ShapeVTable;
+
+// The base object holds only a pointer to its type's vtable.
+struct Shape {
+    const ShapeVTable *vt;
+};
+
+// Public interface: callers use these and never touch vt directly.
+static inline const char *shape_name(const Shape *s)      { return s->vt->name; }
+static inline double      shape_area(const Shape *s)      { return s->vt->area(s); }
+static inline double      shape_perimeter(const Shape *s) { return s->vt->perimeter(s); }
+static inline void        shape_free(Shape *s)            { free(s); }
+
+// ============================================================
+// Circle
+// ============================================================
+
+typedef struct {
+    Shape  base;   // must be first, so a Circle * and its Shape * are the same address
+    double radius;
+} Circle;
+
+static_assert(offsetof(Circle, base) == 0, "base must be the first member");
+
+// The one place a Shape * becomes a Circle *.
+static inline const Circle *as_circle(const Shape *s) { return (const Circle *)s; }
+
+static double circle_area(const Shape *s) {
+    const Circle *c = as_circle(s);
+    return PI * c->radius * c->radius;
+}
+
+static double circle_perimeter(const Shape *s) {
+    const Circle *c = as_circle(s);
+    return 2.0 * PI * c->radius;
+}
+
+static const ShapeVTable CIRCLE_VT = {
+    .name      = "Circle",
+    .area      = circle_area,
+    .perimeter = circle_perimeter,
+};
+
+[[nodiscard]] Shape *circle_new(double radius) {
+    Circle *c = malloc(sizeof *c);
+    if (c == nullptr) {
+        return nullptr;
+    }
+    *c = (Circle){ .base = { .vt = &CIRCLE_VT }, .radius = radius };
+    return &c->base;
+}
+
+// ============================================================
+// Rectangle
+// ============================================================
+
+typedef struct {
+    Shape  base;   // must be first
+    double w, h;
+} Rectangle;
+
+static_assert(offsetof(Rectangle, base) == 0, "base must be the first member");
+
+static inline const Rectangle *as_rectangle(const Shape *s) { return (const Rectangle *)s; }
+
+static double rectangle_area(const Shape *s) {
+    const Rectangle *r = as_rectangle(s);
+    return r->w * r->h;
+}
+
+static double rectangle_perimeter(const Shape *s) {
+    const Rectangle *r = as_rectangle(s);
+    return 2.0 * (r->w + r->h);
+}
+
+static const ShapeVTable RECTANGLE_VT = {
+    .name      = "Rectangle",
+    .area      = rectangle_area,
+    .perimeter = rectangle_perimeter,
+};
+
+[[nodiscard]] Shape *rectangle_new(double w, double h) {
+    Rectangle *r = malloc(sizeof *r);
+    if (r == nullptr) {
+        return nullptr;
+    }
+    *r = (Rectangle){ .base = { .vt = &RECTANGLE_VT }, .w = w, .h = h };
+    return &r->base;
+}
+
+// ============================================================
+// Demo
+// ============================================================
+
+int main(void) {
+    Shape *shapes[] = {
+        circle_new(1.0),
+        rectangle_new(3.0, 4.0),
+        circle_new(0.5),
+    };
+    constexpr size_t n = sizeof shapes / sizeof shapes[0];
+
+    int status = EXIT_SUCCESS;
+
+    for (size_t i = 0; i < n; i++) {
+        if (shapes[i] == nullptr) {
+            fprintf(stderr, "allocation failed\n");
+            status = EXIT_FAILURE;
+            goto cleanup;
+        }
+    }
+
+    // The loop knows nothing about Circle or Rectangle.
+    for (size_t i = 0; i < n; i++) {
+        printf("%-10s area = %7.3f  perimeter = %7.3f\n",
+               shape_name(shapes[i]),
+               shape_area(shapes[i]),
+               shape_perimeter(shapes[i]));
+    }
+
+cleanup:
+    for (size_t i = 0; i < n; i++) {
+        shape_free(shapes[i]);   // free(nullptr) is a no-op
+    }
+    return status;
 }
 ```
 
@@ -472,32 +953,32 @@ constexpr int32_t max_items = 64; // each including file gets its own copy
 
 ### Abstraction 
 
-**Abstraction:** representing something by its essential behavior, so users can depend on *what* it does rather than *how* it does it.
-*In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does.*
+**Abstraction:** representing something by its essential behavior, so users can depend on _what_ it does rather than _how_ it does it.
+_In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does._
 
 We use Abstraction to reduce complexity.
 
 ### Encapsulation
 
 **Encapsulation:** keeping a thing's internal state under its own control, so nothing outside can put it into an invalid condition.
-*In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data.*
+_In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data._
 
 We use encapsulation to protect state.
 
 ### Inheritance & Composition
 
-**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an *is-a* relationship: a `Dog` *is an* `Animal`.
-*In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them.*
+**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an _is-a_ relationship: a `Dog` _is an_ `Animal`.
+_In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them._
 
-**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a *has-a* relationship: a `Car` *has an* `Engine`.
-*In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods.*
+**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a _has-a_ relationship: a `Car` _has an_ `Engine`.
+_In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods._
 
 We use inheritance or composition to reuse by being or having. 
 
 ### Polymorphism
 
 **Polymorphism:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
-*In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces).*
+_In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces)._
 
 Polymorphism lets one piece of code work with many types.
 
