@@ -255,6 +255,11 @@ fn highlight_code_blocks(html: &str) -> String {
         .replace_all(html, |caps: &regex::Captures| {
             let lang = caps.get(1).map_or("text", |m| m.as_str());
             let code = unescape_html(&caps[2]);
+            if lang == "tikz"
+                && let Some(drawing) = super::tikz::render(&code)
+            {
+                return drawing;
+            }
             super::highlight::code_block(lang, &code)
         })
         .into_owned()

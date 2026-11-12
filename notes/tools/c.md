@@ -653,11 +653,51 @@ If we use static dispatch as above, the call b->bar() would execute B::bar(), si
 
 For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
 
-![](images/image.png)
+```tikz
+\begin{tikzpicture}[row/.style={draw, minimum width=3cm, minimum height=0.7cm, text width=2.7cm, align=left},
+    fn/.style={draw, minimum width=2.6cm, minimum height=0.55cm, font=\ttfamily\small, text width=2.3cm, align=left}]
+  % \vtable{name}{x}{y}{title}: a header row and one row per virtual function
+  \newcommand{\vtable}[4]{
+    \node[row, hl, anchor=north west] (#1) at (#2, #3) {#4};
+    \node[row, below=0pt of #1] (#1bar) {\texttt{bar}};
+    \node[row, below=0pt of #1bar] (#1qux) {\texttt{qux}};
+  }
+  \foreach \f [count=\k] in {B::bar(), B::qux(), C::bar()} \node[fn] (f\k) at (7, 0.2 - 0.75*\k) {\f};
+  \vtable{B}{0}{0}{Vtable of class B}
+  \vtable{C}{0}{-2.6}{Vtable of class C}
+  \draw[->] (Bbar.east) -- (f1.west);
+  \draw[->] (Bqux.east) -- (f2.west);
+  \draw[->] (Cbar.east) -- (f3.west);
+  \draw[->] (Cqux.east) -- (f2.west);
+\end{tikzpicture}
+```
 
 Every time the compiler creates a vtable for a class, it adds an extra argument to it: a pointer to the corresponding virtual table, called the vpointer.
 
-![](images/image-1.png)
+```tikz
+\begin{tikzpicture}[row/.style={draw, minimum width=3cm, minimum height=0.7cm, text width=2.7cm, align=left},
+    fn/.style={draw, minimum width=2.6cm, minimum height=0.55cm, font=\ttfamily\small, text width=2.3cm, align=left}]
+  % \vtable{name}{x}{y}{title}: a header row and one row per virtual function
+  \newcommand{\vtable}[4]{
+    \node[row, hl, anchor=north west] (#1) at (#2, #3) {#4};
+    \node[row, below=0pt of #1] (#1bar) {\texttt{bar}};
+    \node[row, below=0pt of #1bar] (#1qux) {\texttt{qux}};
+  }
+  \foreach \f [count=\k] in {B::bar(), B::qux(), C::bar()} \node[fn] (f\k) at (11, 0.2 - 0.75*\k) {\f};
+  \vtable{B}{4}{0}{Vtable of class B}
+  \vtable{C}{4}{-2.6}{Vtable of class C}
+  \draw[->] (Bbar.east) -- (f1.west);
+  \draw[->] (Bqux.east) -- (f2.west);
+  \draw[->] (Cbar.east) -- (f3.west);
+  \draw[->] (Cqux.east) -- (f2.west);
+  % Each object holds a vpointer to its class's vtable.
+  \foreach \c/\y in {B/0.4, C/-2.2} {
+    \node[row, hl, anchor=north west] (obj\c) at (0, \y) {Class \c};
+    \node[row, below=0pt of obj\c] (vp\c) {vpointer};
+    \draw[->] (vp\c.east) -- (\c.west);
+  }
+\end{tikzpicture}
+```
 
 Note that the vpointer is just another class member added by the compiler and increases the size of every object that has a vtable by sizeof(vpointer).
 
@@ -692,6 +732,19 @@ int main() {
     Base* p = new Derived(5);
     delete p;  // Base's destructor isn't virtual, so `~Derived()` never runs
 }
+```
+
+This outputs only:
+
+```text
+Destroying base
+```
+
+Making `Base`'s destructor `virtual` gives the expected behavior:
+
+```text
+Destroying derived
+Destroying base
 ```
 
 ```c
@@ -949,140 +1002,6 @@ constexpr int32_t max_items = 64; // each including file gets its own copy
 > [!WARNING]
 > Identifiers are case sensitive. This means `foo` and `FOO` are two different identifiers.
 
-## OOP
-
-### Abstraction 
-
-**Abstraction:** representing something by its essential behavior, so users can depend on _what_ it does rather than _how_ it does it.
-_In OOP, this is achieved through interfaces, abstract classes, and public methods named and designed around what an object does._
-
-We use Abstraction to reduce complexity.
-
-### Encapsulation
-
-**Encapsulation:** keeping a thing's internal state under its own control, so nothing outside can put it into an invalid condition.
-_In OOP, this is achieved by bundling data and the methods that operate on it into a class, and using access modifiers (like `private`) to block direct outside access to that data._
-
-We use encapsulation to protect state.
-
-### Inheritance & Composition
-
-**Inheritance:** defining a new kind of thing as a specialized version of an existing one, so it automatically has everything the original has and can extend or change it. It models an _is-a_ relationship: a `Dog` _is an_ `Animal`.
-_In OOP, this is achieved by having a subclass extend a superclass, inheriting its fields and methods and optionally overriding some of them._
-
-**Composition:** building a thing out of other things, so it gains their capabilities by containing them rather than by being them. It models a _has-a_ relationship: a `Car` _has an_ `Engine`.
-_In OOP, this is achieved by giving a class fields that hold other objects and having it delegate work to them by calling their methods._
-
-We use inheritance or composition to reuse by being or having. 
-
-### Polymorphism
-
-**Polymorphism:** treating different kinds of things uniformly through a shared interface, while each one responds in its own way.
-_In OOP, this is achieved either statically, where the compiler picks the version from declared types (overloading, generics), or dynamically, where the runtime picks it from the actual object (overriding, interfaces)._
-
-Polymorphism lets one piece of code work with many types.
-
-```cpp
-#include <iostream>
-#include <memory>
-
-class B {
-public:
-    virtual ~B() = default;  // safe deletion through a B*
-
-    virtual void bar() const;
-    virtual void qux() const;
-};
-
-void B::bar() const {
-    std::cout << "This is B's implementation of bar\n";
-}
-
-void B::qux() const {
-    std::cout << "This is B's implementation of qux\n";
-}
-
-class C : public B {
-public:
-    void bar() const override;
-};
-
-void C::bar() const {
-    std::cout << "This is C's implementation of bar\n";
-}
-
-int main() {
-    // unique_ptr deletes the object automatically, so nothing leaks
-    std::unique_ptr<B> b = std::make_unique<C>();
-
-    // Follows the object's vptr to C's vtable: calls C::bar
-    b->bar();
-
-    // C doesn't override qux, so C's vtable points to B::qux
-    b->qux();
-}
-```
-
-If we use static dispatch as above, the call b->bar() would execute B::bar(), since (from the point of view of the compiler) b points to an object of type B.
-
-For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
-
-![alt text](image.png)
-
-Every time the compiler creates a vtable for a class, it adds an extra argument to it: a pointer to the corresponding virtual table, called the vpointer.
-
-![alt text](image-1.png)
-
-Note that the vpointer is just another class member added by the compiler and increases the size of every object that has a vtable by sizeof(vpointer).
-
-Dynamic function dispatch can be implemented using vtables. When a virtual function is called on an object, the object’s vpointer is used to find the vtable of its actual class. At compile time, the compiler has already assigned each virtual function a fixed slot in the vtable. The call then reads the function pointer stored in that slot, which points to the most specific override (the version of the function defined furthest down the inheritance chain, counting from the base class to the object’s actual type), and calls it.
-
-Always declare desctructors of base classes as virtual
-
-```cpp
-#include <iostream>
-
-class Base
-{
-public:
-  ~Base()
-  {
-    std::cout << "Destroying base" << std::endl;
-  }
-};
-
-class Derived : public Base
-{
-public:
-  Derived(int number)
-  {
-    some_resource_ = new int(number);
-  }
-
-  ~Derived()
-  {
-    std::cout << "Destroying derived" << std::endl;
-    delete some_resource_;
-  }
-
-private:
-  int* some_resource_;
-};
-
-int main()
-{
-  Base* p = new Derived(5);
-  delete p;
-}
-
-This will output:
-
-> Destroying base
-```
-Making Base’s destructor virtual will result in the expected behavior:
-
-> Destroying derived
-> Destroying base
 ## Expressions
 
 An **expression** is anything that produces a value, such as `x + 1`, `a < b` or `f()`.

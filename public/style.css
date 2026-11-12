@@ -351,6 +351,18 @@ body {
   border-radius: 6px;
 }
 
+/* TikZ drawings: inline SVG, centered, black strokes follow the text color */
+.prose .tikz {
+  margin: 1.25em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.prose .tikz svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ─── Inline code ────────────────────────────────────────── */
 .prose :not(pre) > code {
   font-family: var(--mono);

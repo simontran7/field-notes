@@ -13,7 +13,24 @@ Given a graph or n-ary tree, systematically visit every relevant node, exactly o
 
 ### On Trees
 
-[image](https://excalidraw.com/#json=6KhPhFw0odvp69FAo4Ugs,NjEJA9EdV1FPR_y485AGVw)
+```tikz
+\begin{tikzpicture}[tn/.style={draw, circle, minimum size=0.8cm, inner sep=0pt},
+    cell/.style={draw, minimum size=0.75cm}]
+  % The same binary tree is used for every traversal on this page.
+  \foreach \n/\x/\y in {F/0/0, B/-2.4/-1.4, G/2.4/-1.4, A/-3.6/-2.8, D/-1.2/-2.8, I/3.6/-2.8, C/-1.9/-4.2, E/-0.5/-4.2, H/2.9/-4.2}
+    \node[tn] (\n) at (\x, \y) {\n};
+  \foreach \a/\b in {F/B, F/G, B/A, B/D, D/C, D/E, G/I, I/H} \draw[->] (\a) -- (\b);
+
+  % \order{y}{name}{nodes}: the order in which a traversal visits the nodes
+  \newcommand{\order}[3]{
+    \node[anchor=east] at (-3.4, #1) {#2};
+    \foreach \v [count=\i from 0] in {#3} \node[cell] at (-3 + 0.75*\i, #1) {\v};
+  }
+  \order{-5.6}{Preorder}{F, B, A, D, C, E, G, I, H}
+  \order{-6.6}{Inorder}{A, B, C, D, E, F, G, H, I}
+  \order{-7.6}{Postorder}{A, C, E, D, B, H, I, G, F}
+\end{tikzpicture}
+```
 
 #### Use Case
 
@@ -192,7 +209,22 @@ Let $S$ be the number of reachable states (product of the ranges of each state v
 
 ### On Trees
 
-[image](https://excalidraw.com/#json=fDh43_-klJzpBKkz72-rR,2aQqM9sKdkzpEIcgmGpVWw)
+```tikz
+\begin{tikzpicture}[tn/.style={draw, circle, minimum size=0.8cm, inner sep=0pt},
+    cell/.style={draw, minimum size=0.75cm}]
+  % The same binary tree is used for every traversal on this page.
+  \foreach \n/\x/\y in {F/0/0, B/-2.4/-1.4, G/2.4/-1.4, A/-3.6/-2.8, D/-1.2/-2.8, I/3.6/-2.8, C/-1.9/-4.2, E/-0.5/-4.2, H/2.9/-4.2}
+    \node[tn] (\n) at (\x, \y) {\n};
+  \foreach \a/\b in {F/B, F/G, B/A, B/D, D/C, D/E, G/I, I/H} \draw[->] (\a) -- (\b);
+
+  % Each level is one batch of the queue, visited left to right.
+  \foreach \lvl/\y/\nodes in {0/0/{F}, 1/-1.4/{B, G}, 2/-2.8/{A, D, I}, 3/-4.2/{C, E, H}} {
+    \draw[thin, dashed] (-4.4, \y - 0.6) -- (4.4, \y - 0.6);
+    \node[anchor=west, font=\small] at (4.6, \y) {Level \lvl: \nodes};
+  }
+  \node[anchor=west] at (-4.4, -5.4) {Level-order traversal: \texttt{[[F], [B, G], [A, D, I], [C, E, H]]}};
+\end{tikzpicture}
+```
 
 #### Use Case
 
@@ -287,9 +319,31 @@ Let $S$ be the number of reachable states (product of the ranges of each state v
 > [!TIP]
 > In grid problems, the direction vectors for horizontal and vertical moves are `[(-1, 0), (1, 0), (0, -1), (0, 1)]`. If horizontal, vertical, _and_ diagonal moves are allowed, the complete direction vectors are `[(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, 1), (1, -1)]`.
 
-<img src="images/grid_cell_four_neighbors.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=2.2cm, y=1.3cm, cell/.style={draw, minimum width=2.2cm, minimum height=1.3cm}]
+  % Row r grows downward and column c grows rightward, as in the direction vectors.
+  \foreach \r in {-1, 0, 1} \foreach \c in {-1, 0, 1} \node[cell] at (\c, -\r) {};
+  \node[cell, hl] at (0, 0) {};
+  \node (center) at (0, 0) {$(r, c)$};
+  \foreach \dr/\dc/\label in {-1/0/{$(r-1, c)$}, 1/0/{$(r+1, c)$}, 0/-1/{$(r, c-1)$}, 0/1/{$(r, c+1)$}} {
+    \node (n) at (\dc, -\dr) {\label};
+    \draw[->, thin, shorten <=2pt, shorten >=2pt] (center) -- (n);
+  }
+\end{tikzpicture}
+```
 
-<img src="images/grid_cell_eight_neighbors.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=2.2cm, y=1.3cm, cell/.style={draw, minimum width=2.2cm, minimum height=1.3cm}]
+  % Row r grows downward and column c grows rightward, as in the direction vectors.
+  \foreach \r in {-1, 0, 1} \foreach \c in {-1, 0, 1} \node[cell] at (\c, -\r) {};
+  \node[cell, hl] at (0, 0) {};
+  \node (center) at (0, 0) {$(r, c)$};
+  \foreach \dr/\dc/\label in {-1/0/{$(r-1, c)$}, 1/0/{$(r+1, c)$}, 0/-1/{$(r, c-1)$}, 0/1/{$(r, c+1)$}, -1/-1/{$(r-1, c-1)$}, -1/1/{$(r-1, c+1)$}, 1/1/{$(r+1, c+1)$}, 1/-1/{$(r+1, c-1)$}} {
+    \node (n) at (\dc, -\dr) {\label};
+    \draw[->, thin, shorten <=2pt, shorten >=2pt] (center) -- (n);
+  }
+\end{tikzpicture}
+```
 
 > [!TIP]
 > BST problems typically use DFS traversal. Common techniques include:

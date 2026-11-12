@@ -21,7 +21,19 @@ def linear_search(array, target):
     return -1
 ```
 
-<img src="images/linear_search.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm},
+    found/.style={hl, line width=1.6pt}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \row{0}{1/,2/,3/,4/,5/,6/,7/,8/}
+  \foreach \i in {0,...,5} \draw[->, thin] (\i, -1.6) to[bend left=60] (\i+1, -1.6);
+  \row{-2.1}{1/,2/,3/,4/,5/,6/,7/found,8/}
+\end{tikzpicture}
+```
 
 #### Complexity Analysis
 
@@ -58,7 +70,22 @@ def binary_search(array, target):
     return -1
 ```
 
-<img src="images/binary_search_exact_match.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm},
+    found/.style={hl, line width=1.6pt}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[right, font=\small] at (-0.45, -0.0 + 0.8) {$\mathit{low} = 0$, $\mathit{high} = 7$, $\mathit{mid} = 3$: $18 < 40$, search right half};
+  \row{-0.0}{3/,7/,12/,18/hl,24/,31/,40/,52/}
+  \node[right, font=\small] at (-0.45, -2.4 + 0.8) {$\mathit{low} = 4$, $\mathit{high} = 7$, $\mathit{mid} = 5$: $31 < 40$, search right half};
+  \row{-2.4}{3/,7/,12/,18/,24/,31/hl,40/,52/}
+  \node[right, font=\small] at (-0.45, -4.8 + 0.8) {$\mathit{low} = 6$, $\mathit{high} = 7$, $\mathit{mid} = 6$: $40$ is the target, found at index $6$};
+  \row{-4.8}{3/,7/,12/,18/,24/,31/,40/found,52/}
+\end{tikzpicture}
+```
 
 #### Complexity Analysis
 
@@ -90,7 +117,24 @@ def lower_bound(array, target):
     return low
 ```
 
-<img src="images/lower_bound_convergence.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm},
+    found/.style={hl, line width=1.6pt}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[right, font=\small] at (-0.45, -0.0 + 0.8) {$\mathit{low} = 0$, $\mathit{high} = 6$, $\mathit{mid} = 3$: $2$ is not less than the target, search left half};
+  \row{-0.0}{1/,2/,2/,2/hl,4/,7/}
+  \node[right, font=\small] at (-0.45, -2.4 + 0.8) {$\mathit{low} = 0$, $\mathit{high} = 3$, $\mathit{mid} = 1$: $2$ is not less than the target, search left half};
+  \row{-2.4}{1/,2/hl,2/,2/,4/,7/}
+  \node[right, font=\small] at (-0.45, -4.8 + 0.8) {$\mathit{low} = 0$, $\mathit{high} = 1$, $\mathit{mid} = 0$: $1$ is less than the target, search right half};
+  \row{-4.8}{1/hl,2/,2/,2/,4/,7/}
+  \node[right, font=\small] at (-0.45, -7.199999999999999 + 0.8) {$\mathit{low} = \mathit{high} = 1$: the first index with a value $\ge$ the target};
+  \row{-7.199999999999999}{1/,2/found,2/,2/,4/,7/}
+\end{tikzpicture}
+```
 
 ```python
 def upper_bound(array, target):
@@ -108,7 +152,24 @@ def upper_bound(array, target):
     return low
 ```
 
-<img src="images/upper_bound_convergence.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm},
+    found/.style={hl, line width=1.6pt}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[right, font=\small] at (-0.45, -0.0 + 0.8) {$\mathit{low} = 0$, $\mathit{high} = 6$, $\mathit{mid} = 3$: $2$ is at most the target, search right half};
+  \row{-0.0}{1/,2/,2/,2/hl,4/,7/}
+  \node[right, font=\small] at (-0.45, -2.4 + 0.8) {$\mathit{low} = 4$, $\mathit{high} = 6$, $\mathit{mid} = 5$: $7$ is greater than the target, search left half};
+  \row{-2.4}{1/,2/,2/,2/,4/,7/hl}
+  \node[right, font=\small] at (-0.45, -4.8 + 0.8) {$\mathit{low} = 4$, $\mathit{high} = 5$, $\mathit{mid} = 4$: $4$ is greater than the target, search left half};
+  \row{-4.8}{1/,2/,2/,2/,4/hl,7/}
+  \node[right, font=\small] at (-0.45, -7.199999999999999 + 0.8) {$\mathit{low} = \mathit{high} = 4$: the first index with a value $>$ the target};
+  \row{-7.199999999999999}{1/,2/,2/,2/,4/found,7/}
+\end{tikzpicture}
+```
 
 #### Complexity Analysis
 

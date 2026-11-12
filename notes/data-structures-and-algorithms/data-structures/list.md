@@ -33,22 +33,96 @@ Index into the `array` at the desired index $i$ if it is within bounds $[0, N)$.
 3. If inserting at index $N - 1$, skip to step 4. Otherwise, shift all elements from $[i + 1, N)$ to the right to make way for the new element.
 4. Write the new element at index $i$.
 
-<img src="images/array_insert_front.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[draw] (new) at (0, 1.4) {8};
+  \draw[->] (new) -- (0, 0.5);
+  \row{0}{1/,2/,3/,4/,5/,6/,7/,/empty}
+  \foreach \i in {0,1,2,3,4,5,6} \draw[->, thin] (\i, -2.1+0.5) to[bend left=60] (\i+1, -2.1+0.5);
+  \row{-2.1}{1/,2/,3/,4/,5/,6/,7/,/empty}
+  \row{-4.2}{8/hl,1/,2/,3/,4/,5/,6/,7/}
+\end{tikzpicture}
+```
 
-<img src="images/array_insert_middle.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[draw] (new) at (4, 1.4) {8};
+  \draw[->] (new) -- (4, 0.5);
+  \row{0}{1/,2/,3/,4/,5/,6/,7/,/empty}
+  \foreach \i in {4,5,6} \draw[->, thin] (\i, -2.1+0.5) to[bend left=60] (\i+1, -2.1+0.5);
+  \row{-2.1}{1/,2/,3/,4/,5/,6/,7/,/empty}
+  \row{-4.2}{1/,2/,3/,4/,8/hl,5/,6/,7/}
+\end{tikzpicture}
+```
 
-<img src="images/array_insert_end.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \node[draw] (new) at (7, 1.4) {8};
+  \draw[->] (new) -- (7, 0.5);
+  \row{0}{1/,2/,3/,4/,5/,6/,7/,/empty}
+  \row{-2.1}{1/,2/,3/,4/,5/,6/,7/,8/hl}
+\end{tikzpicture}
+```
 
 ### Deletion
 
 1. Starting at index $i$, up till and including $N - 2$, replace its element with the element to its left.
 2. (Optional) Zero out the last element at index $N - 1$.
 
-<img src="images/array_remove_front.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \row{0}{1/hl,2/,3/,4/,5/,6/,7/,8/}
+  \foreach \i in {0,1,2,3,4,5,6} \draw[->, thin] (\i+1, -2.1+0.5) to[bend right=60] (\i, -2.1+0.5);
+  \row{-2.1}{/empty,2/,3/,4/,5/,6/,7/,8/}
+  \row{-4.2}{2/,3/,4/,5/,6/,7/,8/,/empty}
+\end{tikzpicture}
+```
 
-<img src="images/array_remove_middle.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \row{0}{1/,2/,3/,4/,5/hl,6/,7/,8/}
+  \foreach \i in {4,5,6} \draw[->, thin] (\i+1, -2.1+0.5) to[bend right=60] (\i, -2.1+0.5);
+  \row{-2.1}{1/,2/,3/,4/,/empty,6/,7/,8/}
+  \row{-4.2}{1/,2/,3/,4/,6/,7/,8/,/empty}
+\end{tikzpicture}
+```
 
-<img src="images/array_remove_end.svg" width="500">
+```tikz
+\begin{tikzpicture}[x=0.9cm, y=0.9cm, cell/.style={draw, minimum size=0.9cm}, empty/.style={dashed}]
+  % \row{y}{value/style, ...}: one array, with each index below its cell
+  \newcommand{\row}[2]{\foreach \v/\s [count=\i from 0] in {#2} {
+    \node[cell, \s] at (\i, #1) {\v};
+    \node[font=\scriptsize] at (\i, #1 - 0.75) {\i};
+  }}
+  \row{0}{1/,2/,3/,4/,5/,6/,7/,8/hl}
+  \row{-2.1}{1/,2/,3/,4/,5/,6/,7/,/empty}
+\end{tikzpicture}
+```
 
 ### Implementation
 

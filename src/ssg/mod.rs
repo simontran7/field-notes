@@ -3,6 +3,7 @@ mod layout;
 mod math;
 pub(crate) mod notes;
 mod render;
+mod tikz;
 
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};

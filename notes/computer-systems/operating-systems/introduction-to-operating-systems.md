@@ -36,11 +36,25 @@ The hardware is organized in terms of protection rings. It has at least two prot
   - restricts access on which instructions can be executed and which memory can be accessed.
   - regular applications programs run here
 
-<img src="images/protection_rings.svg" width="500">
+```tikz
+\begin{tikzpicture}
+  % Darker rings are more privileged.
+  \foreach \r/\o in {4.2/0.04, 3.1/0.1, 2/0.2, 1/0.32} \draw[fill=black, fill opacity=\o] (0, 0) circle (\r);
+  \foreach \y/\ring/\who in {3.6/3/Applications, 2.55/2/Device drivers, 1.5/1/Device drivers, 0.3/0/Kernel} {
+    \node[font=\small] at (0, \y) {Ring \ring};
+    \node[font=\small] at (0, -\y) {\who};
+  }
+  % Legend
+  \node[font=\small] at (5.8, 2.6) {Least privileged};
+  % Each swatch uses the combined opacity of the nested circles over that ring.
+  \foreach \o [count=\k] in {0.04, 0.136, 0.309, 0.53} \draw[fill=black, fill opacity=\o] (5.45, 2.3 - 0.7*\k) rectangle ++(0.7, 0.7);
+  \node[font=\small] at (5.8, -0.75) {Most privileged};
+\end{tikzpicture}
+```
 
 This is enforced by a special register or a flag in the CPU, called a **mode bit**, that tracks which mode it's currently in. 
-- `mode bit = 1`: kernel mode.
-- `mode bit = 0`: user mode.
+- `mode bit = 0`: kernel mode.
+- `mode bit = 1`: user mode.
 
 ## System Call
 
@@ -59,7 +73,22 @@ A system call work as follows:
 4. The kernel looks at a syscall number and arguments, and performs the operation itself.
 5. The kernel executes a return-from-trap instruction which switches the CPU back to ring 3 and resumes the application program.
 
-<img src="images/user_mode_kernel_mode_transition.svg" width="500">
+```tikz
+\begin{tikzpicture}[box/.style={draw, rounded corners=3pt, minimum height=0.9cm, inner xsep=10pt}]
+  \node[box] (exec) at (5, 0) {User process executing};
+  \node[box] (call) at (5, -1.8) {Calls system call};
+  \node[box] (sys) at (0, -3.6) {Execute system call};
+  \node[box] (ret) at (5, -7.2) {Return from system call};
+  \draw[->] (exec) -- (call);
+  \draw[->] (call) |- node[pos=0.25, right, font=\small] {trap} (sys);
+  \draw[->] (sys) |- node[pos=0.75, above, font=\small] {return} (5, -5.4) -- (ret);
+  % Mode regions
+  \draw[thin] (2.7, 1) rectangle (7.3, -8);
+  \node[font=\small] at (5, 0.75) {User mode (mode bit $= 1$)};
+  \draw[thin, fill=black, fill opacity=0.06] (-2.4, -2.6) rectangle (2.4, -4.6);
+  \node[font=\small] at (0, -2.85) {Kernel mode (mode bit $= 0$)};
+\end{tikzpicture}
+```
 
 ## Kernel Architecture
 

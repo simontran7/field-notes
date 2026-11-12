@@ -749,15 +749,57 @@ fn reverse_bits(mut x: u32) -> u32 {
 
 - Single precision (32 bits)
 
-<img src="images/float32_bit_layout.svg" width="500">
+```tikz
+\begin{tikzpicture}[field/.style={draw, minimum height=0.8cm, anchor=west}, bit/.style={font=\scriptsize, above}]
+  % Field widths are proportional to their bit counts (the sign is widened to stay visible).
+  \node[field, hl, minimum width=0.45cm] (sign) at (0, 0) {};
+  \node[field, minimum width=2.98cm] (exp) at (sign.east) {Exponent (8 bits)};
+  \node[field, minimum width=8.57cm] (sig) at (exp.east) {Significand (23 bits)};
+  \draw[thin] (sign.south) -- ++(0, -0.35) node[below, font=\small] {Sign};
+  % Bit indices, most significant on the left
+  \node[bit] at (sign.north) {31};
+  \node[bit, anchor=south west] at (exp.north west) {30};
+  \node[bit, anchor=south east] at (exp.north east) {23};
+  \node[bit, anchor=south west] at (sig.north west) {22};
+  \node[bit, anchor=south east] at (sig.north east) {0};
+\end{tikzpicture}
+```
 
 - Double precision (64 bits)
 
-<img src="images/float64_bit_layout.svg" width="500">
+```tikz
+\begin{tikzpicture}[field/.style={draw, minimum height=0.8cm, anchor=west}, bit/.style={font=\scriptsize, above}]
+  % Field widths are proportional to their bit counts (the sign is widened to stay visible).
+  \node[field, hl, minimum width=0.45cm] (sign) at (0, 0) {};
+  \node[field, minimum width=2.02cm] (exp) at (sign.east) {Exponent (11 bits)};
+  \node[field, minimum width=9.53cm] (sig) at (exp.east) {Significand (52 bits)};
+  \draw[thin] (sign.south) -- ++(0, -0.35) node[below, font=\small] {Sign};
+  % Bit indices, most significant on the left
+  \node[bit] at (sign.north) {63};
+  \node[bit, anchor=south west] at (exp.north west) {62};
+  \node[bit, anchor=south east] at (exp.north east) {52};
+  \node[bit, anchor=south west] at (sig.north west) {51};
+  \node[bit, anchor=south east] at (sig.north east) {0};
+\end{tikzpicture}
+```
 
 - Quadruple precision (128 bits)
 
-<img src="images/float128_bit_layout.svg" width="500">
+```tikz
+\begin{tikzpicture}[field/.style={draw, minimum height=0.8cm, anchor=west}, bit/.style={font=\scriptsize, above}]
+  % Field widths are proportional to their bit counts (the sign is widened to stay visible).
+  \node[field, hl, minimum width=0.45cm] (sign) at (0, 0) {};
+  \node[field, minimum width=1.36cm] (exp) at (sign.east) {Exponent (15 bits)};
+  \node[field, minimum width=10.19cm] (sig) at (exp.east) {Significand (112 bits)};
+  \draw[thin] (sign.south) -- ++(0, -0.35) node[below, font=\small] {Sign};
+  % Bit indices, most significant on the left
+  \node[bit] at (sign.north) {127};
+  \node[bit, anchor=south west] at (exp.north west) {126};
+  \node[bit, anchor=south east] at (exp.north east) {112};
+  \node[bit, anchor=south west] at (sig.north west) {111};
+  \node[bit, anchor=south east] at (sig.north east) {0};
+\end{tikzpicture}
+```
 
 > [!NOTE]
 > Whenever the actual exponent falls outside the representable range, or the fraction field can't fit in the allocated number of bits, storing a given $x$ exactly with this scheme becomes impossible. For single precision, that means bit 24 or bit 25 turns out to be a one, counting bit 0 as the implicit integer.
