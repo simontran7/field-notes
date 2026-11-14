@@ -1,0 +1,31 @@
+\documentclass[tikz,border=2pt]{standalone}
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{arrows.meta,calc,positioning}
+\tikzset{every picture/.style={line width=1pt, >=Stealth},
+         hl/.style={fill=black, fill opacity=0.12, text opacity=1}}
+\begin{document}
+\begin{tikzpicture}[x=1cm, y=0.75cm, frame/.style={draw, minimum width=2.7cm, minimum height=0.6cm, font=\ttfamily\small},
+    base/.style={hl, line width=1.6pt}, small/.style={font=\small}]
+  % \stack{x}{frame/style, ... from the bottom}{caption}: one snapshot of the call stack
+  \newcommand{\stack}[3]{
+    \foreach \f/\s [count=\j from 0] in {#2} \node[frame, \s] at (#1, \j) {\f};
+    \draw (#1 - 1.5, -0.6) -- (#1 + 1.5, -0.6);
+    \node[align=center, small] at (#1, -1.4) {#3};
+  }
+  \node[anchor=west, font=\large] at (-1.35, 6) {Call stack unwinding: \texttt{factorial(3)}};
+  \stack{0}{main()/, factorial(3)/, factorial(2)/, factorial(1)/, factorial(0)/base}{Step 6\\\texttt{factorial(0)} returns}
+  \stack{3.4}{main()/, factorial(3)/, factorial(2)/, factorial(1)/hl}{Step 7\\\texttt{factorial(1)} returns}
+  \stack{6.8}{main()/, factorial(3)/, factorial(2)/hl}{Step 8\\\texttt{factorial(2)} returns}
+  \stack{10.2}{main()/, factorial(3)/hl}{Step 9\\\texttt{factorial(3)} returns}
+  \stack{13.6}{main()/hl}{Step 10\\back in \texttt{main()}}
+  \foreach \x/\y/\note in {0/5/{returns $1$}, 3.4/4/{returns $1 \times 1 = 1$}, 6.8/3/{returns $2 \times 1 = 2$},
+      10.2/2/{returns $3 \times 2 = 6$}, 13.6/1/{receives $6$}} \node[small] at (\x, \y - 0.1) {\note};
+  \node at (1.7, 0) {$\rightarrow$};
+  \node at (5.1, 0) {$\rightarrow$};
+  \node at (8.5, 0) {$\rightarrow$};
+  \node at (11.9, 0) {$\rightarrow$};
+  \node[frame, hl, minimum width=0.3cm, minimum height=0.3cm, label=right:{\small returning frame}] at (-1.2, -2.6) {};
+  \node[frame, base, minimum width=0.3cm, minimum height=0.3cm, label=right:{\small base case}] at (-1.2+4, -2.6) {};
+  \node[frame, minimum width=0.3cm, minimum height=0.3cm, label=right:{\small waiting for a call to return}] at (-1.2+6.6, -2.6) {};
+\end{tikzpicture}
+\end{document}

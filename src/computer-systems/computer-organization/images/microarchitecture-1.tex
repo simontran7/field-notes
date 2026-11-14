@@ -1,0 +1,34 @@
+\documentclass[tikz,border=2pt]{standalone}
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{arrows.meta,calc,positioning}
+\tikzset{every picture/.style={line width=1pt, >=Stealth},
+         hl/.style={fill=black, fill opacity=0.12, text opacity=1}}
+\begin{document}
+\begin{tikzpicture}[box/.style={draw, minimum height=0.8cm}]
+  \newcommand{\alu}[1]{\draw[shift={(#1)}, scale=1.2] (0, 0) ++(-0.4, 0.8) -- ++(0.8, -0.35) -- ++(0, -0.9) -- ++(-0.8, -0.35) -- ++(0, 0.6) -- ++(0.25, 0.2) -- ++(-0.25, 0.2) -- cycle;}
+  \node at (4.9, -0.3) {Modern Digital Computer};
+  \draw[fill=black, fill opacity=0.06] (0.4, -1.3) rectangle (6.6, -6) node[pos=0, above right, opacity=1] {Processor Chip};
+  \draw (0.7, -1.6) rectangle (6.3, -4.4);
+  \node at (3.5, -1.95) {CPU};
+  \node[box, align=center, minimum width=1.9cm, minimum height=1.5cm] at (2.1, -3.3) {Register \\ File};
+  \alu{4.6, -3.3}
+  \node[font=\footnotesize] at (4.8, -3.3) {ALU};
+  \draw (3.5, -4.4) -- (3.5, -4.8);
+  \node[box, minimum width=5.6cm, hl] at (3.5, -5.25) {cache memory};
+
+  % Buses: the chip and main memory share the memory bus; devices hang off the I/O bus.
+  \node[box, minimum width=2.4cm, minimum height=4.6cm, align=center] (ram) at (8.4, -3.7) {Main \\ Memory \\ (RAM)};
+  \draw[line width=2pt] (3.5, -6) -- (3.5, -6.6) -| (ram.south);
+  \node[below right, font=\small] at (5.6, -6.6) {Memory Bus};
+  \node[box] (io) at (3.5, -7.4) {I/O Controller};
+  \draw[line width=2pt] (3.5, -6.6) -- (io.north);
+  \draw[line width=2pt] (io.south) -- (3.5, -8.3);
+  \draw[line width=2pt] (1.5, -8.8) |- (6.9, -8.3) -- (6.9, -8.8);
+  \foreach \x in {2.95, 5.05} \draw[line width=2pt] (\x, -8.3) -- (\x, -8.8);
+  \node[above right, font=\small] at (6.9, -8.3) {I/O Bus};
+  \foreach \x in {1.5, 2.95, 5.05, 6.9} \node[box, minimum width=1.1cm, minimum height=0.7cm, anchor=north] at (\x, -8.8) {};
+  \draw[thin, dashed] (0.6, -8.6) rectangle (7.8, -10.3);
+  \node at (4.2, -10) {Input and Output Devices};
+  \draw (-0.2, 0.2) rectangle (10, -10.6);
+\end{tikzpicture}
+\end{document}

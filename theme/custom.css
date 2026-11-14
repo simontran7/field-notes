@@ -1,0 +1,77 @@
+:root {
+  --env-definition: #8a8f5c;
+  --env-definition-bg: #f3f4ec;
+  --env-math: #b04a80;
+  --env-math-bg: #faf0f5;
+  --env-title-text: #ffffff;
+}
+
+.coal,
+.navy,
+.ayu {
+  --env-definition: #62664a;
+  --env-definition-bg: #25261f;
+  --env-math: #8a3d66;
+  --env-math-bg: #2b2027;
+  --env-title-text: #f3f1ee;
+}
+
+.env {
+  --env-color: var(--env-definition);
+  --env-bg: var(--env-definition-bg);
+  margin: 1.5em 0;
+}
+
+.env-theorem,
+.env-proposition,
+.env-corollary {
+  --env-color: var(--env-math);
+  --env-bg: var(--env-math-bg);
+}
+
+.env-title {
+  border-radius: 6px 6px 0 0;
+  background: var(--env-color);
+  color: var(--env-title-text);
+  font-weight: 700;
+  padding: 0.3em 1rem;
+  line-height: 1.4;
+}
+
+.env-body {
+  background: var(--env-bg);
+  border: 1px solid var(--env-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 0.75rem 1rem;
+}
+
+.env-body> :first-child {
+  margin-top: 0;
+}
+
+.env-body> :last-child {
+  margin-bottom: 0;
+}
+
+.env-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Figures (figures/render.sh output and other diagrams) are black on
+   transparent. Dark themes invert them; the hue rotation keeps colored labels
+   close to their original hue. */
+.content img[src$=".svg"] {
+  display: block;
+  margin: 1.25em auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.coal .content img[src$=".svg"],
+.navy .content img[src$=".svg"],
+.ayu .content img[src$=".svg"] {
+  filter: invert(0.88) hue-rotate(180deg);
+}

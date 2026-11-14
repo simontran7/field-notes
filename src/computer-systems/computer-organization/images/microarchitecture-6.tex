@@ -1,0 +1,21 @@
+\documentclass[tikz,border=2pt]{standalone}
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{arrows.meta,calc,positioning}
+\tikzset{every picture/.style={line width=1pt, >=Stealth},
+         hl/.style={fill=black, fill opacity=0.12, text opacity=1}}
+\begin{document}
+\begin{tikzpicture}[x=0.7cm, y=0.7cm, cell/.style={draw, minimum size=0.7cm},
+    stall/.style={hl}, clash/.style={line width=1.8pt}]
+  % \pipe{row}{first cycle}{stage/style, ...}: one instruction, one cell per clock cycle
+  \newcommand{\pipe}[3]{\foreach \v/\s [count=\i from 0] in {#3} \node[cell, \s] at (#2 + \i, -#1) {\v};}
+  % Both instructions reach write-back (W) in the same cycle (bold), so the second must wait.
+  \pipe{0}{0}{F/, D/, E/, M/, W/clash}
+  \pipe{1}{1}{F/, D/, E/, W/clash}
+  \node[font=\small] at (2.5, -2.4) {Problem: both write back at once};
+  \begin{scope}[xshift=5.6cm]
+    \pipe{0}{0}{F/, D/, E/, M/, W/}
+    \pipe{1}{1}{F/, D/, /stall, E/, W/}
+    \node[font=\small] at (3, -2.4) {Partial solution: a bubble (NOP)};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

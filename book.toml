@@ -1,0 +1,20 @@
+[book]
+title = "Field Notes"
+description = "Computer science field notes"
+src = "src"
+
+[build]
+build-dir = "dist"
+
+# Theorem-style boxes: > [!DEFINITION], [!THEOREM], [!PROPOSITION], [!COROLLARY].
+[preprocessor.callouts]
+command = "python3 callouts.py"
+
+# `$...$` and `$$...$$` math
+[preprocessor.katex]
+after = ["links", "callouts"]
+
+[output.html]
+additional-css = ["theme/custom.css"]
+# GitHub Pages serves the site under /field-notes/; the 404 page needs it for its links.
+site-url = "/field-notes/"
