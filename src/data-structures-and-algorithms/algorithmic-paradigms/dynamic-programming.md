@@ -6,6 +6,14 @@ An optimization problem, a counting problem, or a feasability problem with the f
 - **Overlapping subproblems**: the same subproblems are encountered and solved multiple times
 - **Optimal substructure**: the solution to the whole problem can be built from solutions to its subproblems
 
+| Kind | Combine with | Question |
+|---|---|---|
+| Counting | `+` (often `mod`) | How many ways? |
+| Optimization (min) | `min` | What's the smallest cost? |
+| Optimization (max) | `max` | What's the largest value? |
+| Feasibility | `or` / `and` | Is it possible? |
+| Probability / expectation | weighted `+` | How likely, or what's the expected value? |
+
 ## Template 
 
 ## Step 0: Draw the recursion tree for a few small, varied inputs

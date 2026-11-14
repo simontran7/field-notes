@@ -51,7 +51,7 @@
     - [Physical Memory](computer-systems/computer-organization/physical-memory.md)
     - [Assembly](computer-systems/computer-organization/assembly.md)
     - [Multiprocessor Systems](computer-systems/computer-organization/multiprocessor-systems.md)
-- [Operating Systems]()
+<!-- - [Operating Systems]()
     - [Introduction to Operating Systems](computer-systems/operating-systems/introduction-to-operating-systems.md)
     - [Processes](computer-systems/operating-systems/processes.md)
     - [Threads](computer-systems/operating-systems/threads.md)
@@ -61,13 +61,11 @@
     - [Benchmarking](computer-systems/performance-engineering/benchmarking.md)
     - [Data Packing](computer-systems/performance-engineering/data-packing.md)
     - [Atomics](computer-systems/performance-engineering/atomics.md)
-    - [Memory Allocators](computer-systems/performance-engineering/memory-allocators.md)
+    - [Memory Allocators](computer-systems/performance-engineering/memory-allocators.md) -->
 
 # Tools
 
 - [C](tools/c.md)
 - [Git](tools/git.md)
-- [GDB](tools/gdb.md)
 - [GNU Make](tools/gnu-make.md)
 - [Linux Environment](tools/linux-environment.md)
-- [Rust](tools/rust.md)

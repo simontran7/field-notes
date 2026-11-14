@@ -614,9 +614,6 @@ fn count_ones(mut x: u32) -> u32 {
 }
 ```
 
-> [!TIP]
-> x86-64 counts set bits in a single instruction (`popcnt`), which `x.count_ones()` compiles to.
-
 #### Count the Amount of Leading Zeroes
 
 Each right shift removes one bit from the bottom, so the number of shifts it takes `x` to reach `0` is the number of bits up to and including the most significant set bit. The rest of the 32 bits are leading zeroes.
@@ -632,9 +629,6 @@ fn count_leading_zeros(mut x: u32) -> u32 {
     count
 }
 ```
-
-> [!TIP]
-> x86-64 does this in a single instruction (`lzcnt`), which `x.leading_zeros()` compiles to.
 
 #### Count the Amount of Trailing Zeroes
 
@@ -655,9 +649,6 @@ fn count_trailing_zeros(mut x: u32) -> u32 {
     count
 }
 ```
-
-> [!TIP]
-> x86-64 does this in a single instruction (`tzcnt`), which `x.trailing_zeros()` compiles to.
 
 #### Find the Index of the Most Significant Bit
 
@@ -680,9 +671,6 @@ fn most_significant_bit(mut x: u32) -> i32 {
 > [!WARNING]
 > We take `x` as **unsigned** so that `>>=` is a logical shift. Right-shifting a negative signed `x` sign-extends indefinitely and will never reach `0` (leading to an infinite loop). Don't fix this with `abs` like you might in Python, since `i32::MIN.abs()` overflows.
 
-> [!TIP]
-> Rust provides `x.ilog2()`, which equals `most_significant_bit(x)` for `x > 0` (and panics for `0`).
-
 #### Check if the Number is a Power of 2
 
 A power of 2 has exactly one set bit. Since `x & (x - 1)` clears the lowest set bit, the result is `0` exactly when there was only one. `0` has no set bits at all, so it's excluded separately.
@@ -692,9 +680,6 @@ fn is_power_of_two(x: u32) -> bool {
     x != 0 && (x & (x - 1)) == 0
 }
 ```
-
-> [!TIP]
-> Rust provides `x.is_power_of_two()`.
 
 #### Rotates Bits
 
@@ -711,9 +696,6 @@ fn rotate_left(x: u32, k: u32) -> u32 {
 }
 ```
 
-> [!TIP]
-> x86-64 has `rol` and `ror` instructions. Rust provides `x.rotate_left(k)` and `x.rotate_right(k)`.
-
 #### Reverse Bits
 
 Take bits off the bottom of `x` one at a time, and push each onto the bottom of the result, so the first bit taken ends up at the top.
@@ -729,9 +711,6 @@ fn reverse_bits(mut x: u32) -> u32 {
     result
 }
 ```
-
-> [!TIP]
-> Rust provides `x.reverse_bits()`. 
 
 ## Floating-Point Representation
 
@@ -896,7 +875,7 @@ address: 0x100 0x101 0x102 0x103
 > [!NOTE]
 > On x86-64, the byte ordering is _little_ endian.
 
-## Alignment
+## Alignment Requirement
 
 Every type carries an **alignment requirement**, a number of bytes $N$ that determines which memory addresses its objects can occupy: if a type $T$ has an alignment requirement of $N$, every object of type $T$ must be placed at an address that's a multiple of $N$.
 
@@ -904,7 +883,21 @@ A primitive type has a **natural alignment requirement**, which is equal to its 
 
 Alignment matters because x86-64 reads memory in aligned chunks. A misaligned access may need two reads instead of one (e.g., when it straddles two cache lines), and some instructions refuse it outright.
 
-To determine whether an address is $2^n$-byte aligned, check whether `(address & ((1 << n) - 1)) == 0`. This works because the low $n$ bits of the address hold its remainder $\bmod 2^n$, which must be $0$.
+To determine whether an address is $2^n$-byte aligned:
+
+```rust
+/// Returns true if `x` is aligned to a 2^N-byte boundary.
+#[inline]
+pub const fn is_aligned<const N: u32>(x: u64) -> bool {
+    if N >= 64 {
+        // 1 << 64 would overflow; only 0 is aligned this strictly.
+        return a == 0;
+    }
+    (x & ((1u64 << N) - 1)) == 0
+}
+```
+
+This works because the low $n$ bits of the address hold its remainder $\bmod 2^n$, which must be $0$.
 
 ### Padding
 

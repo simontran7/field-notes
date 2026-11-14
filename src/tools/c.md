@@ -100,6 +100,27 @@ An **object** is a region of memory that holds a value of some type.
 > [!NOTE]
 > This is unrelated to the term object in object-oriented programming.
 
+### Alignment
+
+| Type | Typical alignment |
+| :---: | :---: |
+| `bool` | 1 |
+| `char` / `signed char` / `unsigned char` | 1 |
+| `short` / `int16_t` | 2 |
+| `int` / `int32_t` | 4 |
+| `long` / `long long` / `int64_t` | 8 |
+| `size_t` / `ptrdiff_t` | 8 |
+| `float` | 4 |
+| `double` | 8 |
+| `long double` | 16 |
+| Pointer `T *` | 8 |
+| Array `T[N]` | alignment of `T` |
+| `struct` | maximum alignment of its members |
+| `union` | maximum alignment of its members |
+
+> [!TIP]
+> Alignment depends on the target platform (architecture, OS, and compiler/ABI); the values above are typical for x86-64 Linux and macOS. For example, `long` is 4 bytes on Windows. Check a type's alignment with `alignof` (C23), or `_Alignof` / `alignof` from `<stdalign.h>` before C23.
+
 ## Scope
 
 An identifier's **scope** is the part of the code where its name is visible.
