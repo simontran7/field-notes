@@ -637,42 +637,42 @@ class B {
 public:
     virtual ~B() = default;  // safe deletion through a B*
 
+    virtual void foo() const;
     virtual void bar() const;
-    virtual void qux() const;
 };
+
+void B::foo() const {
+    std::cout << "This is B's implementation of foo\n";
+}
 
 void B::bar() const {
     std::cout << "This is B's implementation of bar\n";
 }
 
-void B::qux() const {
-    std::cout << "This is B's implementation of qux\n";
-}
-
 class C : public B {
 public:
-    void bar() const override;
+    void foo() const override;
 };
 
-void C::bar() const {
-    std::cout << "This is C's implementation of bar\n";
+void C::foo() const {
+    std::cout << "This is C's implementation of foo\n";
 }
 
 int main() {
     // unique_ptr deletes the object automatically, so nothing leaks
     std::unique_ptr<B> b = std::make_unique<C>();
 
-    // Follows the object's vptr to C's vtable: calls C::bar
-    b->bar();
+    // Follows the object's vptr to C's vtable: calls C::foo
+    b->foo();
 
-    // C doesn't override qux, so C's vtable points to B::qux
-    b->qux();
+    // C doesn't override bar, so C's vtable points to B::bar
+    b->bar();
 }
 ```
 
-If we use static dispatch as above, the call b->bar() would execute B::bar(), since (from the point of view of the compiler) b points to an object of type B.
+If we use static dispatch as above, the call b->foo() would execute B::foo(), since (from the point of view of the compiler) b points to an object of type B.
 
-For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::bar()), or virtual functions inherited from a base class (e.g. C::qux()).
+For every class that contains virtual functions, the compiler constructs a virtual table, a.k.a vtable. The vtable contains an entry for each virtual function accessible by the class and stores a pointer to its definition. Only the most specific function definition callable by the class is stored in the vtable. Entries in the vtable can point to either functions declared in the class itself (e.g. C::foo()), or virtual functions inherited from a base class (e.g. C::bar()).
 
 ![](images/c-1.svg)
 

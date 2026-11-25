@@ -9,15 +9,15 @@
   % \vtable{name}{x}{y}{title}: a header row and one row per virtual function
   \newcommand{\vtable}[4]{
     \node[row, hl, anchor=north west] (#1) at (#2, #3) {#4};
-    \node[row, below=0pt of #1] (#1bar) {\texttt{bar}};
-    \node[row, below=0pt of #1bar] (#1qux) {\texttt{qux}};
+    \node[row, below=0pt of #1] (#1foo) {\texttt{foo}};
+    \node[row, below=0pt of #1foo] (#1bar) {\texttt{bar}};
   }
-  \foreach \f [count=\k] in {B::bar(), B::qux(), C::bar()} \node[fn] (f\k) at (7, 0.2 - 0.75*\k) {\f};
+  \foreach \f [count=\k] in {B::foo(), B::bar(), C::foo()} \node[fn] (f\k) at (7, 0.2 - 0.75*\k) {\f};
   \vtable{B}{0}{0}{Vtable of class B}
   \vtable{C}{0}{-2.6}{Vtable of class C}
-  \draw[->] (Bbar.east) -- (f1.west);
-  \draw[->] (Bqux.east) -- (f2.west);
-  \draw[->] (Cbar.east) -- (f3.west);
-  \draw[->] (Cqux.east) -- (f2.west);
+  \draw[->] (Bfoo.east) -- (f1.west);
+  \draw[->] (Bbar.east) -- (f2.west);
+  \draw[->] (Cfoo.east) -- (f3.west);
+  \draw[->] (Cbar.east) -- (f2.west);
 \end{tikzpicture}
 \end{document}

@@ -5,7 +5,7 @@
          hl/.style={fill=black, fill opacity=0.12, text opacity=1}}
 \begin{document}
 \begin{tikzpicture}[box/.style={draw, minimum height=0.8cm}]
-  \newcommand{\alu}[1]{\draw[shift={(#1)}, scale=1.05] (0, 0) ++(-0.4, 0.6) -- ++(0.6, -0.25) -- ++(0, -0.7) -- ++(-0.6, -0.25) -- ++(0, 0.4) -- ++(0.2, 0.2) -- ++(-0.2, 0.2) -- cycle;}
+  \newcommand{\alu}[1]{\draw[shift={(#1)}, scale=1.05] (0, 0) ++(-0.32, 0.6) -- ++(0.7, -0.25) -- ++(0, -0.7) -- ++(-0.7, -0.25) -- ++(0, 0.4) -- ++(0.12, 0.2) -- ++(-0.12, 0.2) -- cycle;}
   \node at (4.9, -0.3) {Multi-Core Computer};
   \draw[fill=black, fill opacity=0.06] (0.4, -1.3) rectangle (6.6, -6) node[pos=0, above right, opacity=1] {Processor Chip};
   % Each core has its own registers, ALU, and private cache; the cores share a cache over a bus.
@@ -13,8 +13,8 @@
     \draw (\x, -1.5) rectangle ++(1.75, -2.65);
     \node[font=\small] at (\x + 0.875, -1.8) {\name};
     \node[box, align=center, font=\scriptsize, minimum width=0.65cm, minimum height=1cm] at (\x + 0.45, -2.75) {Reg. \\ File};
-    \alu{\x + 1.2, -2.75}
-    \node[font=\scriptsize] at (\x + 1.27, -2.75) {ALU};
+    \alu{\x + 1.27, -2.75}
+    \node[font=\scriptsize] at (\x + 1.365, -2.75) {ALU};
     \node[box, hl, font=\small, minimum width=1.45cm, minimum height=0.55cm] at (\x + 0.875, -3.7) {cache};
     \draw (\x + 0.875, -4.15) -- (\x + 0.875, -4.45);
   }

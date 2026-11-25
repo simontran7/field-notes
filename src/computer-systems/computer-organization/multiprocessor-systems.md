@@ -217,7 +217,7 @@ This is why concurrent programming requires atomics, mutexes, and memory orderin
 > An **atomic operation** is an operation that other cores can only observe as either not yet started or fully finished.
 
 To see why we need them, consider incrementing a shared counter with `counter += 1`. The CPU carries it out in three steps: 
-1. it **loads** the value from memory into a register
+1. **loads** the value from memory into a register
 2. **adds** one to the register
 3. **stores** the result back to memory. 
 

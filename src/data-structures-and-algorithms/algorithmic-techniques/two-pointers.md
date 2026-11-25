@@ -7,6 +7,27 @@ When the loop indices of your brute-force nested loops algorithm never needs to 
 > [!NOTE]
 > The following templates are not comprehensive.
 
+## Indexing Tips
+
+- Finding `end` in `for i in range(end)`:
+    1. Find the last _valid_ value of $i$ by solving for $i$ the following inequality: $$\text{highest} \ i \ \text{the loop body touches} \le n - 1$$
+    2. Let $l$ be the $\text{RHS}$ of step 1. Then, $\text{end} = l + 1$.
+- Use half-open intervals $[\text{low}, \text{high})$ everywhere, where the length is $\text{high} - \text{low}$ and the empty range is $\text{low} = \text{high}$, since adjacent ranges join with no gap.
+- Run the loop mentally with $n = 0$, $n = 1$, $n = 2$, and the case where the window equals the whole input. 
+- The element at index $k$ is the $(k + 1)^{th}$ element
+- Prefer iterators over indices
+    - `for x in a`
+    - `for i, x in enumerate(a)`
+    - `for x in zip(a, b)`
+    - `for x in zip(a, a[1:])`
+- Fence-post problem
+    ```python
+    for i, x in enumerate(items):
+        if i > 0:
+            print(",", end="")
+        print(x, end="")
+    ``` 
+
 ## Converge
 
 ### Use Case
@@ -114,3 +135,4 @@ def three_way_partition_two_pointers(array):
             high -= 1 # don't advance mid: the swapped-in value is unchecked
         else:
             mid += 1
+```
